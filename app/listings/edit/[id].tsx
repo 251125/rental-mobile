@@ -13,7 +13,7 @@ import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { useListing, useUpdateListing, useCategories } from "@/hooks/use-listings";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import { COLORS, API_URL } from "@/constants";
+import { COLORS, resolveImageUrl } from "@/constants";
 import Toast from "react-native-toast-message";
 
 export default function EditListingScreen() {
@@ -135,7 +135,7 @@ export default function EditListingScreen() {
           {listing.images.map((img) => (
             <Image
               key={img.id}
-              source={{ uri: `${API_URL}${img.image_url}` }}
+              source={{ uri: resolveImageUrl(img.image_url) ?? "" }}
               style={styles.img}
             />
           ))}

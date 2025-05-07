@@ -12,13 +12,13 @@ import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuthStore } from "@/store/auth.store";
 import { useLogout } from "@/hooks/use-auth";
-import { COLORS, API_URL } from "@/constants";
+import { COLORS, resolveImageUrl } from "@/constants";
 
 export default function ProfileScreen() {
   const { user } = useAuthStore();
   const { mutate: logout, isPending } = useLogout();
 
-  const avatarUri = user?.avatar_url ? `${API_URL}${user.avatar_url}` : null;
+  const avatarUri = user?.avatar_url ? resolveImageUrl(user.avatar_url) ?? "" : null;
 
   type IoniconsName = "person-outline" | "list-outline" | "car-outline" | "mail-outline" | "shield-outline";
 

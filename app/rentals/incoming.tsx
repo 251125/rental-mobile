@@ -13,7 +13,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useIncomingRentals, useUpdateRentalStatus } from "@/hooks/use-rentals";
 import RentalStatusBadge from "@/components/RentalStatusBadge";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import { COLORS, API_URL } from "@/constants";
+import { COLORS, resolveImageUrl } from "@/constants";
 
 export default function IncomingRentalsScreen() {
   const { data: rentals, isLoading } = useIncomingRentals();
@@ -36,7 +36,7 @@ export default function IncomingRentalsScreen() {
               >
                 {img ? (
                   <Image
-                    source={{ uri: `${API_URL}${img.image_url}` }}
+                    source={{ uri: resolveImageUrl(img.image_url) ?? "" }}
                     style={styles.listingImg}
                   />
                 ) : (
@@ -63,7 +63,7 @@ export default function IncomingRentalsScreen() {
                 >
                   {item.renter.avatar_url ? (
                     <Image
-                      source={{ uri: `${API_URL}${item.renter.avatar_url}` }}
+                      source={{ uri: resolveImageUrl(item.renter.avatar_url) ?? "" }}
                       style={styles.renterAvatar}
                     />
                   ) : (

@@ -13,7 +13,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useMyChats } from "@/hooks/use-chats";
 import { useAuthStore } from "@/store/auth.store";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import { COLORS, API_URL } from "@/constants";
+import { COLORS, resolveImageUrl } from "@/constants";
 import { Chat } from "@/types";
 
 export default function ChatsScreen() {
@@ -46,7 +46,7 @@ export default function ChatsScreen() {
           const other = getOtherParticipant(item);
           const last = getLastMessage(item);
           const avatarUri = other.avatar_url
-            ? `${API_URL}${other.avatar_url}`
+            ? resolveImageUrl(other.avatar_url) ?? ""
             : null;
           return (
             <TouchableOpacity

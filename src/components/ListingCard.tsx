@@ -1,16 +1,9 @@
 import React from "react";
-import {
-  View,
-  Text,
-  Image,
-  TouchableOpacity,
-  StyleSheet,
-} from "react-native";
+import { View, Text, Image, TouchableOpacity, StyleSheet } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Listing } from "@/types";
-import { COLORS } from "@/constants";
-import { API_URL } from "@/constants";
+import { COLORS, resolveImageUrl } from "@/constants";
 
 interface Props {
   listing: Listing;
@@ -18,15 +11,8 @@ interface Props {
   isFavorite?: boolean;
 }
 
-export default function ListingCard({
-  listing,
-  onFavoriteToggle,
-  isFavorite,
-}: Props) {
-  const imageUrl =
-    listing.images[0]?.image_url
-      ? `${API_URL}${listing.images[0].image_url}`
-      : null;
+export default function ListingCard({ listing, onFavoriteToggle, isFavorite }: Props) {
+  const imageUrl = resolveImageUrl(listing.images[0]?.image_url);
 
   return (
     <TouchableOpacity
@@ -36,7 +22,7 @@ export default function ListingCard({
     >
       <View style={styles.imageContainer}>
         {imageUrl ? (
-          <Image source={{ uri: imageUrl }} style={styles.image} />
+          <Image source={{ uri: imageUrl }} style={styles.image} resizeMode="cover" />
         ) : (
           <View style={[styles.image, styles.imagePlaceholder]}>
             <Ionicons name="image-outline" size={40} color={COLORS.border} />
@@ -57,8 +43,7 @@ export default function ListingCard({
           {listing.title}
         </Text>
         <Text style={styles.city}>
-          <Ionicons name="location-outline" size={12} color={COLORS.muted} />{" "}
-          {listing.city}
+          📍 {listing.city}
         </Text>
         <View style={styles.footer}>
           <Text style={styles.price}>{listing.price} ₸/день</Text>
@@ -81,13 +66,8 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
-  imageContainer: {
-    position: "relative",
-  },
-  image: {
-    width: "100%",
-    height: 180,
-  },
+  imageContainer: { position: "relative" },
+  image: { width: "100%", height: 180 },
   imagePlaceholder: {
     backgroundColor: COLORS.background,
     justifyContent: "center",
@@ -101,30 +81,20 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 6,
   },
-  info: {
-    padding: 12,
-  },
+  info: { padding: 12 },
   title: {
     fontSize: 15,
     fontWeight: "600",
     color: COLORS.text,
     marginBottom: 4,
   },
-  city: {
-    fontSize: 12,
-    color: COLORS.muted,
-    marginBottom: 8,
-  },
+  city: { fontSize: 12, color: COLORS.muted, marginBottom: 8 },
   footer: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
   },
-  price: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: COLORS.primary,
-  },
+  price: { fontSize: 15, fontWeight: "700", color: COLORS.primary },
   category: {
     fontSize: 11,
     color: COLORS.muted,

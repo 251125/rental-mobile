@@ -35,7 +35,7 @@ export function useLogin() {
         if (data.user.role === "ADMIN") {
           router.replace("/admin");
         } else {
-          router.replace("/(tabs)/");
+          router.replace("/");
         }
       });
     },
@@ -56,7 +56,7 @@ export function useRegister() {
     onSuccess: (data) => {
       void setAuth(data.user, data.access_token).then(() => {
         Toast.show({ type: "success", text1: "Аккаунт успешно создан" });
-        router.replace("/(tabs)/");
+        router.replace("/");
       });
     },
 

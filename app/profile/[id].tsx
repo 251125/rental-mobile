@@ -15,7 +15,7 @@ import { useUser, useUserReviews } from "@/hooks/use-profile";
 import { useOrCreateChat } from "@/hooks/use-chats";
 import { useAuthStore } from "@/store/auth.store";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import { COLORS, API_URL } from "@/constants";
+import { COLORS, resolveImageUrl } from "@/constants";
 import { Review } from "@/types";
 
 export default function PublicProfileScreen() {
@@ -36,7 +36,7 @@ export default function PublicProfileScreen() {
   if (isLoading) return <LoadingSpinner />;
   if (!user) return null;
 
-  const avatarUri = user.avatar_url ? `${API_URL}${user.avatar_url}` : null;
+  const avatarUri = user.avatar_url ? resolveImageUrl(user.avatar_url) ?? "" : null;
 
   return (
     <SafeAreaView style={styles.safe}>

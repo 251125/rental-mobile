@@ -17,7 +17,7 @@ import { usePayRental } from "@/hooks/use-wallet";
 import { useCreateReview } from "@/hooks/use-reviews";
 import RentalStatusBadge from "@/components/RentalStatusBadge";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import { COLORS, API_URL } from "@/constants";
+import { COLORS, resolveImageUrl } from "@/constants";
 import { RentalRequest } from "@/types";
 
 export default function MyRentalsScreen() {
@@ -65,7 +65,7 @@ export default function MyRentalsScreen() {
               >
                 {img ? (
                   <Image
-                    source={{ uri: `${API_URL}${img.image_url}` }}
+                    source={{ uri: resolveImageUrl(img.image_url) ?? "" }}
                     style={styles.listingImg}
                   />
                 ) : (

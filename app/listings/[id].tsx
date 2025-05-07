@@ -20,7 +20,7 @@ import { useCreateRentalRequest } from "@/hooks/use-rentals";
 import { useOrCreateChat } from "@/hooks/use-chats";
 import { useAuthStore } from "@/store/auth.store";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import { COLORS, API_URL } from "@/constants";
+import { COLORS, resolveImageUrl } from "@/constants";
 
 const { width } = Dimensions.get("window");
 
@@ -91,8 +91,9 @@ export default function ListingDetailScreen() {
             }
             renderItem={({ item }) => (
               <Image
-                source={{ uri: `${API_URL}${item.image_url}` }}
+                source={{ uri: resolveImageUrl(item.image_url) ?? "" }}
                 style={styles.image}
+                resizeMode="cover"
               />
             )}
           />
@@ -159,7 +160,7 @@ export default function ListingDetailScreen() {
           <View style={styles.ownerInfo}>
             {listing.owner.avatar_url ? (
               <Image
-                source={{ uri: `${API_URL}${listing.owner.avatar_url}` }}
+                source={{ uri: resolveImageUrl(listing.owner.avatar_url) ?? "" }}
                 style={styles.ownerAvatar}
               />
             ) : (

@@ -1,5 +1,4 @@
-import { Tabs, router } from "expo-router";
-import { useEffect } from "react";
+import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuthStore } from "@/store/auth.store";
 import { COLORS } from "@/constants";
@@ -34,14 +33,6 @@ export default function TabsLayout() {
   const { isAuthenticated } = useAuthStore();
   const { data: unreadCount = 0 } = useUnreadCount(isAuthenticated);
 
-  useEffect(() => {
-    if (!isAuthenticated) {
-      router.replace("/auth/login");
-    }
-  }, [isAuthenticated]);
-
-  if (!isAuthenticated) return null;
-
   return (
     <Tabs
       screenOptions={{
@@ -51,6 +42,14 @@ export default function TabsLayout() {
           borderTopWidth: 1,
           borderTopColor: COLORS.border,
           paddingBottom: 4,
+          height: 56,
+        },
+        tabBarLabelStyle: {
+          fontSize: 10,
+          marginBottom: 2,
+        },
+        tabBarIconStyle: {
+          marginTop: 4,
         },
         headerShown: false,
       }}

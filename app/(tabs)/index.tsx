@@ -8,6 +8,7 @@ import {
   StyleSheet,
   SafeAreaView,
   ScrollView,
+  Platform,
 } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -52,15 +53,13 @@ export default function HomeScreen() {
   };
 
   const toggleFavorite = (listingId: string) => {
-    if (favoriteIds.has(listingId)) {
-      removeFav(listingId);
-    } else {
-      addFav(listingId);
-    }
+    if (favoriteIds.has(listingId)) removeFav(listingId);
+    else addFav(listingId);
   };
 
   return (
     <SafeAreaView style={styles.safe}>
+      {/* Header */}
       <View style={styles.header}>
         <Text style={styles.title}>Diplom Rental</Text>
         {user?.role === "ADMIN" && (
@@ -70,6 +69,7 @@ export default function HomeScreen() {
         )}
       </View>
 
+      {/* Search */}
       <View style={styles.searchRow}>
         <View style={styles.searchWrap}>
           <Ionicons name="search-outline" size={18} color={COLORS.muted} style={styles.searchIcon} />
@@ -93,35 +93,38 @@ export default function HomeScreen() {
         </TouchableOpacity>
       </View>
 
+      {/* Categories */}
       {categories && categories.length > 0 && (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.categories}
-          contentContainerStyle={styles.categoriesContent}
-        >
-          <TouchableOpacity
-            style={[styles.catChip, !selectedCategory && styles.catChipActive]}
-            onPress={() => handleCategoryPress(null)}
+        <View style={styles.categoriesWrap}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.categoriesContent}
           >
-            <Text style={[styles.catText, !selectedCategory && styles.catTextActive]}>
-              Все
-            </Text>
-          </TouchableOpacity>
-          {categories.map((cat) => (
             <TouchableOpacity
-              key={cat.id}
-              style={[styles.catChip, selectedCategory === cat.id && styles.catChipActive]}
-              onPress={() => handleCategoryPress(cat.id)}
+              style={[styles.catChip, !selectedCategory && styles.catChipActive]}
+              onPress={() => handleCategoryPress(null)}
             >
-              <Text style={[styles.catText, selectedCategory === cat.id && styles.catTextActive]}>
-                {cat.name}
+              <Text style={[styles.catText, !selectedCategory && styles.catTextActive]}>
+                Все
               </Text>
             </TouchableOpacity>
-          ))}
-        </ScrollView>
+            {categories.map((cat) => (
+              <TouchableOpacity
+                key={cat.id}
+                style={[styles.catChip, selectedCategory === cat.id && styles.catChipActive]}
+                onPress={() => handleCategoryPress(cat.id)}
+              >
+                <Text style={[styles.catText, selectedCategory === cat.id && styles.catTextActive]}>
+                  {cat.name}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
       )}
 
+      {/* Listings */}
       {isLoading ? (
         <LoadingSpinner />
       ) : (
@@ -146,9 +149,7 @@ export default function HomeScreen() {
             data && data.meta.page < data.meta.total_pages ? (
               <TouchableOpacity
                 style={styles.loadMore}
-                onPress={() =>
-                  setFilters((p) => ({ ...p, page: (p.page ?? 1) + 1 }))
-                }
+                onPress={() => setFilters((p) => ({ ...p, page: (p.page ?? 1) + 1 }))}
               >
                 <Text style={styles.loadMoreText}>Загрузить ещё</Text>
               </TouchableOpacity>
@@ -157,6 +158,7 @@ export default function HomeScreen() {
         />
       )}
 
+      {/* FAB */}
       <TouchableOpacity
         style={styles.fab}
         onPress={() => router.push("/listings/create")}
@@ -179,11 +181,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
   },
-  title: {
-    fontSize: 20,
-    fontWeight: "800",
-    color: COLORS.primary,
-  },
+  title: { fontSize: 20, fontWeight: "800", color: COLORS.primary },
   searchRow: {
     flexDirection: "row",
     gap: 8,
@@ -202,32 +200,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   searchIcon: { marginRight: 6 },
-  searchInput: {
-    flex: 1,
-    fontSize: 14,
-    color: COLORS.text,
-    paddingVertical: 10,
-  },
+  searchInput: { flex: 1, fontSize: 14, color: COLORS.text, paddingVertical: 10 },
   searchBtn: {
     backgroundColor: COLORS.primary,
     borderRadius: 10,
     paddingHorizontal: 14,
     justifyContent: "center",
   },
-  searchBtnText: {
-    color: COLORS.white,
-    fontWeight: "600",
-    fontSize: 14,
-  },
-  categories: {
+  searchBtnText: { color: COLORS.white, fontWeight: "600", fontSize: 14 },
+  categoriesWrap: {
     backgroundColor: COLORS.white,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
   },
   categoriesContent: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    flexDirection: "row",
+    alignItems: "center",
   },
   catChip: {
     paddingHorizontal: 14,
@@ -237,31 +227,14 @@ const styles = StyleSheet.create({
     borderColor: COLORS.border,
     backgroundColor: COLORS.white,
     marginRight: 8,
+    alignSelf: "flex-start",
   },
-  catChipActive: {
-    backgroundColor: COLORS.primary,
-    borderColor: COLORS.primary,
-  },
-  catText: {
-    fontSize: 13,
-    color: COLORS.muted,
-  },
-  catTextActive: {
-    color: COLORS.white,
-    fontWeight: "600",
-  },
-  list: {
-    padding: 16,
-  },
-  empty: {
-    alignItems: "center",
-    paddingTop: 60,
-    gap: 12,
-  },
-  emptyText: {
-    fontSize: 15,
-    color: COLORS.muted,
-  },
+  catChipActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
+  catText: { fontSize: 13, color: COLORS.muted },
+  catTextActive: { color: COLORS.white, fontWeight: "600" },
+  list: { padding: 16, paddingBottom: 100 },
+  empty: { alignItems: "center", paddingTop: 60, gap: 12 },
+  emptyText: { fontSize: 15, color: COLORS.muted },
   loadMore: {
     alignItems: "center",
     padding: 16,
@@ -270,13 +243,10 @@ const styles = StyleSheet.create({
     borderColor: COLORS.border,
     marginTop: 8,
   },
-  loadMoreText: {
-    color: COLORS.primary,
-    fontWeight: "600",
-  },
+  loadMoreText: { color: COLORS.primary, fontWeight: "600" },
   fab: {
     position: "absolute",
-    bottom: 90,
+    bottom: Platform.OS === "web" ? 80 : 100,
     right: 20,
     backgroundColor: COLORS.primary,
     width: 54,
