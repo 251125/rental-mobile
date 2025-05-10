@@ -87,6 +87,10 @@ export default function RootLayout() {
               options={{ headerShown: true, title: "Мои объявления" }}
             />
             <Stack.Screen
+              name="profile/edit"
+              options={{ headerShown: true, title: "Редактировать профиль" }}
+            />
+            <Stack.Screen
               name="chats/[id]"
               options={{ headerShown: true, title: "Чат" }}
             />

@@ -41,15 +41,16 @@ export default function TabsLayout() {
         tabBarStyle: {
           borderTopWidth: 1,
           borderTopColor: COLORS.border,
-          paddingBottom: 4,
-          height: 56,
+          paddingBottom: 8,
+          paddingTop: 4,
+          height: 64,
         },
         tabBarLabelStyle: {
           fontSize: 10,
-          marginBottom: 2,
+          marginBottom: 0,
         },
         tabBarIconStyle: {
-          marginTop: 4,
+          marginTop: 2,
         },
         headerShown: false,
       }}

@@ -9,6 +9,7 @@ import {
   SafeAreaView,
   ScrollView,
   Platform,
+  Modal,
 } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -25,6 +26,16 @@ export default function HomeScreen() {
   const [filters, setFilters] = useState<ListingFilters>({ page: 1, limit: 20 });
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+
+  const [showFilters, setShowFilters] = useState(false);
+  const [cityInput, setCityInput] = useState("");
+  const [priceMin, setPriceMin] = useState("");
+  const [priceMax, setPriceMax] = useState("");
+
+  const activeFilterCount =
+    (filters.city ? 1 : 0) +
+    (filters.price_min ? 1 : 0) +
+    (filters.price_max ? 1 : 0);
 
   const { data, isLoading } = useListings(filters);
   const { data: categories } = useCategories();
@@ -52,6 +63,31 @@ export default function HomeScreen() {
     }));
   };
 
+  const applyFilters = () => {
+    setFilters((prev) => ({
+      ...prev,
+      city: cityInput.trim() || undefined,
+      price_min: priceMin ? Number(priceMin) : undefined,
+      price_max: priceMax ? Number(priceMax) : undefined,
+      page: 1,
+    }));
+    setShowFilters(false);
+  };
+
+  const resetFilters = () => {
+    setCityInput("");
+    setPriceMin("");
+    setPriceMax("");
+    setFilters((prev) => ({
+      ...prev,
+      city: undefined,
+      price_min: undefined,
+      price_max: undefined,
+      page: 1,
+    }));
+    setShowFilters(false);
+  };
+
   const toggleFavorite = (listingId: string) => {
     if (favoriteIds.has(listingId)) removeFav(listingId);
     else addFav(listingId);
@@ -61,7 +97,7 @@ export default function HomeScreen() {
     <SafeAreaView style={styles.safe}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>Diplom Rental</Text>
+        <Text style={styles.title}>Rental</Text>
         {user?.role === "ADMIN" && (
           <TouchableOpacity onPress={() => router.push("/admin")}>
             <Ionicons name="shield-outline" size={24} color={COLORS.primary} />
@@ -90,6 +126,21 @@ export default function HomeScreen() {
         </View>
         <TouchableOpacity style={styles.searchBtn} onPress={handleSearch}>
           <Text style={styles.searchBtnText}>Найти</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.filterBtn, activeFilterCount > 0 && styles.filterBtnActive]}
+          onPress={() => setShowFilters(true)}
+        >
+          <Ionicons
+            name="options-outline"
+            size={20}
+            color={activeFilterCount > 0 ? COLORS.white : COLORS.primary}
+          />
+          {activeFilterCount > 0 && (
+            <View style={styles.filterBadge}>
+              <Text style={styles.filterBadgeText}>{activeFilterCount}</Text>
+            </View>
+          )}
         </TouchableOpacity>
       </View>
 
@@ -165,6 +216,67 @@ export default function HomeScreen() {
       >
         <Ionicons name="add" size={28} color={COLORS.white} />
       </TouchableOpacity>
+
+      {/* Filter Modal */}
+      <Modal
+        visible={showFilters}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setShowFilters(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowFilters(false)}
+        />
+        <View style={styles.filterSheet}>
+          <View style={styles.filterHeader}>
+            <Text style={styles.filterTitle}>Фильтры</Text>
+            <TouchableOpacity onPress={() => setShowFilters(false)}>
+              <Ionicons name="close" size={24} color={COLORS.text} />
+            </TouchableOpacity>
+          </View>
+
+          <Text style={styles.filterLabel}>Город</Text>
+          <TextInput
+            style={styles.filterInput}
+            value={cityInput}
+            onChangeText={setCityInput}
+            placeholder="Например: Алматы"
+            placeholderTextColor={COLORS.muted}
+          />
+
+          <Text style={styles.filterLabel}>Цена (₸/день)</Text>
+          <View style={styles.priceRow}>
+            <TextInput
+              style={[styles.filterInput, styles.priceInput]}
+              value={priceMin}
+              onChangeText={setPriceMin}
+              placeholder="От"
+              placeholderTextColor={COLORS.muted}
+              keyboardType="numeric"
+            />
+            <Text style={styles.priceDash}>—</Text>
+            <TextInput
+              style={[styles.filterInput, styles.priceInput]}
+              value={priceMax}
+              onChangeText={setPriceMax}
+              placeholder="До"
+              placeholderTextColor={COLORS.muted}
+              keyboardType="numeric"
+            />
+          </View>
+
+          <View style={styles.filterActions}>
+            <TouchableOpacity style={styles.resetBtn} onPress={resetFilters}>
+              <Text style={styles.resetBtnText}>Сбросить</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.applyBtn} onPress={applyFilters}>
+              <Text style={styles.applyBtnText}>Применить</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -188,6 +300,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     backgroundColor: COLORS.white,
+    alignItems: "center",
   },
   searchWrap: {
     flex: 1,
@@ -205,9 +318,36 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primary,
     borderRadius: 10,
     paddingHorizontal: 14,
+    paddingVertical: 10,
     justifyContent: "center",
   },
   searchBtnText: { color: COLORS.white, fontWeight: "600", fontSize: 14 },
+  filterBtn: {
+    width: 42,
+    height: 42,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+    justifyContent: "center",
+    alignItems: "center",
+    position: "relative",
+  },
+  filterBtnActive: {
+    backgroundColor: COLORS.primary,
+  },
+  filterBadge: {
+    position: "absolute",
+    top: -5,
+    right: -5,
+    backgroundColor: COLORS.danger,
+    borderRadius: 8,
+    minWidth: 16,
+    height: 16,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 3,
+  },
+  filterBadgeText: { color: COLORS.white, fontSize: 9, fontWeight: "700" },
   categoriesWrap: {
     backgroundColor: COLORS.white,
     borderBottomWidth: 1,
@@ -232,7 +372,7 @@ const styles = StyleSheet.create({
   catChipActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
   catText: { fontSize: 13, color: COLORS.muted },
   catTextActive: { color: COLORS.white, fontWeight: "600" },
-  list: { padding: 16, paddingBottom: 100 },
+  list: { padding: 16, paddingBottom: 120 },
   empty: { alignItems: "center", paddingTop: 60, gap: 12 },
   emptyText: { fontSize: 15, color: COLORS.muted },
   loadMore: {
@@ -246,7 +386,7 @@ const styles = StyleSheet.create({
   loadMoreText: { color: COLORS.primary, fontWeight: "600" },
   fab: {
     position: "absolute",
-    bottom: Platform.OS === "web" ? 80 : 100,
+    bottom: Platform.OS === "web" ? 80 : 90,
     right: 20,
     backgroundColor: COLORS.primary,
     width: 54,
@@ -260,4 +400,69 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 5,
   },
+  // Filter modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.4)",
+  },
+  filterSheet: {
+    backgroundColor: COLORS.white,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    paddingBottom: 36,
+  },
+  filterHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  filterTitle: { fontSize: 18, fontWeight: "700", color: COLORS.text },
+  filterLabel: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: COLORS.text,
+    marginBottom: 6,
+    marginTop: 14,
+  },
+  filterInput: {
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 11,
+    fontSize: 15,
+    color: COLORS.text,
+    backgroundColor: COLORS.background,
+  },
+  priceRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  priceInput: { flex: 1 },
+  priceDash: { fontSize: 16, color: COLORS.muted },
+  filterActions: {
+    flexDirection: "row",
+    gap: 12,
+    marginTop: 24,
+  },
+  resetBtn: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 10,
+    padding: 14,
+    alignItems: "center",
+  },
+  resetBtnText: { fontWeight: "600", color: COLORS.text, fontSize: 15 },
+  applyBtn: {
+    flex: 1,
+    backgroundColor: COLORS.primary,
+    borderRadius: 10,
+    padding: 14,
+    alignItems: "center",
+  },
+  applyBtnText: { fontWeight: "700", color: COLORS.white, fontSize: 15 },
 });

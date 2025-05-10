@@ -20,13 +20,13 @@ export default function ProfileScreen() {
 
   const avatarUri = user?.avatar_url ? resolveImageUrl(user.avatar_url) ?? "" : null;
 
-  type IoniconsName = "person-outline" | "list-outline" | "car-outline" | "mail-outline" | "shield-outline";
+  type IoniconsName = "person-outline" | "list-outline" | "time-outline" | "mail-outline" | "shield-outline";
 
   const menuItems: { icon: IoniconsName; label: string; onPress: () => void }[] = [
     {
       icon: "person-outline",
       label: "Редактировать профиль",
-      onPress: () => router.push("/(tabs)/profile/edit" as any),
+      onPress: () => router.push("/profile/edit" as any),
     },
     {
       icon: "list-outline",
@@ -34,7 +34,7 @@ export default function ProfileScreen() {
       onPress: () => router.push("/profile/my-listings" as any),
     },
     {
-      icon: "car-outline",
+      icon: "time-outline",
       label: "Мои аренды",
       onPress: () => router.push("/rentals/my" as any),
     },
