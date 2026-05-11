@@ -32,11 +32,7 @@ export function useLogin() {
     onSuccess: (data) => {
       void setAuth(data.user, data.access_token).then(() => {
         Toast.show({ type: "success", text1: "Вы успешно вошли" });
-        if (data.user.role === "ADMIN") {
-          router.replace("/admin");
-        } else {
-          router.replace("/");
-        }
+        router.replace("/");
       });
     },
 
