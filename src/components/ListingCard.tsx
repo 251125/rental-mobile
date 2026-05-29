@@ -4,6 +4,8 @@ import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Listing } from "@/types";
 import { COLORS, resolveImageUrl } from "@/constants";
+import { useCompareStore } from "@/store/compare.store";
+import Toast from "react-native-toast-message";
 
 interface Props {
   listing: Listing;
@@ -13,6 +15,25 @@ interface Props {
 
 export default function ListingCard({ listing, onFavoriteToggle, isFavorite }: Props) {
   const imageUrl = resolveImageUrl(listing.images[0]?.image_url);
+  const { add, remove, has, validate, items } = useCompareStore();
+  const inCompare = has(listing.id);
+
+  const toggleCompare = () => {
+    if (inCompare) {
+      remove(listing.id);
+      return;
+    }
+    const err = validate(listing);
+    if (err) {
+      Toast.show({ type: "error", text1: err });
+      return;
+    }
+    add(listing);
+    Toast.show({ type: "success", text1: "Добавлено к сравнению" });
+    if (items.length + 1 >= 2) {
+      router.push("/compare");
+    }
+  };
 
   return (
     <TouchableOpacity
@@ -28,15 +49,27 @@ export default function ListingCard({ listing, onFavoriteToggle, isFavorite }: P
             <Ionicons name="image-outline" size={40} color={COLORS.border} />
           </View>
         )}
-        {onFavoriteToggle && (
-          <TouchableOpacity style={styles.favBtn} onPress={onFavoriteToggle}>
+        <View style={styles.imgOverlay}>
+          {onFavoriteToggle && (
+            <TouchableOpacity style={styles.overlayBtn} onPress={onFavoriteToggle}>
+              <Ionicons
+                name={isFavorite ? "heart" : "heart-outline"}
+                size={20}
+                color={isFavorite ? COLORS.danger : COLORS.white}
+              />
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity
+            style={[styles.overlayBtn, inCompare && styles.overlayBtnActive]}
+            onPress={toggleCompare}
+          >
             <Ionicons
-              name={isFavorite ? "heart" : "heart-outline"}
-              size={22}
-              color={isFavorite ? COLORS.danger : COLORS.white}
+              name="git-compare-outline"
+              size={18}
+              color={inCompare ? COLORS.primary : COLORS.white}
             />
           </TouchableOpacity>
-        )}
+        </View>
       </View>
       <View style={styles.info}>
         <Text style={styles.title} numberOfLines={2}>
@@ -46,8 +79,16 @@ export default function ListingCard({ listing, onFavoriteToggle, isFavorite }: P
           📍 {listing.city}
         </Text>
         <View style={styles.footer}>
-          <Text style={styles.price}>{listing.price} ₸/день</Text>
-          <Text style={styles.category}>{listing.category.name}</Text>
+          <Text style={styles.price}>{Number(listing.price).toLocaleString()} ₸/день</Text>
+          <View style={styles.rightMeta}>
+            <View style={styles.ratingRow}>
+              <Ionicons name="star" size={11} color="#f59e0b" />
+              <Text style={styles.ratingText}>
+                {listing.rating_avg ? parseFloat(String(listing.rating_avg)).toFixed(1) : "—"}
+              </Text>
+            </View>
+            <Text style={styles.category}>{listing.category.name}</Text>
+          </View>
         </View>
       </View>
     </TouchableOpacity>
@@ -73,13 +114,20 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  favBtn: {
+  imgOverlay: {
     position: "absolute",
     top: 8,
     right: 8,
+    flexDirection: "column",
+    gap: 6,
+  },
+  overlayBtn: {
     backgroundColor: "rgba(0,0,0,0.35)",
     borderRadius: 20,
     padding: 6,
+  },
+  overlayBtnActive: {
+    backgroundColor: "rgba(255,255,255,0.9)",
   },
   info: { padding: 12 },
   title: {
@@ -95,6 +143,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   price: { fontSize: 15, fontWeight: "700", color: COLORS.primary },
+  rightMeta: { flexDirection: "row", alignItems: "center", gap: 6 },
+  ratingRow: { flexDirection: "row", alignItems: "center", gap: 2 },
+  ratingText: { fontSize: 11, color: COLORS.muted, fontWeight: "600" },
   category: {
     fontSize: 11,
     color: COLORS.muted,

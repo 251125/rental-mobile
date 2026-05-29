@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -7,17 +7,19 @@ import {
   StyleSheet,
   ScrollView,
   Image,
-  Alert,
 } from "react-native";
-import { router } from "expo-router";
+import { router, useNavigation } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
-import { useCreateListing } from "@/hooks/use-listings";
+import { useCreateListing, useUploadImage } from "@/hooks/use-listings";
 import { useCategories } from "@/hooks/use-listings";
 import { COLORS } from "@/constants";
 import Toast from "react-native-toast-message";
+import CityPicker from "@/components/CityPicker";
+import CategoryPicker from "@/components/CategoryPicker";
 
 export default function CreateListingScreen() {
+  const navigation = useNavigation();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
@@ -26,8 +28,24 @@ export default function CreateListingScreen() {
   const [categoryId, setCategoryId] = useState("");
   const [images, setImages] = useState<string[]>([]);
 
+  useEffect(() => {
+    navigation.setOptions({
+      headerLeft: () => (
+        <TouchableOpacity
+          onPress={() => navigation.canGoBack() ? navigation.goBack() : router.replace("/(tabs)")}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          style={{ marginLeft: 4 }}
+        >
+          <Ionicons name="arrow-back" size={24} color={COLORS.text} />
+        </TouchableOpacity>
+      ),
+    });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   const { data: categories } = useCategories();
   const { mutate: create, isPending } = useCreateListing();
+  const { mutateAsync: uploadImage } = useUploadImage();
+  const [isUploading, setIsUploading] = useState(false);
 
   const pickImages = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -43,38 +61,52 @@ export default function CreateListingScreen() {
     }
   };
 
+  const takePhoto = async () => {
+    const perm = await ImagePicker.requestCameraPermissionsAsync();
+    if (perm.status !== "granted") {
+      Toast.show({ type: "error", text1: "Нет доступа к камере" });
+      return;
+    }
+    const result = await ImagePicker.launchCameraAsync({ quality: 0.8 });
+    if (!result.canceled && result.assets[0]) {
+      setImages((prev) => [...prev, result.assets[0].uri].slice(0, 5));
+    }
+  };
+
   const removeImage = (uri: string) =>
     setImages((prev) => prev.filter((i) => i !== uri));
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     if (!title || !price || !city || !categoryId) {
       Toast.show({ type: "error", text1: "Заполните все обязательные поля" });
       return;
     }
 
-    const formData = new FormData();
-    formData.append("title", title);
-    formData.append("description", description);
-    formData.append("price", price);
-    formData.append("deposit", deposit || "0");
-    formData.append("city", city);
-    formData.append("category_id", categoryId);
+    let image_urls: string[] = [];
+    if (images.length > 0) {
+      setIsUploading(true);
+      try {
+        image_urls = await Promise.all(images.map((uri) => uploadImage(uri)));
+      } catch {
+        Toast.show({ type: "error", text1: "Ошибка загрузки фото" });
+        setIsUploading(false);
+        return;
+      }
+      setIsUploading(false);
+    }
 
-    images.forEach((uri, i) => {
-      const filename = uri.split("/").pop() ?? `photo_${i}.jpg`;
-      const type = "image/jpeg";
-      formData.append("images", { uri, name: filename, type } as unknown as Blob);
-    });
-
-    create(formData, {
-      onSuccess: () => {
-        Toast.show({ type: "success", text1: "Объявление создано!" });
-        router.back();
+    create(
+      { title, description, price, deposit: deposit || "0", city, category_id: categoryId, image_urls },
+      {
+        onSuccess: () => {
+          Toast.show({ type: "success", text1: "Объявление создано!" });
+          router.replace("/" as never);
+        },
+        onError: (err) => {
+          Toast.show({ type: "error", text1: err.message ?? "Ошибка" });
+        },
       },
-      onError: (err) => {
-        Toast.show({ type: "error", text1: err.message ?? "Ошибка" });
-      },
-    });
+    );
   };
 
   return (
@@ -122,30 +154,14 @@ export default function CreateListingScreen() {
         />
 
         <Text style={styles.label}>Город *</Text>
-        <TextInput
-          style={styles.input}
-          value={city}
-          onChangeText={setCity}
-          placeholder="Алматы"
-          placeholderTextColor={COLORS.muted}
-        />
+        <CityPicker value={city} onChange={setCity} />
 
         <Text style={styles.label}>Категория *</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.cats}>
-          {categories?.map((cat) => (
-            <TouchableOpacity
-              key={cat.id}
-              style={[styles.catChip, categoryId === cat.id && styles.catChipActive]}
-              onPress={() => setCategoryId(cat.id)}
-            >
-              <Text
-                style={[styles.catText, categoryId === cat.id && styles.catTextActive]}
-              >
-                {cat.name}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+        <CategoryPicker
+          categories={categories ?? []}
+          value={categoryId}
+          onChange={setCategoryId}
+        />
 
         <Text style={styles.label}>Фотографии (до 5)</Text>
         <View style={styles.imagesGrid}>
@@ -160,20 +176,27 @@ export default function CreateListingScreen() {
               </TouchableOpacity>
             </View>
           ))}
-          {images.length < 5 && (
-            <TouchableOpacity style={styles.addImg} onPress={pickImages}>
-              <Ionicons name="add" size={30} color={COLORS.muted} />
-            </TouchableOpacity>
-          )}
         </View>
+        {images.length < 5 && (
+          <View style={styles.photoBtnsRow}>
+            <TouchableOpacity style={styles.photoBtn} onPress={pickImages}>
+              <Ionicons name="images-outline" size={18} color={COLORS.primary} />
+              <Text style={styles.photoBtnText}>Добавить фото</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.photoBtn} onPress={takePhoto}>
+              <Ionicons name="camera-outline" size={18} color={COLORS.primary} />
+              <Text style={styles.photoBtnText}>Сфотографировать</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         <TouchableOpacity
-          style={[styles.submitBtn, isPending && { opacity: 0.6 }]}
+          style={[styles.submitBtn, (isPending || isUploading) && { opacity: 0.6 }]}
           onPress={handleCreate}
-          disabled={isPending}
+          disabled={isPending || isUploading}
         >
           <Text style={styles.submitText}>
-            {isPending ? "Создаём..." : "Создать объявление"}
+            {isUploading ? "Загружаем фото..." : isPending ? "Создаём..." : "Создать объявление"}
           </Text>
         </TouchableOpacity>
       </View>
@@ -197,24 +220,11 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 12,
-    fontSize: 15,
+    fontSize: 16,
     color: COLORS.text,
     backgroundColor: COLORS.white,
   },
   textarea: { height: 100, paddingTop: 12 },
-  cats: { marginBottom: 4 },
-  catChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.white,
-    marginRight: 8,
-  },
-  catChipActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
-  catText: { fontSize: 13, color: COLORS.muted },
-  catTextActive: { color: COLORS.white, fontWeight: "600" },
   imagesGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -230,16 +240,28 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
     borderRadius: 12,
   },
-  addImg: {
-    width: 88,
-    height: 88,
+  photoBtnsRow: {
+    flexDirection: "row",
+    gap: 8,
+    marginTop: 8,
+  },
+  photoBtn: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
     borderRadius: 8,
     borderWidth: 1.5,
-    borderColor: COLORS.border,
-    borderStyle: "dashed",
-    justifyContent: "center",
-    alignItems: "center",
+    borderColor: COLORS.primary,
     backgroundColor: COLORS.white,
+  },
+  photoBtnText: {
+    fontSize: 13,
+    color: COLORS.primary,
+    fontWeight: "600",
   },
   submitBtn: {
     backgroundColor: COLORS.primary,

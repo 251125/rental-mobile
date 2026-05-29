@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -7,17 +7,33 @@ import {
   StyleSheet,
   SafeAreaView,
   Image,
+  Modal,
 } from "react-native";
-import { router } from "expo-router";
+import QRCode from "react-qr-code";
+import { router, useNavigation } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useIncomingRentals, useUpdateRentalStatus } from "@/hooks/use-rentals";
 import RentalStatusBadge from "@/components/RentalStatusBadge";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { COLORS, resolveImageUrl } from "@/constants";
 
+const MOBILE_BASE = typeof window !== "undefined" ? window.location.origin : "http://localhost:8082";
+
 export default function IncomingRentalsScreen() {
+  const navigation = useNavigation();
+  useEffect(() => {
+    navigation.setOptions({
+      headerLeft: () => (
+        <TouchableOpacity onPress={() => router.back()} style={{ marginLeft: 4, padding: 4 }}>
+          <Ionicons name="chevron-back" size={24} color={COLORS.text} />
+        </TouchableOpacity>
+      ),
+    });
+  }, [navigation]);
+
   const { data: rentals, isLoading } = useIncomingRentals();
   const { mutate: updateStatus, isPending } = useUpdateRentalStatus();
+  const [qrToken, setQrToken] = useState<string | null>(null);
 
   if (isLoading) return <LoadingSpinner />;
 
@@ -104,13 +120,30 @@ export default function IncomingRentalsScreen() {
               )}
 
               {item.status === "APPROVED" && (
-                <TouchableOpacity
-                  style={styles.completeBtn}
-                  onPress={() => updateStatus({ id: item.id, status: "COMPLETED" })}
-                  disabled={isPending}
-                >
-                  <Text style={styles.completeBtnText}>Завершить</Text>
-                </TouchableOpacity>
+                <View style={styles.approvedActions}>
+                  {item.payment_status === "UNPAID" && item.qr_token && (
+                    <TouchableOpacity
+                      style={styles.qrBtn}
+                      onPress={() => setQrToken(item.qr_token!)}
+                    >
+                      <Ionicons name="qr-code-outline" size={16} color={COLORS.primary} />
+                      <Text style={styles.qrBtnText}>QR для оплаты</Text>
+                    </TouchableOpacity>
+                  )}
+                  <TouchableOpacity
+                    style={[
+                      styles.completeBtn,
+                      (isPending || item.payment_status !== "PAID" || !item.return_images?.length) && styles.completeBtnDisabled,
+                    ]}
+                    onPress={() => updateStatus({ id: item.id, status: "COMPLETED" })}
+                    disabled={isPending || item.payment_status !== "PAID" || !item.return_images?.length}
+                  >
+                    <Text style={styles.completeBtnText}>Завершить</Text>
+                  </TouchableOpacity>
+                  {item.payment_status === "PAID" && !item.return_images?.length && (
+                    <Text style={styles.returnPhotoHint}>Ожидается фото возврата</Text>
+                  )}
+                </View>
               )}
             </View>
           );
@@ -123,6 +156,23 @@ export default function IncomingRentalsScreen() {
           </View>
         }
       />
+
+      <Modal visible={!!qrToken} transparent animationType="fade" onRequestClose={() => setQrToken(null)}>
+        <View style={styles.qrOverlay}>
+          <View style={styles.qrSheet}>
+            <Text style={styles.qrTitle}>QR-код для оплаты</Text>
+            <Text style={styles.qrSub}>Покажите арендатору для оплаты</Text>
+            {qrToken && (
+              <View style={styles.qrBox}>
+                <QRCode value={`${MOBILE_BASE}/rentals/scan/${qrToken}`} size={220} />
+              </View>
+            )}
+            <TouchableOpacity style={styles.qrCloseBtn} onPress={() => setQrToken(null)}>
+              <Text style={styles.qrCloseBtnText}>Закрыть</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -193,13 +243,59 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   rejectBtnText: { color: COLORS.danger, fontWeight: "600", fontSize: 14 },
+  approvedActions: { gap: 8 },
+  qrBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  qrBtnText: { color: COLORS.primary, fontWeight: "600", fontSize: 14 },
   completeBtn: {
     backgroundColor: COLORS.primary,
     paddingVertical: 10,
     borderRadius: 8,
     alignItems: "center",
   },
+  completeBtnDisabled: { backgroundColor: COLORS.muted, opacity: 0.5 },
   completeBtnText: { color: COLORS.white, fontWeight: "600", fontSize: 14 },
+  returnPhotoHint: { fontSize: 11, color: COLORS.muted, textAlign: "center" },
   empty: { alignItems: "center", paddingTop: 60, gap: 12 },
   emptyText: { fontSize: 15, color: COLORS.muted },
+  qrOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.55)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 24,
+  },
+  qrSheet: {
+    backgroundColor: COLORS.white,
+    borderRadius: 20,
+    padding: 24,
+    alignItems: "center",
+    width: "100%",
+    maxWidth: 340,
+  },
+  qrTitle: { fontSize: 18, fontWeight: "700", color: COLORS.text, marginBottom: 4 },
+  qrSub: { fontSize: 13, color: COLORS.muted, marginBottom: 20, textAlign: "center" },
+  qrBox: {
+    padding: 12,
+    backgroundColor: COLORS.white,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    marginBottom: 20,
+  },
+  qrCloseBtn: {
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: 32,
+    paddingVertical: 12,
+    borderRadius: 10,
+  },
+  qrCloseBtnText: { color: COLORS.white, fontWeight: "700", fontSize: 15 },
 });

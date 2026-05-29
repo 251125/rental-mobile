@@ -9,6 +9,8 @@ import { useAuthStore } from "@/store/auth.store";
 import { getToken } from "@/services/api";
 import api from "@/services/api";
 import { COLORS } from "@/constants";
+import { CallProvider } from "@/providers/CallProvider";
+import CallOverlay from "@/components/CallOverlay";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -54,6 +56,7 @@ export default function RootLayout() {
       <QueryClientProvider client={queryClient}>
         <StatusBar style="dark" />
         <AuthInitializer>
+          <CallProvider>
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="index" />
             <Stack.Screen name="(tabs)" />
@@ -79,6 +82,10 @@ export default function RootLayout() {
               options={{ headerShown: true, title: "Входящие заявки" }}
             />
             <Stack.Screen
+              name="rentals/scan/[token]"
+              options={{ headerShown: true, title: "Оплата аренды" }}
+            />
+            <Stack.Screen
               name="profile/[id]"
               options={{ headerShown: true, title: "Профиль" }}
             />
@@ -98,9 +105,19 @@ export default function RootLayout() {
               name="admin/index"
               options={{ headerShown: true, title: "Администрирование" }}
             />
+            <Stack.Screen
+              name="profile/change-password"
+              options={{ headerShown: true, title: "Смена пароля" }}
+            />
+            <Stack.Screen
+              name="compare"
+              options={{ headerShown: true, title: "Сравнение" }}
+            />
           </Stack>
+          <CallOverlay />
+          </CallProvider>
         </AuthInitializer>
-        <Toast />
+        <Toast visibilityTime={3000} topOffset={60} />
       </QueryClientProvider>
     </GestureHandlerRootView>
   );

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -9,27 +9,93 @@ import {
   Image,
   Modal,
   TextInput,
+  Alert,
 } from "react-native";
-import { router } from "expo-router";
+import { router, useNavigation } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
 import { useMyRentals, useCancelRental } from "@/hooks/use-rentals";
-import { usePayRental } from "@/hooks/use-wallet";
 import { useCreateReview } from "@/hooks/use-reviews";
+import { useUploadImage } from "@/hooks/use-listings";
 import RentalStatusBadge from "@/components/RentalStatusBadge";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import { COLORS, resolveImageUrl } from "@/constants";
+import { COLORS, resolveImageUrl, API_URL } from "@/constants";
 import { RentalRequest } from "@/types";
+import api from "@/services/api";
+import Toast from "react-native-toast-message";
 
 export default function MyRentalsScreen() {
+  const navigation = useNavigation();
+  useEffect(() => {
+    navigation.setOptions({
+      headerLeft: () => (
+        <TouchableOpacity onPress={() => router.back()} style={{ marginLeft: 4, padding: 4 }}>
+          <Ionicons name="chevron-back" size={24} color={COLORS.text} />
+        </TouchableOpacity>
+      ),
+    });
+  }, [navigation]);
+
   const { data: rentals, isLoading } = useMyRentals();
   const { mutate: cancelRental } = useCancelRental();
-  const { mutate: payRental } = usePayRental();
   const { mutate: createReview, isPending: isReviewing } = useCreateReview();
+  const { mutateAsync: uploadImage } = useUploadImage();
 
   const [reviewModal, setReviewModal] = useState(false);
   const [selectedRental, setSelectedRental] = useState<RentalRequest | null>(null);
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
+  const [returnImages, setReturnImages] = useState<Record<string, string[]>>({});
+  const [uploadingId, setUploadingId] = useState<string | null>(null);
+
+  const handleReturnPhoto = (rentalId: string) => {
+    Alert.alert("Фото возврата", "Выберите способ", [
+      {
+        text: "Галерея",
+        onPress: () => pickReturnPhoto(rentalId, "gallery"),
+      },
+      {
+        text: "Камера",
+        onPress: () => pickReturnPhoto(rentalId, "camera"),
+      },
+      { text: "Отмена", style: "cancel" },
+    ]);
+  };
+
+  const pickReturnPhoto = async (rentalId: string, source: "gallery" | "camera") => {
+    let result;
+    if (source === "camera") {
+      const perm = await ImagePicker.requestCameraPermissionsAsync();
+      if (perm.status !== "granted") {
+        Toast.show({ type: "error", text1: "Нет доступа к камере" });
+        return;
+      }
+      result = await ImagePicker.launchCameraAsync({ quality: 0.8 });
+    } else {
+      result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        quality: 0.8,
+      });
+    }
+    if (result.canceled || !result.assets[0]) return;
+
+    const uri = result.assets[0].uri;
+    setUploadingId(rentalId);
+    try {
+      const url = await uploadImage(uri);
+      await api.post(`${API_URL}/rental-requests/${rentalId}/return-images`, { images: [url] });
+      setReturnImages((prev) => ({
+        ...prev,
+        [rentalId]: [...(prev[rentalId] ?? []), url],
+      }));
+      Toast.show({ type: "success", text1: "Фото возврата загружено" });
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Ошибка загрузки";
+      Toast.show({ type: "error", text1: msg });
+    } finally {
+      setUploadingId(null);
+    }
+  };
 
   const submitReview = () => {
     if (!selectedRental) return;
@@ -100,12 +166,13 @@ export default function MyRentalsScreen() {
               </View>
 
               <View style={styles.actions}>
-                {item.status === "APPROVED" && item.payment_status === "UNPAID" && (
+                {item.status === "APPROVED" && item.payment_status === "UNPAID" && item.qr_token && (
                   <TouchableOpacity
                     style={styles.payBtn}
-                    onPress={() => payRental(item.id)}
+                    onPress={() => router.push(`/rentals/scan/${item.qr_token}` as never)}
                   >
-                    <Text style={styles.payBtnText}>Оплатить</Text>
+                    <Ionicons name="qr-code-outline" size={14} color={COLORS.white} />
+                    <Text style={styles.payBtnText}>Оплатить по QR</Text>
                   </TouchableOpacity>
                 )}
                 {(item.status === "PENDING" || item.status === "APPROVED") && (
@@ -125,7 +192,30 @@ export default function MyRentalsScreen() {
                     <Text style={styles.reviewBtnText}>Оставить отзыв</Text>
                   </TouchableOpacity>
                 )}
+                {item.status === "APPROVED" && item.payment_status === "PAID" && (
+                  <TouchableOpacity
+                    style={styles.returnPhotoBtn}
+                    onPress={() => handleReturnPhoto(item.id)}
+                    disabled={uploadingId === item.id}
+                  >
+                    <Ionicons name="camera-outline" size={14} color={COLORS.white} />
+                    <Text style={styles.returnPhotoBtnText}>
+                      {uploadingId === item.id ? "Загрузка..." : "Фото возврата"}
+                    </Text>
+                  </TouchableOpacity>
+                )}
               </View>
+              {(returnImages[item.id] ?? []).length > 0 && (
+                <View style={styles.returnThumbsRow}>
+                  {(returnImages[item.id] ?? []).map((url, idx) => (
+                    <Image
+                      key={idx}
+                      source={{ uri: resolveImageUrl(url) ?? url }}
+                      style={styles.returnThumb}
+                    />
+                  ))}
+                </View>
+              )}
             </View>
           );
         }}
@@ -220,6 +310,9 @@ const styles = StyleSheet.create({
   payStatus: { fontSize: 12, fontWeight: "600" },
   actions: { flexDirection: "row", gap: 8, flexWrap: "wrap" },
   payBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
     backgroundColor: COLORS.success,
     paddingHorizontal: 14,
     paddingVertical: 8,
@@ -245,6 +338,23 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   reviewBtnText: { color: COLORS.primary, fontWeight: "600", fontSize: 13 },
+  returnPhotoBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  returnPhotoBtnText: { color: COLORS.white, fontWeight: "600", fontSize: 13 },
+  returnThumbsRow: {
+    flexDirection: "row",
+    gap: 8,
+    marginTop: 10,
+    flexWrap: "wrap",
+  },
+  returnThumb: { width: 64, height: 64, borderRadius: 8 },
   empty: { alignItems: "center", paddingTop: 60, gap: 12 },
   emptyText: { fontSize: 15, color: COLORS.muted },
   modalOverlay: {

@@ -15,6 +15,7 @@ import { useListing, useUpdateListing, useCategories } from "@/hooks/use-listing
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { COLORS, resolveImageUrl } from "@/constants";
 import Toast from "react-native-toast-message";
+import CityPicker from "@/components/CityPicker";
 
 export default function EditListingScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -113,7 +114,7 @@ export default function EditListingScreen() {
         <TextInput style={styles.input} value={deposit} onChangeText={setDeposit} keyboardType="numeric" placeholderTextColor={COLORS.muted} />
 
         <Text style={styles.label}>Город</Text>
-        <TextInput style={styles.input} value={city} onChangeText={setCity} placeholderTextColor={COLORS.muted} />
+        <CityPicker value={city} onChange={setCity} />
 
         <Text style={styles.label}>Категория</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -183,7 +184,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 12,
-    fontSize: 15,
+    fontSize: 16,
     color: COLORS.text,
     backgroundColor: COLORS.white,
   },

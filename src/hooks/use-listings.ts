@@ -25,17 +25,48 @@ export function useListing(id: string) {
   });
 }
 
+export interface CreateListingPayload {
+  title: string;
+  description: string;
+  price: string | number;
+  deposit: string | number;
+  city: string;
+  category_id: string;
+  image_urls: string[];
+}
+
 export function useCreateListing() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: FormData) =>
-      api
-        .post<Listing>("/listings", data, {
-          headers: { "Content-Type": "multipart/form-data" },
-        })
-        .then((r) => r.data),
+    mutationFn: (data: CreateListingPayload) =>
+      api.post<Listing>("/listings", data).then((r) => r.data),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["listings"] });
+    },
+  });
+}
+
+export function useUploadImage() {
+  return useMutation({
+    mutationFn: async (uri: string) => {
+      const filename = uri.split("/").pop()?.split("?")[0] ?? "photo.jpg";
+      const formData = new FormData();
+
+      if (uri.startsWith("blob:") || uri.startsWith("http")) {
+        // Web: fetch the actual Blob from the blob/http URI
+        const res = await fetch(uri);
+        const blob = await res.blob();
+        formData.append("file", blob, filename);
+      } else {
+        // React Native: use the RN-specific object shorthand
+        formData.append("file", { uri, name: filename, type: "image/jpeg" } as unknown as Blob);
+      }
+
+      return api
+        .post<{ url: string }>("/uploads/image", formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        })
+        .then((r) => r.data.url);
     },
   });
 }

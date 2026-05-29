@@ -12,16 +12,24 @@ import {
 } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { useChatMessages } from "@/hooks/use-chats";
+import { useChatMessages, useMyChats } from "@/hooks/use-chats";
 import { useAuthStore } from "@/store/auth.store";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { COLORS } from "@/constants";
 import { Message } from "@/types";
+import { useCall } from "@/providers/CallProvider";
 
 export default function ChatScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { messages, isLoading, sendMessage } = useChatMessages(id);
   const { user } = useAuthStore();
+  const { data: chats } = useMyChats(!!user);
+  const { callState, initiateCall, initiateVideoCall } = useCall();
+
+  const chat = chats?.find((c) => c.id === id);
+  const other = chat && user
+    ? chat.participant1_id === user.id ? chat.participant2 : chat.participant1
+    : null;
   const [text, setText] = useState("");
   const listRef = useRef<FlatList>(null);
 
@@ -41,6 +49,21 @@ export default function ChatScreen() {
   if (isLoading) return <LoadingSpinner />;
 
   const renderMessage = ({ item }: { item: Message }) => {
+    if (item.type === "call") {
+      let data: { outcome: string; duration?: number } = { outcome: "completed" };
+      try { data = JSON.parse(item.content); } catch {}
+      const fmt = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+      const label =
+        data.outcome === "completed" ? `Звонок ${fmt(data.duration ?? 0)}`
+        : data.outcome === "rejected" ? "Звонок отклонён"
+        : "Пропущенный звонок";
+      const icon = data.outcome === "completed" ? "📞" : "📵";
+      return (
+        <View style={styles.callMsgRow}>
+          <Text style={styles.callMsgText}>{icon} {label}</Text>
+        </View>
+      );
+    }
     const isMe = item.sender_id === user?.id;
     return (
       <View style={[styles.msgRow, isMe ? styles.msgRowMe : styles.msgRowOther]}>
@@ -61,6 +84,25 @@ export default function ChatScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
+      {other && (
+        <View style={styles.callBar}>
+          <Text style={styles.callBarName}>{other.name}</Text>
+          <TouchableOpacity
+            style={[styles.callBtn, callState.status !== "idle" && styles.callBtnDisabled]}
+            disabled={callState.status !== "idle"}
+            onPress={() => initiateCall(other.id, other.name, other.avatar_url ?? undefined)}
+          >
+            <Ionicons name="call" size={20} color={callState.status === "idle" ? "#22c55e" : COLORS.muted} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.callBtn, styles.videocallBtn, callState.status !== "idle" && styles.callBtnDisabled]}
+            disabled={callState.status !== "idle"}
+            onPress={() => initiateVideoCall(other.id, other.name, other.avatar_url ?? undefined)}
+          >
+            <Ionicons name="videocam" size={20} color={callState.status === "idle" ? "#2563eb" : COLORS.muted} />
+          </TouchableOpacity>
+        </View>
+      )}
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -151,7 +193,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 10,
-    fontSize: 15,
+    fontSize: 16,
     color: COLORS.text,
     maxHeight: 120,
     backgroundColor: COLORS.background,
@@ -165,6 +207,31 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   sendBtnDisabled: { opacity: 0.4 },
+  callMsgRow: { alignItems: "center", marginVertical: 6 },
+  callMsgText: { fontSize: 12, color: COLORS.muted, backgroundColor: "#f1f5f9", paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12 },
   empty: { flex: 1, justifyContent: "center", alignItems: "center", paddingTop: 60 },
   emptyText: { fontSize: 14, color: COLORS.muted },
+  callBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    backgroundColor: COLORS.white,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  callBarName: { fontSize: 16, fontWeight: "600", color: COLORS.text },
+  callBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: "#f0fdf4",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  videocallBtn: {
+    backgroundColor: "#eff6ff",
+  },
+  callBtnDisabled: { backgroundColor: COLORS.background },
 });

@@ -54,6 +54,8 @@ export interface Listing {
   owner_id: string;
   category_id: string;
   views_count: number;
+  rating_avg?: string | null;
+  reviews_count?: number;
   created_at: string;
   updated_at: string;
   images: ListingImage[];
@@ -101,7 +103,7 @@ export interface ListingFilters {
   price_max?: number;
   page?: number;
   limit?: number;
-  sortBy?: "price" | "created_at" | "rating_avg";
+  sortBy?: "price" | "created_at" | "rating_avg" | "views_count";
   sortOrder?: "asc" | "desc";
 }
 
@@ -114,6 +116,8 @@ export interface RentalRequest {
   total_price: number;
   status: RentalRequestStatus;
   payment_status: PaymentStatus;
+  qr_token?: string | null;
+  return_images: string[];
   created_at: string;
   listing: Listing;
   renter?: Pick<User, "id" | "name" | "avatar_url" | "rating_avg">;
@@ -131,6 +135,7 @@ export interface Message {
   chat_id: string;
   sender_id: string;
   content: string;
+  type: string;
   is_read: boolean;
   created_at: string;
   sender: ChatParticipant;

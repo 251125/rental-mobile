@@ -32,6 +32,17 @@ export default function ChatsScreen() {
     return msgs.length > 0 ? msgs[msgs.length - 1] : null;
   };
 
+  const formatPreview = (msg: { content: string; type?: string }) => {
+    if (msg.type !== "call") return msg.content;
+    try {
+      const d = JSON.parse(msg.content) as { outcome: string; duration?: number };
+      const fmt = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+      if (d.outcome === "completed") return `📞 Звонок ${fmt(d.duration ?? 0)}`;
+      if (d.outcome === "rejected") return "📵 Звонок отклонён";
+      return "📵 Пропущенный звонок";
+    } catch { return msg.content; }
+  };
+
   if (isLoading) return <LoadingSpinner />;
 
   return (
@@ -68,8 +79,8 @@ export default function ChatsScreen() {
                 <Text style={styles.chatName}>{other.name}</Text>
                 {last && (
                   <Text style={styles.lastMsg} numberOfLines={1}>
-                    {last.sender_id === user?.id ? "Вы: " : ""}
-                    {last.content}
+                    {last.sender_id === user?.id && last.type !== "call" ? "Вы: " : ""}
+                    {formatPreview(last)}
                   </Text>
                 )}
               </View>

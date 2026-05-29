@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -17,6 +17,7 @@ import { useAuthStore } from "@/store/auth.store";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { COLORS, resolveImageUrl } from "@/constants";
 import { Review } from "@/types";
+import ReportModal from "@/components/ReportModal";
 
 export default function PublicProfileScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -26,6 +27,7 @@ export default function PublicProfileScreen() {
   const { user: me } = useAuthStore();
 
   const isMe = me?.id === id;
+  const [reportVisible, setReportVisible] = useState(false);
 
   const handleChat = () => {
     openChat(id, {
@@ -69,16 +71,25 @@ export default function PublicProfileScreen() {
           </Text>
 
           {!isMe && (
-            <TouchableOpacity style={styles.chatBtn} onPress={handleChat}>
-              <Ionicons
-                name="chatbubble-outline"
-                size={16}
-                color={COLORS.white}
-              />
-              <Text style={styles.chatBtnText}>Написать сообщение</Text>
-            </TouchableOpacity>
+            <View style={styles.actionBtns}>
+              <TouchableOpacity style={styles.chatBtn} onPress={handleChat}>
+                <Ionicons name="chatbubble-outline" size={16} color={COLORS.white} />
+                <Text style={styles.chatBtnText}>Написать</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.reportBtn} onPress={() => setReportVisible(true)}>
+                <Ionicons name="flag-outline" size={16} color={COLORS.danger} />
+                <Text style={styles.reportBtnText}>Жалоба</Text>
+              </TouchableOpacity>
+            </View>
           )}
         </View>
+
+        <ReportModal
+          visible={reportVisible}
+          onClose={() => setReportVisible(false)}
+          type="USER"
+          targetId={id}
+        />
 
         {reviews && reviews.length > 0 && (
           <View style={styles.reviewsSection}>
@@ -135,16 +146,32 @@ const styles = StyleSheet.create({
   rating: { fontSize: 16, fontWeight: "700", color: COLORS.text },
   reviewsCount: { fontSize: 13, color: COLORS.muted },
   since: { fontSize: 12, color: COLORS.muted, marginBottom: 16 },
+  actionBtns: { flexDirection: "row", gap: 10, marginTop: 0 },
   chatBtn: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
     gap: 8,
     backgroundColor: COLORS.primary,
-    paddingHorizontal: 24,
+    paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 20,
   },
   chatBtnText: { color: COLORS.white, fontWeight: "600", fontSize: 14 },
+  reportBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: "#fee2e2",
+    backgroundColor: "#fff5f5",
+  },
+  reportBtnText: { color: COLORS.danger, fontWeight: "600", fontSize: 14 },
   reviewsSection: { paddingHorizontal: 16, paddingBottom: 24 },
   sectionTitle: { fontSize: 16, fontWeight: "700", color: COLORS.text, marginBottom: 12 },
   reviewCard: {

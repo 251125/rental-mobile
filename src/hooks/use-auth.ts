@@ -65,6 +65,20 @@ export function useRegister() {
   });
 }
 
+export function useChangePassword() {
+  return useMutation({
+    mutationFn: ({ currentPassword, newPassword }: { currentPassword: string; newPassword: string }) =>
+      api.post("/auth/change-password", { currentPassword, newPassword }).then((r) => r.data),
+    onSuccess: () => {
+      Toast.show({ type: "success", text1: "Пароль изменён" });
+      router.back();
+    },
+    onError: (error: Error) => {
+      Toast.show({ type: "error", text1: error.message ?? "Ошибка изменения пароля" });
+    },
+  });
+}
+
 export function useLogout() {
   const { logout } = useAuthStore();
   const queryClient = useQueryClient();

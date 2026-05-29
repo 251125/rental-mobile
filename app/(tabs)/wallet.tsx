@@ -2,56 +2,68 @@ import React, { useState } from "react";
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   FlatList,
   StyleSheet,
   SafeAreaView,
-  Modal,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useWallet, useTopUp } from "@/hooks/use-wallet";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import StripePaymentSheet from "@/components/StripePaymentSheet";
 import { COLORS } from "@/constants";
 import { Transaction, TransactionType } from "@/types";
 
-const TX_LABELS: Record<TransactionType, { label: string; color: string }> = {
-  DEPOSIT: { label: "Пополнение", color: COLORS.success },
-  PAYMENT: { label: "Оплата", color: COLORS.danger },
-  INCOME: { label: "Доход", color: COLORS.success },
-  REFUND: { label: "Возврат", color: COLORS.primary },
+const QUICK_AMOUNTS = [1000, 5000, 10000, 50000];
+
+const TX_LABELS: Record<TransactionType, { label: string; icon: string }> = {
+  DEPOSIT: { label: "Пополнение", icon: "arrow-down-circle-outline" },
+  PAYMENT: { label: "Оплата аренды", icon: "arrow-up-circle-outline" },
+  INCOME: { label: "Доход", icon: "cash-outline" },
+  REFUND: { label: "Возврат", icon: "refresh-circle-outline" },
+};
+
+const TX_COLORS: Record<TransactionType, string> = {
+  DEPOSIT: COLORS.success,
+  PAYMENT: COLORS.danger,
+  INCOME: COLORS.success,
+  REFUND: COLORS.primary,
 };
 
 export default function WalletScreen() {
-  const { data, isLoading } = useWallet();
-  const { mutate: topUp, isPending } = useTopUp();
-  const [modalVisible, setModalVisible] = useState(false);
-  const [amount, setAmount] = useState("");
+  const { data, isLoading, refetch } = useWallet();
+  const { mutate: topUp } = useTopUp();
+  const [stripeVisible, setStripeVisible] = useState(false);
+  const [pendingAmount, setPendingAmount] = useState(0);
 
-  const handleTopUp = () => {
-    const num = parseFloat(amount);
-    if (!num || num <= 0) return;
-    topUp(num, { onSuccess: () => { setModalVisible(false); setAmount(""); } });
+  const openStripe = (amount: number) => {
+    setPendingAmount(amount);
+    setStripeVisible(true);
+  };
+
+  const handleStripeSuccess = () => {
+    setStripeVisible(false);
+    topUp(pendingAmount, { onSuccess: () => refetch() });
   };
 
   if (isLoading) return <LoadingSpinner />;
 
   const renderTx = ({ item }: { item: Transaction }) => {
-    const config = TX_LABELS[item.type];
-    const isPositive = item.type === "DEPOSIT" || item.type === "INCOME" || item.type === "REFUND";
+    const cfg = TX_LABELS[item.type];
+    const color = TX_COLORS[item.type];
+    const isPositive = item.type !== "PAYMENT";
     return (
       <View style={styles.txRow}>
-        <View style={styles.txLeft}>
-          <Text style={styles.txLabel}>{config.label}</Text>
-          <Text style={styles.txDesc} numberOfLines={1}>
-            {item.description}
-          </Text>
-          <Text style={styles.txDate}>
-            {new Date(item.created_at).toLocaleDateString("ru-RU")}
-          </Text>
+        <View style={[styles.txIcon, { backgroundColor: color + "20" }]}>
+          <Ionicons name={cfg.icon as any} size={20} color={color} />
         </View>
-        <Text style={[styles.txAmount, { color: config.color }]}>
-          {isPositive ? "+" : "-"}{Math.abs(item.amount)} ₸
+        <View style={styles.txBody}>
+          <Text style={styles.txLabel}>{cfg.label}</Text>
+          <Text style={styles.txDesc} numberOfLines={1}>{item.description}</Text>
+          <Text style={styles.txDate}>{new Date(item.created_at).toLocaleDateString("ru-RU")}</Text>
+        </View>
+        <Text style={[styles.txAmount, { color }]}>
+          {isPositive ? "+" : "−"}{Math.abs(Number(item.amount)).toLocaleString()} ₸
         </Text>
       </View>
     );
@@ -59,76 +71,91 @@ export default function WalletScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Кошелёк</Text>
-      </View>
-
-      <View style={styles.balanceCard}>
-        <Text style={styles.balanceLabel}>Ваш баланс</Text>
-        <Text style={styles.balance}>{data?.balance ?? 0} ₸</Text>
-        <TouchableOpacity
-          style={styles.topUpBtn}
-          onPress={() => setModalVisible(true)}
-        >
-          <Ionicons name="add-circle-outline" size={18} color={COLORS.white} />
-          <Text style={styles.topUpBtnText}>Пополнить</Text>
-        </TouchableOpacity>
-      </View>
-
-      <Text style={styles.sectionTitle}>История транзакций</Text>
-
       <FlatList
         data={data?.transactions ?? []}
         keyExtractor={(item) => item.id}
         renderItem={renderTx}
         ItemSeparatorComponent={() => <View style={styles.divider} />}
-        contentContainerStyle={styles.list}
+        contentContainerStyle={styles.listContent}
+        ListHeaderComponent={
+          <>
+            {/* Header */}
+            <View style={styles.header}>
+              <Text style={styles.title}>Кошелёк</Text>
+            </View>
+
+            {/* Balance card */}
+            <View style={styles.balanceCard}>
+              <View style={styles.balanceTopRow}>
+                <Ionicons name="wallet-outline" size={18} color="rgba(255,255,255,0.7)" />
+                <Text style={styles.balanceTag}>Rental Pay</Text>
+              </View>
+              <Text style={styles.balance}>
+                {Number(data?.balance ?? 0).toLocaleString()} ₸
+              </Text>
+              <Text style={styles.balanceSub}>Доступно для оплаты аренды</Text>
+            </View>
+
+            {/* Quick top-up */}
+            <View style={styles.topUpSection}>
+              <Text style={styles.sectionTitle}>Пополнить картой</Text>
+              <View style={styles.quickGrid}>
+                {QUICK_AMOUNTS.map((amt) => (
+                  <TouchableOpacity
+                    key={amt}
+                    style={styles.quickBtn}
+                    onPress={() => openStripe(amt)}
+                  >
+                    <Text style={styles.quickBtnText}>{amt.toLocaleString()} ₸</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <TouchableOpacity
+                style={styles.customBtn}
+                onPress={() => openStripe(2000)}
+              >
+                <Ionicons name="card-outline" size={18} color="#635BFF" />
+                <Text style={styles.customBtnText}>Другая сумма</Text>
+                <Ionicons name="chevron-forward" size={16} color="#635BFF" />
+              </TouchableOpacity>
+
+              {/* Stripe badge */}
+              <View style={styles.stripeBadge}>
+                <Ionicons name="shield-checkmark-outline" size={12} color={COLORS.muted} />
+                <Text style={styles.stripeBadgeText}>Защищено · </Text>
+                <Text style={[styles.stripeBadgeText, { fontStyle: "italic", fontWeight: "700", color: "#635BFF" }]}>
+                  stripe
+                </Text>
+                <Text style={styles.stripeBadgeText}> · Тест</Text>
+              </View>
+            </View>
+
+            <Text style={styles.sectionTitle2}>История операций</Text>
+          </>
+        }
         ListEmptyComponent={
           <View style={styles.empty}>
-            <Ionicons name="receipt-outline" size={40} color={COLORS.border} />
-            <Text style={styles.emptyText}>Транзакций нет</Text>
+            <Ionicons name="receipt-outline" size={44} color={COLORS.border} />
+            <Text style={styles.emptyText}>Операций пока нет</Text>
           </View>
         }
       />
 
-      <Modal visible={modalVisible} transparent animationType="slide">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Пополнить баланс</Text>
-            <TextInput
-              style={styles.modalInput}
-              value={amount}
-              onChangeText={setAmount}
-              keyboardType="numeric"
-              placeholder="Сумма в ₸"
-              placeholderTextColor={COLORS.muted}
-            />
-            <View style={styles.modalBtns}>
-              <TouchableOpacity
-                style={styles.modalCancel}
-                onPress={() => { setModalVisible(false); setAmount(""); }}
-              >
-                <Text style={styles.modalCancelText}>Отмена</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalConfirm, isPending && { opacity: 0.6 }]}
-                onPress={handleTopUp}
-                disabled={isPending}
-              >
-                <Text style={styles.modalConfirmText}>
-                  {isPending ? "..." : "Пополнить"}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+      <StripePaymentSheet
+        visible={stripeVisible}
+        amount={pendingAmount}
+        onClose={() => setStripeVisible(false)}
+        onSuccess={handleStripeSuccess}
+      />
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: COLORS.background },
+  listContent: { paddingBottom: 100 },
+
   header: {
     paddingHorizontal: 16,
     paddingVertical: 14,
@@ -137,87 +164,93 @@ const styles = StyleSheet.create({
     borderBottomColor: COLORS.border,
   },
   title: { fontSize: 20, fontWeight: "800", color: COLORS.text },
+
   balanceCard: {
     margin: 16,
-    backgroundColor: COLORS.primary,
-    borderRadius: 16,
+    backgroundColor: "#635BFF",
+    borderRadius: 20,
     padding: 24,
-    alignItems: "center",
-    gap: 8,
+    gap: 6,
   },
-  balanceLabel: { fontSize: 14, color: "rgba(255,255,255,0.8)" },
-  balance: { fontSize: 36, fontWeight: "800", color: COLORS.white },
-  topUpBtn: {
+  balanceTopRow: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 4 },
+  balanceTag: { fontSize: 12, color: "rgba(255,255,255,0.7)" },
+  balance: { fontSize: 34, fontWeight: "800", color: "#fff" },
+  balanceSub: { fontSize: 12, color: "rgba(255,255,255,0.6)" },
+
+  topUpSection: {
+    marginHorizontal: 16,
+    backgroundColor: COLORS.white,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 8,
+  },
+  sectionTitle: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: COLORS.text,
+    marginBottom: 12,
+  },
+  quickGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginBottom: 12,
+  },
+  quickBtn: {
+    flex: 1,
+    minWidth: "45%",
+    borderWidth: 1.5,
+    borderColor: "#635BFF",
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: "center",
+  },
+  quickBtnText: { color: "#635BFF", fontWeight: "700", fontSize: 14 },
+
+  customBtn: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    backgroundColor: "rgba(255,255,255,0.2)",
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 20,
-    marginTop: 8,
+    gap: 8,
+    borderWidth: 1.5,
+    borderColor: "#635BFF",
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 13,
+    marginBottom: 12,
   },
-  topUpBtnText: { color: COLORS.white, fontWeight: "600", fontSize: 14 },
-  sectionTitle: {
-    fontSize: 16,
+  customBtnText: { flex: 1, color: "#635BFF", fontWeight: "600", fontSize: 15 },
+
+  stripeBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 2,
+  },
+  stripeBadgeText: { fontSize: 11, color: COLORS.muted },
+
+  sectionTitle2: {
+    fontSize: 15,
     fontWeight: "700",
     color: COLORS.text,
     paddingHorizontal: 16,
-    marginBottom: 8,
+    marginTop: 8,
+    marginBottom: 4,
   },
-  list: { paddingBottom: 24 },
+
   txRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
     padding: 16,
     backgroundColor: COLORS.white,
+    gap: 12,
   },
-  txLeft: { flex: 1, marginRight: 12 },
+  txIcon: { width: 42, height: 42, borderRadius: 21, alignItems: "center", justifyContent: "center" },
+  txBody: { flex: 1 },
   txLabel: { fontSize: 14, fontWeight: "600", color: COLORS.text },
   txDesc: { fontSize: 12, color: COLORS.muted, marginTop: 2 },
-  txDate: { fontSize: 11, color: COLORS.muted, marginTop: 2 },
-  txAmount: { fontSize: 15, fontWeight: "700" },
+  txDate: { fontSize: 11, color: COLORS.muted, marginTop: 1 },
+  txAmount: { fontSize: 15, fontWeight: "700", shrink: 0 } as any,
   divider: { height: 1, backgroundColor: COLORS.border },
-  empty: { alignItems: "center", paddingTop: 40, gap: 8 },
+  empty: { alignItems: "center", paddingTop: 40, gap: 10 },
   emptyText: { fontSize: 14, color: COLORS.muted },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.4)",
-    justifyContent: "flex-end",
-  },
-  modalCard: {
-    backgroundColor: COLORS.white,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 24,
-    gap: 16,
-  },
-  modalTitle: { fontSize: 18, fontWeight: "700", color: COLORS.text },
-  modalInput: {
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 10,
-    padding: 14,
-    fontSize: 16,
-    color: COLORS.text,
-  },
-  modalBtns: { flexDirection: "row", gap: 12 },
-  modalCancel: {
-    flex: 1,
-    padding: 14,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    alignItems: "center",
-  },
-  modalCancelText: { color: COLORS.muted, fontWeight: "600" },
-  modalConfirm: {
-    flex: 1,
-    padding: 14,
-    borderRadius: 10,
-    backgroundColor: COLORS.primary,
-    alignItems: "center",
-  },
-  modalConfirmText: { color: COLORS.white, fontWeight: "700" },
 });

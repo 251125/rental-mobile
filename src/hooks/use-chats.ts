@@ -50,10 +50,10 @@ export function useChatMessages(chatId: string) {
   useEffect(() => {
     if (!chatId || !user) return;
 
-    let socket: Awaited<ReturnType<typeof getSocket>> | null = null;
+    let socket: ReturnType<typeof getSocket> | null = null;
 
-    const setup = async () => {
-      socket = await getSocket();
+    const setup = () => {
+      socket = getSocket();
 
       if (!joinedRef.current) {
         socket.emit("join_chat", chatId);
@@ -71,7 +71,7 @@ export function useChatMessages(chatId: string) {
       socket.on("new_message", handleNew);
     };
 
-    void setup();
+    setup();
 
     return () => {
       if (socket) {
@@ -82,9 +82,8 @@ export function useChatMessages(chatId: string) {
     };
   }, [chatId, user, queryClient]);
 
-  const sendMessage = async (content: string) => {
-    const socket = await getSocket();
-    socket.emit("send_message", { chatId, content });
+  const sendMessage = (content: string) => {
+    getSocket().emit("send_message", { chatId, content });
   };
 
   return { messages, isLoading, sendMessage };
