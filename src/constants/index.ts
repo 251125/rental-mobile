@@ -4,7 +4,7 @@ import { Platform } from "react-native";
 // Продакшн: задайте EXPO_PUBLIC_API_HOST=rental.bolatbekov.kz при сборке Docker-образа
 export const MACHINE_IP = process.env.EXPO_PUBLIC_API_HOST ?? "192.168.10.6";
 const SCHEME = process.env.EXPO_PUBLIC_API_HOST ? "https" : "http";
-const API_PORT = process.env.EXPO_PUBLIC_API_HOST ? ":8443" : "";
+const API_PORT = process.env.EXPO_PUBLIC_API_HOST ? "" : "";
 
 export const KZ_CITIES = [
   "Алматы","Астана","Шымкент","Актобе","Тараз","Павлодар",
