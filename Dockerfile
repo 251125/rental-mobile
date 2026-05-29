@@ -1,5 +1,9 @@
 FROM node:20-alpine AS builder
 
+# Build-time env: set to domain in production, IP in development
+ARG EXPO_PUBLIC_API_HOST
+ENV EXPO_PUBLIC_API_HOST=${EXPO_PUBLIC_API_HOST}
+
 WORKDIR /app
 
 COPY package*.json ./

@@ -1,7 +1,10 @@
 import { Platform } from "react-native";
 
-// Измени на IP своей машины для тестирования с телефона
-export const MACHINE_IP = "192.168.10.6";
+// Локальная разработка: задайте MACHINE_IP = IP вашей машины в сети
+// Продакшн: задайте EXPO_PUBLIC_API_HOST=rental.bolatbekov.kz при сборке Docker-образа
+export const MACHINE_IP = process.env.EXPO_PUBLIC_API_HOST ?? "192.168.10.6";
+const SCHEME = process.env.EXPO_PUBLIC_API_HOST ? "https" : "http";
+const API_PORT = process.env.EXPO_PUBLIC_API_HOST ? ":8443" : "";
 
 export const KZ_CITIES = [
   "Алматы","Астана","Шымкент","Актобе","Тараз","Павлодар",
@@ -52,16 +55,16 @@ export const KZ_CITY_COORDS: Record<string, [number, number]> = {
   "Конаев": [43.8500, 77.0500],
 };
 
-export const SOCKET_URL = `http://${MACHINE_IP}`;
-export const API_URL = `http://${MACHINE_IP}/api`;
+export const SOCKET_URL = `${SCHEME}://${MACHINE_IP}${API_PORT}`;
+export const API_URL = `${SCHEME}://${MACHINE_IP}${API_PORT}/api`;
 
-// Rewrite MinIO URLs (http://IP:9000/...) → nginx storage proxy (http://IP/storage/...)
+// Rewrite MinIO URLs (http://IP:9000/...) → nginx storage proxy
 export function resolveImageUrl(url: string | null | undefined): string | null {
   if (!url) return null;
   const minioPattern = /^https?:\/\/[^/]+:9000\//;
   if (minioPattern.test(url)) {
     const path = url.replace(minioPattern, "");
-    return `http://${MACHINE_IP}/storage/${path}`;
+    return `${SCHEME}://${MACHINE_IP}${API_PORT}/storage/${path}`;
   }
   return url;
 }
