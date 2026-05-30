@@ -104,7 +104,7 @@ function CalendarPicker({ availability, startDate, endDate, onRangeChange }: Cal
       onRangeChange(key, "");
       return;
     }
-    if (key <= startDate) {
+    if (key < startDate) {
       onRangeChange(key, "");
       return;
     }
