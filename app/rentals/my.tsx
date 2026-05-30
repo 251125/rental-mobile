@@ -16,6 +16,7 @@ import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { useMyRentals, useCancelRental } from "@/hooks/use-rentals";
 import { useCreateReview } from "@/hooks/use-reviews";
+import { useOrCreateChat } from "@/hooks/use-chats";
 import { useUploadImage } from "@/hooks/use-listings";
 import RentalStatusBadge from "@/components/RentalStatusBadge";
 import LoadingSpinner from "@/components/LoadingSpinner";
@@ -39,6 +40,7 @@ export default function MyRentalsScreen() {
   const { data: rentals, isLoading } = useMyRentals();
   const { mutate: cancelRental } = useCancelRental();
   const { mutate: createReview, isPending: isReviewing } = useCreateReview();
+  const { mutate: openChat } = useOrCreateChat();
   const { mutateAsync: uploadImage } = useUploadImage();
 
   const [reviewModal, setReviewModal] = useState(false);
@@ -166,13 +168,26 @@ export default function MyRentalsScreen() {
               </View>
 
               <View style={styles.actions}>
-                {item.status === "APPROVED" && item.payment_status === "UNPAID" && item.qr_token && (
+                {item.status === "APPROVED" && item.payment_status === "UNPAID" && (
                   <TouchableOpacity
                     style={styles.payBtn}
-                    onPress={() => router.push(`/rentals/scan/${item.qr_token}` as never)}
+                    onPress={() => router.push("/rentals/qr-scanner" as never)}
                   >
-                    <Ionicons name="qr-code-outline" size={14} color={COLORS.white} />
-                    <Text style={styles.payBtnText}>Оплатить по QR</Text>
+                    <Ionicons name="scan-outline" size={14} color={COLORS.white} />
+                    <Text style={styles.payBtnText}>Сканировать QR</Text>
+                  </TouchableOpacity>
+                )}
+                {item.status === "APPROVED" && (
+                  <TouchableOpacity
+                    style={styles.msgBtn}
+                    onPress={() =>
+                      openChat(item.listing.owner_id, {
+                        onSuccess: (chat) => router.push(`/chats/${chat.id}` as never),
+                      })
+                    }
+                  >
+                    <Ionicons name="chatbubble-outline" size={14} color={COLORS.primary} />
+                    <Text style={styles.msgBtnText}>Написать</Text>
                   </TouchableOpacity>
                 )}
                 {(item.status === "PENDING" || item.status === "APPROVED") && (
@@ -319,6 +334,17 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   payBtnText: { color: COLORS.white, fontWeight: "600", fontSize: 13 },
+  msgBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  msgBtnText: { color: COLORS.primary, fontWeight: "600", fontSize: 13 },
   cancelBtn: {
     borderWidth: 1,
     borderColor: COLORS.danger,

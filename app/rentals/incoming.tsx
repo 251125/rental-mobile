@@ -13,6 +13,7 @@ import QRCode from "react-qr-code";
 import { router, useNavigation } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useIncomingRentals, useUpdateRentalStatus } from "@/hooks/use-rentals";
+import { useOrCreateChat } from "@/hooks/use-chats";
 import RentalStatusBadge from "@/components/RentalStatusBadge";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { COLORS, resolveImageUrl } from "@/constants";
@@ -33,6 +34,7 @@ export default function IncomingRentalsScreen() {
 
   const { data: rentals, isLoading } = useIncomingRentals();
   const { mutate: updateStatus, isPending } = useUpdateRentalStatus();
+  const { mutate: openChat } = useOrCreateChat();
   const [qrToken, setQrToken] = useState<string | null>(null);
 
   if (isLoading) return <LoadingSpinner />;
@@ -121,15 +123,30 @@ export default function IncomingRentalsScreen() {
 
               {item.status === "APPROVED" && (
                 <View style={styles.approvedActions}>
-                  {item.payment_status === "UNPAID" && item.qr_token && (
-                    <TouchableOpacity
-                      style={styles.qrBtn}
-                      onPress={() => setQrToken(item.qr_token!)}
-                    >
-                      <Ionicons name="qr-code-outline" size={16} color={COLORS.primary} />
-                      <Text style={styles.qrBtnText}>QR для оплаты</Text>
-                    </TouchableOpacity>
-                  )}
+                  <View style={styles.approvedRow}>
+                    {item.payment_status === "UNPAID" && item.qr_token && (
+                      <TouchableOpacity
+                        style={styles.qrBtn}
+                        onPress={() => setQrToken(item.qr_token!)}
+                      >
+                        <Ionicons name="qr-code-outline" size={16} color={COLORS.primary} />
+                        <Text style={styles.qrBtnText}>QR для оплаты</Text>
+                      </TouchableOpacity>
+                    )}
+                    {item.renter && (
+                      <TouchableOpacity
+                        style={styles.msgBtn}
+                        onPress={() =>
+                          openChat(item.renter_id, {
+                            onSuccess: (chat) => router.push(`/chats/${chat.id}` as never),
+                          })
+                        }
+                      >
+                        <Ionicons name="chatbubble-outline" size={16} color={COLORS.primary} />
+                        <Text style={styles.msgBtnText}>Написать</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
                   <TouchableOpacity
                     style={[
                       styles.completeBtn,
@@ -244,7 +261,21 @@ const styles = StyleSheet.create({
   },
   rejectBtnText: { color: COLORS.danger, fontWeight: "600", fontSize: 14 },
   approvedActions: { gap: 8 },
+  approvedRow: { flexDirection: "row", gap: 8, flexWrap: "wrap" },
+  msgBtn: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  msgBtnText: { color: COLORS.primary, fontWeight: "600", fontSize: 14 },
   qrBtn: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
