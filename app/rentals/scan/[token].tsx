@@ -46,7 +46,7 @@ export default function ScanPayScreen() {
     if (!rental) return;
     setIsPaying(true);
     try {
-      await api.post("/wallet/pay", { rental_request_id: rental.id });
+      await api.post(`/wallet/pay/${rental.id}`);
       setPaid(true);
       Toast.show({ type: "success", text1: "Оплата прошла успешно!" });
       setTimeout(() => router.replace("/rentals/my" as never), 1500);
