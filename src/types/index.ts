@@ -114,6 +114,7 @@ export interface RentalRequest {
   start_date: string;
   end_date: string;
   total_price: number;
+  deposit: number;
   status: RentalRequestStatus;
   payment_status: PaymentStatus;
   qr_token?: string | null;

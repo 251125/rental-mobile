@@ -94,6 +94,8 @@ export default function ScanPayScreen() {
   const img = rental.listing.images[0];
   const startDate = new Date(rental.start_date).toLocaleDateString("ru-RU");
   const endDate = new Date(rental.end_date).toLocaleDateString("ru-RU");
+  const deposit = Number(rental.deposit ?? 0);
+  const totalCharge = Number(rental.total_price) + deposit;
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -125,10 +127,29 @@ export default function ScanPayScreen() {
         </View>
         <View style={styles.divider} />
         <View style={styles.infoRow}>
+          <Ionicons name="pricetag-outline" size={18} color={COLORS.primary} />
+          <Text style={styles.infoLabel}>Стоимость аренды</Text>
+          <Text style={styles.infoValue}>{Number(rental.total_price).toLocaleString()} ₸</Text>
+        </View>
+        {deposit > 0 && (
+          <>
+            <View style={styles.divider} />
+            <View style={styles.infoRow}>
+              <Ionicons name="shield-outline" size={18} color={COLORS.warning} />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.infoLabel}>Залог</Text>
+                <Text style={styles.depositNote}>возвращается после завершения</Text>
+              </View>
+              <Text style={styles.infoValue}>{deposit.toLocaleString()} ₸</Text>
+            </View>
+          </>
+        )}
+        <View style={styles.divider} />
+        <View style={styles.infoRow}>
           <Ionicons name="cash-outline" size={18} color={COLORS.primary} />
           <Text style={styles.infoLabel}>Итого к оплате</Text>
           <Text style={[styles.infoValue, styles.totalPrice]}>
-            {rental.total_price} ₸
+            {totalCharge.toLocaleString()} ₸
           </Text>
         </View>
       </View>
@@ -172,7 +193,7 @@ export default function ScanPayScreen() {
           {isPaying ? (
             <ActivityIndicator color={COLORS.white} />
           ) : (
-            <Text style={styles.payBtnText}>Оплатить {rental.total_price} ₸</Text>
+            <Text style={styles.payBtnText}>Оплатить {totalCharge.toLocaleString()} ₸</Text>
           )}
         </TouchableOpacity>
       )}
@@ -244,6 +265,7 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     color: COLORS.primary,
   },
+  depositNote: { fontSize: 11, color: COLORS.warning, marginTop: 1 },
   divider: { height: 1, backgroundColor: COLORS.border, marginVertical: 12 },
   renterCard: {
     backgroundColor: COLORS.white,

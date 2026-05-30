@@ -10,6 +10,7 @@ import {
   Modal,
   TextInput,
   Alert,
+  Platform,
 } from "react-native";
 import { router, useNavigation } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -51,6 +52,38 @@ export default function MyRentalsScreen() {
   const [uploadingId, setUploadingId] = useState<string | null>(null);
 
   const handleReturnPhoto = (rentalId: string) => {
+    if (Platform.OS === "web") {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = "image/*";
+      input.multiple = true;
+      input.onchange = async () => {
+        const files = Array.from(input.files ?? []);
+        if (!files.length) return;
+        setUploadingId(rentalId);
+        try {
+          const urls = await Promise.all(
+            files.map((file) => {
+              const uri = URL.createObjectURL(file);
+              return uploadImage(uri);
+            }),
+          );
+          await api.post(`${API_URL}/rental-requests/${rentalId}/return-images`, { images: urls });
+          setReturnImages((prev) => ({
+            ...prev,
+            [rentalId]: [...(prev[rentalId] ?? []), ...urls],
+          }));
+          Toast.show({ type: "success", text1: "Фото возврата загружены" });
+        } catch (e: unknown) {
+          const msg = e instanceof Error ? e.message : "Ошибка загрузки";
+          Toast.show({ type: "error", text1: msg });
+        } finally {
+          setUploadingId(null);
+        }
+      };
+      input.click();
+      return;
+    }
     Alert.alert("Фото возврата", "Выберите способ", [
       {
         text: "Галерея",
