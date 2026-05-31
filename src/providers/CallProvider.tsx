@@ -243,8 +243,10 @@ export function CallProvider({ children }: { children: ReactNode }) {
     }
 
     // auth as callback: evaluated on every (re)connect so the token stays fresh
-    const socket = io(`${SOCKET_URL}/calls`, {
+    const socket = io(SOCKET_URL, {
+      path: "/ws-calls",
       auth: (cb) => { void getToken().then((token) => cb({ token })); },
+      transports: ["websocket"],
     });
     socketRef.current = socket;
 

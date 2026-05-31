@@ -10,6 +10,7 @@ import { getToken } from "@/services/api";
 import api from "@/services/api";
 import { COLORS } from "@/constants";
 import { CallProvider } from "@/providers/CallProvider";
+import { NotificationsProvider } from "@/providers/NotificationsProvider";
 import CallOverlay from "@/components/CallOverlay";
 
 const queryClient = new QueryClient({
@@ -56,6 +57,7 @@ export default function RootLayout() {
       <QueryClientProvider client={queryClient}>
         <StatusBar style="dark" />
         <AuthInitializer>
+          <NotificationsProvider>
           <CallProvider>
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="index" />
@@ -116,6 +118,7 @@ export default function RootLayout() {
           </Stack>
           <CallOverlay />
           </CallProvider>
+          </NotificationsProvider>
         </AuthInitializer>
         <Toast visibilityTime={3000} topOffset={60} />
       </QueryClientProvider>

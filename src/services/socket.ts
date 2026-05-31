@@ -13,7 +13,8 @@ export function getSocket(): Socket {
     socket.removeAllListeners();
     socket.disconnect();
   }
-  socket = io(`${SOCKET_URL}/chats`, {
+  socket = io(SOCKET_URL, {
+    path: "/ws-chats",
     // auth as callback: evaluated on every connection attempt (including reconnects)
     // so it always picks up the latest token after a silent refresh
     auth: (cb) => { void getToken().then((token) => cb({ token })); },
