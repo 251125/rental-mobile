@@ -28,8 +28,11 @@ function AuthInitializer({ children }: { children: React.ReactNode }) {
       try {
         const token = await getToken();
         if (token) {
+          // If the access_token is expired, the api interceptor will silently refresh it
+          // and persist a new one — so we re-read from storage after the call succeeds.
           const user = await api.get("/users/me").then((r) => r.data);
-          await setAuth(user, token);
+          const fresh = (await getToken()) ?? token;
+          await setAuth(user, fresh);
         }
       } catch {
         await logout();

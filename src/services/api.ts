@@ -4,6 +4,7 @@ import { Platform } from "react-native";
 import { API_URL } from "@/constants";
 
 const TOKEN_KEY = "access_token";
+const REFRESH_TOKEN_KEY = "refresh_token";
 
 export async function getToken(): Promise<string | null> {
   if (Platform.OS === "web") {
@@ -23,14 +24,36 @@ export async function setToken(token: string): Promise<void> {
 export async function removeToken(): Promise<void> {
   if (Platform.OS === "web") {
     localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(REFRESH_TOKEN_KEY);
     return;
   }
   await SecureStore.deleteItemAsync(TOKEN_KEY);
+  await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
+}
+
+async function getRefreshToken(): Promise<string | null> {
+  if (Platform.OS === "web") return localStorage.getItem(REFRESH_TOKEN_KEY);
+  return SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
+}
+
+async function setRefreshToken(token: string): Promise<void> {
+  if (Platform.OS === "web") {
+    localStorage.setItem(REFRESH_TOKEN_KEY, token);
+    return;
+  }
+  await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, token);
 }
 
 const api = axios.create({
   baseURL: API_URL,
-  headers: { "Content-Type": "application/json" },
+  // Mobile clients can't use httpOnly cookies — backend identifies us by this
+  // header and returns refresh_token in the response body for SecureStore.
+  // X-Requested-With also satisfies the backend's CSRF guard on /auth/refresh.
+  headers: {
+    "Content-Type": "application/json",
+    "X-Mobile-Client": "1",
+    "X-Requested-With": "XMLHttpRequest",
+  },
 });
 
 api.interceptors.request.use(async (config) => {
@@ -41,6 +64,42 @@ api.interceptors.request.use(async (config) => {
   return config;
 });
 
+// Save tokens whenever the server returns them (login, register, refresh)
+api.interceptors.response.use(async (response) => {
+  const data = response.data as { access_token?: string; refresh_token?: string } | undefined;
+  if (data?.access_token) await setToken(data.access_token);
+  if (data?.refresh_token) await setRefreshToken(data.refresh_token);
+  return response;
+});
+
+// Shared promise so multiple concurrent 401s don't trigger parallel refreshes
+let refreshPromise: Promise<string> | null = null;
+async function doRefresh(): Promise<string> {
+  if (refreshPromise) return refreshPromise;
+  refreshPromise = (async () => {
+    try {
+      const refresh_token = await getRefreshToken();
+      if (!refresh_token) throw new Error("no refresh token");
+      const res = await axios.post<{ access_token: string; refresh_token: string }>(
+        `${API_URL}/auth/refresh`,
+        { refresh_token },
+        {
+          headers: {
+            "X-Mobile-Client": "1",
+            "X-Requested-With": "XMLHttpRequest",
+          },
+        },
+      );
+      await setToken(res.data.access_token);
+      if (res.data.refresh_token) await setRefreshToken(res.data.refresh_token);
+      return res.data.access_token;
+    } finally {
+      refreshPromise = null;
+    }
+  })();
+  return refreshPromise;
+}
+
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -49,9 +108,7 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && !original._retry) {
       original._retry = true;
       try {
-        const res = await axios.post(`${API_URL}/auth/refresh`, {}, { withCredentials: false });
-        const { access_token } = res.data as { access_token: string };
-        await setToken(access_token);
+        const access_token = await doRefresh();
         original.headers.Authorization = `Bearer ${access_token}`;
         return api(original);
       } catch {

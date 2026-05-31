@@ -66,12 +66,21 @@ export function useRegister() {
 }
 
 export function useChangePassword() {
+  const { logout } = useAuthStore();
   return useMutation({
     mutationFn: ({ currentPassword, newPassword }: { currentPassword: string; newPassword: string }) =>
-      api.post("/auth/change-password", { currentPassword, newPassword }).then((r) => r.data),
-    onSuccess: () => {
-      Toast.show({ type: "success", text1: "Пароль изменён" });
-      router.back();
+      api
+        .post("/auth/change-password", {
+          // Backend DTO is snake_case
+          current_password: currentPassword,
+          new_password: newPassword,
+        })
+        .then((r) => r.data),
+    onSuccess: async () => {
+      Toast.show({ type: "success", text1: "Пароль изменён. Войдите заново." });
+      disconnectSocket();
+      await logout();
+      router.replace("/auth/login");
     },
     onError: (error: Error) => {
       Toast.show({ type: "error", text1: error.message ?? "Ошибка изменения пароля" });
