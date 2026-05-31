@@ -1,10 +1,11 @@
 import { Platform } from "react-native";
 
-// Локальная разработка: задайте MACHINE_IP = IP вашей машины в сети
-// Продакшн: задайте EXPO_PUBLIC_API_HOST=rental.bolatbekov.kz при сборке Docker-образа
-export const MACHINE_IP = process.env.EXPO_PUBLIC_API_HOST ?? "192.168.10.6";
+// Локальная разработка: задайте EXPO_PUBLIC_API_HOST=<IP вашей машины в сети> в .env
+// Продакшн: задайте EXPO_PUBLIC_API_HOST=rental.bolatbekov.com при сборке Docker-образа
+// Без EXPO_PUBLIC_API_HOST приложение ходит на localhost — работает только в эмуляторе
+export const MACHINE_IP = process.env.EXPO_PUBLIC_API_HOST ?? "localhost";
 const SCHEME = process.env.EXPO_PUBLIC_API_HOST ? "https" : "http";
-const API_PORT = process.env.EXPO_PUBLIC_API_HOST ? "" : "";
+const API_PORT = "";
 
 export const KZ_CITIES = [
   "Алматы","Астана","Шымкент","Актобе","Тараз","Павлодар",
