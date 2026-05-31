@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Stack } from "expo-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import Toast from "react-native-toast-message";
@@ -21,19 +21,24 @@ const queryClient = new QueryClient({
 
 function AuthInitializer({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
+  const triedRef = useRef(false);
   const { setAuth, logout } = useAuthStore();
 
   useEffect(() => {
+    if (triedRef.current) return;
+    triedRef.current = true;
+
     const init = async () => {
       try {
-        const token = await getToken();
-        if (token) {
-          // If the access_token is expired, the api interceptor will silently refresh it
-          // and persist a new one — so we re-read from storage after the call succeeds.
-          const user = await api.get("/users/me").then((r) => r.data);
-          const fresh = (await getToken()) ?? token;
-          await setAuth(user, fresh);
-        }
+        // Always probe /users/me. The api interceptor will:
+        //   - attach the saved access_token if present
+        //   - silently refresh via /auth/refresh on 401 (using the
+        //     refresh_token stored in SecureStore)
+        //   - retry the original request
+        // For a true guest the call fails fast and we just stay logged out.
+        const user = await api.get("/users/me").then((r) => r.data);
+        const fresh = await getToken();
+        if (fresh) await setAuth(user, fresh);
       } catch {
         await logout();
       } finally {
