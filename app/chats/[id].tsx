@@ -10,7 +10,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useNavigation } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useChatMessages, useMyChats } from "@/hooks/use-chats";
 import { useAuthStore } from "@/store/auth.store";
@@ -32,6 +32,14 @@ export default function ChatScreen() {
     : null;
   const [text, setText] = useState("");
   const listRef = useRef<FlatList>(null);
+  const navigation = useNavigation();
+
+  // Show the other participant's name in the header instead of just "Чат"
+  useEffect(() => {
+    if (other?.name) {
+      navigation.setOptions({ title: other.name });
+    }
+  }, [other?.name, navigation]);
 
   useEffect(() => {
     if (messages.length > 0) {
