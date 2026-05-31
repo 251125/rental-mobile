@@ -12,7 +12,7 @@ import {
 import QRCode from "react-qr-code";
 import { router, useNavigation } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { useIncomingRentals, useUpdateRentalStatus } from "@/hooks/use-rentals";
+import { useIncomingRentals, useUpdateRentalStatus, useMarkIncomingSeen } from "@/hooks/use-rentals";
 import { useOrCreateChat } from "@/hooks/use-chats";
 import RentalStatusBadge from "@/components/RentalStatusBadge";
 import LoadingSpinner from "@/components/LoadingSpinner";
@@ -35,7 +35,13 @@ export default function IncomingRentalsScreen() {
   const { data: rentals, isLoading } = useIncomingRentals();
   const { mutate: updateStatus, isPending } = useUpdateRentalStatus();
   const { mutate: openChat } = useOrCreateChat();
+  const { mutate: markSeen } = useMarkIncomingSeen();
   const [qrToken, setQrToken] = useState<string | null>(null);
+
+  // Clear "new requests" badge when the user opens this screen
+  useEffect(() => {
+    markSeen();
+  }, [markSeen]);
 
   if (isLoading) return <LoadingSpinner />;
 

@@ -69,10 +69,17 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
         text2: data.message.content.slice(0, 80),
       });
     };
+    const handleChatRead = () => {
+      // Server confirmed messages read — drop badges instantly
+      void queryClient.invalidateQueries({ queryKey: ["chats"] });
+      void queryClient.invalidateQueries({ queryKey: ["chats", "unread"] });
+    };
     chatsSocket.on("chat_updated", handleChatUpdated);
+    chatsSocket.on("chat_read", handleChatRead);
 
     return () => {
       chatsSocket.off("chat_updated", handleChatUpdated);
+      chatsSocket.off("chat_read", handleChatRead);
       notifSocket?.disconnect();
       notifSocket = null;
     };
