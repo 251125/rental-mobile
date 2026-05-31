@@ -64,8 +64,16 @@ api.interceptors.request.use(async (config) => {
   return config;
 });
 
-// Save tokens whenever the server returns them (login, register, refresh)
+// Save tokens only when they come from a known auth endpoint. We DON'T want
+// any random response that happens to contain `access_token` (e.g. an admin
+// debug screen) to overwrite the logged-in user's stored credentials.
+const AUTH_TOKEN_PATHS = ["/auth/login", "/auth/register", "/auth/refresh"];
+
 api.interceptors.response.use(async (response) => {
+  const path = response.config.url ?? "";
+  const isAuthEndpoint = AUTH_TOKEN_PATHS.some((p) => path.endsWith(p));
+  if (!isAuthEndpoint) return response;
+
   const data = response.data as { access_token?: string; refresh_token?: string } | undefined;
   if (data?.access_token) await setToken(data.access_token);
   if (data?.refresh_token) await setRefreshToken(data.refresh_token);
