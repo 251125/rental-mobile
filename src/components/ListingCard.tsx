@@ -49,6 +49,13 @@ export default function ListingCard({ listing, onFavoriteToggle, isFavorite }: P
             <Ionicons name="image-outline" size={40} color={COLORS.border} />
           </View>
         )}
+        {listing.promoted_until &&
+          new Date(listing.promoted_until).getTime() > Date.now() && (
+            <View style={styles.featuredBadge}>
+              <Ionicons name="sparkles" size={11} color="#fff" />
+              <Text style={styles.featuredText}>Featured</Text>
+            </View>
+          )}
         <View style={styles.imgOverlay}>
           {onFavoriteToggle && (
             <TouchableOpacity style={styles.overlayBtn} onPress={onFavoriteToggle}>
@@ -128,6 +135,28 @@ const styles = StyleSheet.create({
   },
   overlayBtnActive: {
     backgroundColor: "rgba(255,255,255,0.9)",
+  },
+  featuredBadge: {
+    position: "absolute",
+    top: 8,
+    left: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 999,
+    backgroundColor: "#f59e0b",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 3,
+  },
+  featuredText: {
+    color: "#fff",
+    fontSize: 10,
+    fontWeight: "700",
   },
   info: { padding: 12 },
   title: {

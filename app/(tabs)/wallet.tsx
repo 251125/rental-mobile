@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import {
+  Alert,
   View,
   Text,
   TouchableOpacity,
@@ -8,7 +9,7 @@ import {
   SafeAreaView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useWallet, useTopUp } from "@/hooks/use-wallet";
+import { useWallet, useTopUp, useSubscribePremium } from "@/hooks/use-wallet";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import StripePaymentSheet from "@/components/StripePaymentSheet";
 import { COLORS } from "@/constants";
@@ -21,6 +22,9 @@ const TX_LABELS: Record<TransactionType, { label: string; icon: string }> = {
   PAYMENT: { label: "Оплата аренды", icon: "arrow-up-circle-outline" },
   INCOME: { label: "Доход", icon: "cash-outline" },
   REFUND: { label: "Возврат", icon: "refresh-circle-outline" },
+  PLATFORM_FEE: { label: "Комиссия платформы", icon: "remove-circle-outline" },
+  PROMOTION: { label: "Продвижение", icon: "rocket-outline" },
+  PREMIUM: { label: "Premium-подписка", icon: "diamond-outline" },
 };
 
 const TX_COLORS: Record<TransactionType, string> = {
@@ -28,13 +32,34 @@ const TX_COLORS: Record<TransactionType, string> = {
   PAYMENT: COLORS.danger,
   INCOME: COLORS.success,
   REFUND: COLORS.primary,
+  PLATFORM_FEE: COLORS.muted,
+  PROMOTION: COLORS.warning,
+  PREMIUM: COLORS.warning,
 };
 
 export default function WalletScreen() {
   const { data, isLoading, refetch } = useWallet();
   const { mutate: topUp } = useTopUp();
+  const { mutate: subscribePremium } = useSubscribePremium();
   const [stripeVisible, setStripeVisible] = useState(false);
   const [pendingAmount, setPendingAmount] = useState(0);
+
+  const handlePremium = () => {
+    Alert.alert(
+      data?.is_premium ? "Продлить Premium?" : "Активировать Premium?",
+      "С баланса спишется 2 000 ₸ за 30 дней Premium. Если подписка ещё активна, срок продлится на 30 дней.",
+      [
+        { text: "Отмена", style: "cancel" },
+        {
+          text: data?.is_premium ? "Продлить" : "Активировать",
+          onPress: () => subscribePremium(),
+        },
+      ],
+    );
+  };
+
+  const isPositive = (t: TransactionType) =>
+    t === "DEPOSIT" || t === "INCOME" || t === "REFUND";
 
   const openStripe = (amount: number) => {
     setPendingAmount(amount);
@@ -49,9 +74,9 @@ export default function WalletScreen() {
   if (isLoading) return <LoadingSpinner />;
 
   const renderTx = ({ item }: { item: Transaction }) => {
-    const cfg = TX_LABELS[item.type];
-    const color = TX_COLORS[item.type];
-    const isPositive = item.type !== "PAYMENT";
+    const cfg = TX_LABELS[item.type] ?? { label: item.type, icon: "ellipse-outline" };
+    const color = TX_COLORS[item.type] ?? COLORS.muted;
+    const positive = isPositive(item.type);
     return (
       <View style={styles.txRow}>
         <View style={[styles.txIcon, { backgroundColor: color + "20" }]}>
@@ -63,7 +88,7 @@ export default function WalletScreen() {
           <Text style={styles.txDate}>{new Date(item.created_at).toLocaleDateString("ru-RU")}</Text>
         </View>
         <Text style={[styles.txAmount, { color }]}>
-          {isPositive ? "+" : "−"}{Math.abs(Number(item.amount)).toLocaleString()} ₸
+          {positive ? "+" : "−"}{Math.abs(Number(item.amount)).toLocaleString()} ₸
         </Text>
       </View>
     );
@@ -94,6 +119,41 @@ export default function WalletScreen() {
                 {Number(data?.balance ?? 0).toLocaleString()} ₸
               </Text>
               <Text style={styles.balanceSub}>Доступно для оплаты аренды</Text>
+            </View>
+
+            {/* Premium card */}
+            <View
+              style={[
+                styles.premiumCard,
+                data?.is_premium && styles.premiumCardActive,
+              ]}
+            >
+              <View style={styles.premiumLeft}>
+                <View style={styles.premiumIconWrap}>
+                  <Ionicons name="diamond" size={20} color="#fff" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <View style={styles.premiumTitleRow}>
+                    <Text style={styles.premiumTitle}>Premium</Text>
+                    {data?.is_premium && data.premium_until && (
+                      <Text style={styles.premiumUntil}>
+                        до {new Date(data.premium_until).toLocaleDateString("ru-RU")}
+                      </Text>
+                    )}
+                  </View>
+                  <Text style={styles.premiumDesc}>
+                    Без комиссии, статистика, бейдж, неограниченные объявления.
+                  </Text>
+                </View>
+              </View>
+              <TouchableOpacity
+                style={styles.premiumBtn}
+                onPress={handlePremium}
+              >
+                <Text style={styles.premiumBtnText}>
+                  {data?.is_premium ? "Продлить" : "2 000 ₸"}
+                </Text>
+              </TouchableOpacity>
             </View>
 
             {/* Quick top-up */}
@@ -176,6 +236,45 @@ const styles = StyleSheet.create({
   balanceTag: { fontSize: 12, color: "rgba(255,255,255,0.7)" },
   balance: { fontSize: 34, fontWeight: "800", color: "#fff" },
   balanceSub: { fontSize: 12, color: "rgba(255,255,255,0.6)" },
+
+  premiumCard: {
+    marginHorizontal: 16,
+    marginBottom: 10,
+    backgroundColor: COLORS.white,
+    borderRadius: 14,
+    padding: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderStyle: "dashed",
+  },
+  premiumCardActive: {
+    backgroundColor: "#fff7ed",
+    borderColor: "#fed7aa",
+    borderStyle: "solid",
+  },
+  premiumLeft: { flexDirection: "row", flex: 1, gap: 10, alignItems: "center" },
+  premiumIconWrap: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: "#f59e0b",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  premiumTitleRow: { flexDirection: "row", gap: 6, alignItems: "baseline", flexWrap: "wrap" },
+  premiumTitle: { fontSize: 14, fontWeight: "700", color: COLORS.text },
+  premiumUntil: { fontSize: 11, color: COLORS.warning },
+  premiumDesc: { fontSize: 11, color: COLORS.muted, marginTop: 2, lineHeight: 15 },
+  premiumBtn: {
+    backgroundColor: "#f59e0b",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+  },
+  premiumBtnText: { color: "#fff", fontWeight: "700", fontSize: 13 },
 
   topUpSection: {
     marginHorizontal: 16,

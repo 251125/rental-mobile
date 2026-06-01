@@ -16,6 +16,7 @@ import {
   useDeleteListing,
   useSetListingVisibility,
 } from "@/hooks/use-listings";
+import { usePromoteListing } from "@/hooks/use-wallet";
 import ListingCard from "@/components/ListingCard";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { COLORS } from "@/constants";
@@ -24,7 +25,19 @@ export default function MyListingsScreen() {
   const { data, isLoading } = useMyListings();
   const { mutate: deleteListing } = useDeleteListing();
   const { mutate: setVisibility } = useSetListingVisibility();
+  const { mutate: promoteListing } = usePromoteListing();
   const [togglingId, setTogglingId] = useState<string | null>(null);
+
+  const handlePromote = (id: string, title: string) => {
+    Alert.alert(
+      "Продвинуть объявление?",
+      `Спишется 500 ₸ с баланса. "${title}" попадёт в топ каталога на 7 дней.`,
+      [
+        { text: "Отмена", style: "cancel" },
+        { text: "Продвинуть", onPress: () => promoteListing(id) },
+      ],
+    );
+  };
 
   if (isLoading) return <LoadingSpinner />;
 
@@ -45,6 +58,13 @@ export default function MyListingsScreen() {
               )}
             </View>
             <View style={styles.itemActions}>
+              <TouchableOpacity
+                style={styles.promoteBtn}
+                onPress={() => handlePromote(item.id, item.title)}
+              >
+                <Ionicons name="rocket-outline" size={14} color={COLORS.warning} />
+                <Text style={styles.promoteText}>Поднять</Text>
+              </TouchableOpacity>
               <TouchableOpacity
                 style={styles.visibilityBtn}
                 disabled={togglingId === item.id}
@@ -156,6 +176,18 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.primary,
   },
+  promoteBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: COLORS.warning,
+    backgroundColor: "#fff7ed",
+  },
+  promoteText: { fontSize: 12, color: COLORS.warning, fontWeight: "600" },
   hiddenBadge: {
     position: "absolute",
     top: 8,

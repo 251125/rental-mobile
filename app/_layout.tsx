@@ -120,6 +120,10 @@ export default function RootLayout() {
               options={{ headerShown: true, title: "Споры" }}
             />
             <Stack.Screen
+              name="admin/finance"
+              options={{ headerShown: true, title: "Финансы платформы" }}
+            />
+            <Stack.Screen
               name="profile/change-password"
               options={{ headerShown: true, title: "Смена пароля" }}
             />

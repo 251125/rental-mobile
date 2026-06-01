@@ -40,3 +40,42 @@ export function usePayRental() {
     },
   });
 }
+
+export function usePromoteListing() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (listingId: string) =>
+      api
+        .post<{ promoted_until: string; price: number }>(
+          `/wallet/promote/${listingId}`,
+        )
+        .then((r) => r.data),
+    onSuccess: () => {
+      Toast.show({ type: "success", text1: "Объявление продвинуто на 7 дней" });
+      void qc.invalidateQueries({ queryKey: ["wallet"] });
+      void qc.invalidateQueries({ queryKey: ["listings"] });
+    },
+    onError: (e: Error) =>
+      Toast.show({ type: "error", text1: e.message ?? "Не удалось продвинуть" }),
+  });
+}
+
+export function useSubscribePremium() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () =>
+      api
+        .post<{ premium_until: string; price: number }>("/wallet/premium")
+        .then((r) => r.data),
+    onSuccess: () => {
+      Toast.show({ type: "success", text1: "Premium активирован на 30 дней" });
+      void qc.invalidateQueries({ queryKey: ["wallet"] });
+      void qc.invalidateQueries({ queryKey: ["users", "me"] });
+    },
+    onError: (e: Error) =>
+      Toast.show({
+        type: "error",
+        text1: e.message ?? "Не удалось активировать Premium",
+      }),
+  });
+}

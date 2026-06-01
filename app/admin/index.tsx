@@ -155,14 +155,22 @@ export default function AdminScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <TouchableOpacity
-        style={styles.disputesBtn}
-        onPress={() => router.push("/admin/disputes" as never)}
-      >
-        <Ionicons name="shield-half-outline" size={18} color={COLORS.warning} />
-        <Text style={styles.disputesBtnText}>Споры</Text>
-        <Ionicons name="chevron-forward" size={16} color={COLORS.muted} />
-      </TouchableOpacity>
+      <View style={styles.topRow}>
+        <TouchableOpacity
+          style={[styles.topBtn, styles.financeBtn]}
+          onPress={() => router.push("/admin/finance" as never)}
+        >
+          <Ionicons name="cash-outline" size={18} color={COLORS.primary} />
+          <Text style={styles.topBtnText}>Финансы</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.topBtn, styles.disputesShortcut]}
+          onPress={() => router.push("/admin/disputes" as never)}
+        >
+          <Ionicons name="shield-half-outline" size={18} color={COLORS.warning} />
+          <Text style={styles.topBtnText}>Споры</Text>
+        </TouchableOpacity>
+      </View>
 
       <View style={styles.tabs}>
         {(["stats", "users", "listings", "categories", "reports"] as const).map(
@@ -571,16 +579,27 @@ const styles = StyleSheet.create({
   catCount: { fontSize: 12, color: COLORS.muted, marginRight: 12 },
   denied: { flex: 1, justifyContent: "center", alignItems: "center", gap: 12 },
   deniedText: { fontSize: 16, color: COLORS.muted },
-  disputesBtn: {
+  topRow: {
     flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
+    gap: 10,
+    padding: 12,
     backgroundColor: COLORS.white,
-    padding: 14,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
   },
-  disputesBtnText: { color: COLORS.text, fontWeight: "700", flex: 1 },
+  topBtn: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingVertical: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+  },
+  financeBtn: { borderColor: COLORS.primary, backgroundColor: COLORS.primaryLight },
+  disputesShortcut: { borderColor: COLORS.warning, backgroundColor: "#fff7ed" },
+  topBtnText: { color: COLORS.text, fontWeight: "700" },
   tabBadge: {
     position: "absolute",
     top: 4,

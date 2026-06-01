@@ -436,7 +436,16 @@ export default function ListingDetailScreen() {
               </View>
             )}
             <View>
-              <Text style={styles.ownerName}>{listing.owner.name}</Text>
+              <View style={styles.ownerNameRow}>
+                <Text style={styles.ownerName}>{listing.owner.name}</Text>
+                {listing.owner.premium_until &&
+                  new Date(listing.owner.premium_until).getTime() > Date.now() && (
+                    <View style={styles.premiumChip}>
+                      <Ionicons name="diamond" size={10} color="#fff" />
+                      <Text style={styles.premiumChipText}>Premium</Text>
+                    </View>
+                  )}
+              </View>
               {listing.owner.rating_avg && (
                 <View style={styles.ratingRow}>
                   <Ionicons name="star" size={12} color="#f59e0b" />
@@ -775,6 +784,17 @@ const styles = StyleSheet.create({
   },
   ownerAvatarLetter: { fontSize: 18, fontWeight: "700", color: COLORS.primary },
   ownerName: { fontSize: 14, fontWeight: "600", color: COLORS.text },
+  ownerNameRow: { flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" },
+  premiumChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 2,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 999,
+    backgroundColor: "#f59e0b",
+  },
+  premiumChipText: { color: "#fff", fontSize: 10, fontWeight: "700" },
   ratingRow: { flexDirection: "row", alignItems: "center", gap: 3, marginTop: 2 },
   ratingText: { fontSize: 12, color: COLORS.muted },
   actions: { flexDirection: "row", gap: 10, marginBottom: 24 },
