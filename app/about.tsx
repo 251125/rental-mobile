@@ -88,13 +88,14 @@ export default function AboutScreen() {
   const { isAuthenticated } = useAuthStore();
   const { data: categories } = useCategories();
   const { data: stats } = useQuery<Stats>({
-    queryKey: ["stats", "public"],
-    queryFn: async () => {
-      const listings = await api
-        .get<{ meta: { total: number } }>("/listings?limit=1")
-        .then((r) => r.data.meta.total);
-      return { listings, users: 0 };
-    },
+    queryKey: ["public-stats"],
+    queryFn: () =>
+      api
+        .get<{ totalListings: number; totalUsers: number }>("/public-stats")
+        .then((r) => ({
+          listings: r.data.totalListings,
+          users: r.data.totalUsers,
+        })),
   });
 
   const popular = (categories ?? []).slice(0, 6);
@@ -132,7 +133,7 @@ export default function AboutScreen() {
         {/* Stats */}
         <View style={styles.statsRow}>
           <StatItem icon="cube-outline" value={`${stats?.listings ?? "…"}`} label="Объявлений" />
-          <StatItem icon="star-outline" value="4.8" label="Рейтинг" />
+          <StatItem icon="people-outline" value={`${stats?.users ?? "…"}`} label="Юзеров" />
           <StatItem icon="time-outline" value="24/7" label="Поддержка" />
         </View>
 
