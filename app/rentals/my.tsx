@@ -19,6 +19,7 @@ import { useMyRentals, useCancelRental } from "@/hooks/use-rentals";
 import { useCreateReview } from "@/hooks/use-reviews";
 import { useOrCreateChat } from "@/hooks/use-chats";
 import { useUploadImage } from "@/hooks/use-listings";
+import { usePayRental } from "@/hooks/use-wallet";
 import RentalStatusBadge from "@/components/RentalStatusBadge";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import DisputeModal from "@/components/DisputeModal";
@@ -26,6 +27,137 @@ import { COLORS, resolveImageUrl, API_URL } from "@/constants";
 import { RentalRequest } from "@/types";
 import api from "@/services/api";
 import Toast from "react-native-toast-message";
+
+function calcProgress(startDate: string, endDate: string): number {
+  const now = Date.now();
+  const start = new Date(startDate).getTime();
+  const end = new Date(endDate).getTime();
+  if (end <= start) return 100;
+  const raw = ((now - start) / (end - start)) * 100;
+  return Math.min(100, Math.max(0, raw));
+}
+
+function daysBetween(a: string, b: string): number {
+  const msPerDay = 1000 * 60 * 60 * 24;
+  return Math.round((new Date(b).getTime() - new Date(a).getTime()) / msPerDay);
+}
+
+function daysElapsed(startDate: string): number {
+  const msPerDay = 1000 * 60 * 60 * 24;
+  return Math.max(0, Math.round((Date.now() - new Date(startDate).getTime()) / msPerDay));
+}
+
+function ProgressBar({ startDate, endDate }: { startDate: string; endDate: string }) {
+  const pct = calcProgress(startDate, endDate);
+  const elapsed = Math.min(daysElapsed(startDate), daysBetween(startDate, endDate));
+  const total = daysBetween(startDate, endDate);
+  return (
+    <View style={progressStyles.wrap}>
+      <View style={progressStyles.labelRow}>
+        <Text style={progressStyles.label}>Прогресс аренды</Text>
+        <Text style={progressStyles.label}>
+          {elapsed} дн. из {total}
+        </Text>
+      </View>
+      <View style={progressStyles.track}>
+        <View style={[progressStyles.fill, { width: `${pct}%` }]} />
+      </View>
+    </View>
+  );
+}
+
+interface TimelineStep {
+  label: string;
+  status: "done" | "pending" | "failed";
+  date?: string;
+}
+
+function buildTimeline(rental: RentalRequest): TimelineStep[] {
+  const approvedDone = rental.status === "APPROVED" || rental.status === "COMPLETED";
+  const approvedFailed = rental.status === "REJECTED" || rental.status === "CANCELLED";
+  return [
+    { label: "Заявка создана", status: "done", date: rental.created_at },
+    {
+      label: "Одобрено",
+      status: approvedDone ? "done" : approvedFailed ? "failed" : "pending",
+    },
+    { label: "Оплата", status: rental.payment_status === "PAID" ? "done" : "pending" },
+    { label: "Завершено", status: rental.status === "COMPLETED" ? "done" : "pending" },
+  ];
+}
+
+function Timeline({ rental }: { rental: RentalRequest }) {
+  const steps = buildTimeline(rental);
+  return (
+    <View style={timelineStyles.wrap}>
+      {steps.map((step, i) => (
+        <View key={i} style={timelineStyles.row}>
+          <View
+            style={[
+              timelineStyles.dot,
+              step.status === "done" && timelineStyles.dotDone,
+              step.status === "failed" && timelineStyles.dotFailed,
+            ]}
+          >
+            {step.status === "done" && (
+              <Ionicons name="checkmark" size={11} color={COLORS.white} />
+            )}
+            {step.status === "failed" && (
+              <Ionicons name="close" size={11} color={COLORS.white} />
+            )}
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text
+              style={[
+                timelineStyles.label,
+                step.status === "pending" && { color: COLORS.muted },
+                step.status === "failed" && {
+                  textDecorationLine: "line-through",
+                  color: COLORS.danger,
+                },
+              ]}
+            >
+              {step.label}
+            </Text>
+            {step.date && (
+              <Text style={timelineStyles.date}>
+                {new Date(step.date).toLocaleString("ru-RU")}
+              </Text>
+            )}
+          </View>
+        </View>
+      ))}
+    </View>
+  );
+}
+
+const progressStyles = StyleSheet.create({
+  wrap: { marginTop: 10 },
+  labelRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: 4 },
+  label: { fontSize: 11, color: COLORS.muted },
+  track: { height: 6, borderRadius: 3, backgroundColor: COLORS.border, overflow: "hidden" },
+  fill: { height: "100%", backgroundColor: COLORS.primary },
+});
+
+const timelineStyles = StyleSheet.create({
+  wrap: { marginTop: 10, gap: 10 },
+  row: { flexDirection: "row", alignItems: "flex-start", gap: 10 },
+  dot: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    borderWidth: 2,
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.white,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 2,
+  },
+  dotDone: { borderColor: COLORS.success, backgroundColor: COLORS.success },
+  dotFailed: { borderColor: COLORS.danger, backgroundColor: COLORS.danger },
+  label: { fontSize: 13, color: COLORS.text, fontWeight: "600" },
+  date: { fontSize: 11, color: COLORS.muted, marginTop: 2 },
+});
 
 export default function MyRentalsScreen() {
   const navigation = useNavigation();
@@ -44,6 +176,17 @@ export default function MyRentalsScreen() {
   const { mutate: createReview, isPending: isReviewing } = useCreateReview();
   const { mutate: openChat } = useOrCreateChat();
   const { mutateAsync: uploadImage } = useUploadImage();
+  const { mutate: payRental, isPending: isPaying } = usePayRental();
+  const [payingId, setPayingId] = useState<string | null>(null);
+  const [expandedTimeline, setExpandedTimeline] = useState<Set<string>>(new Set());
+  const toggleTimeline = (id: string) => {
+    setExpandedTimeline((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   const [reviewModal, setReviewModal] = useState(false);
   const [selectedRental, setSelectedRental] = useState<RentalRequest | null>(null);
@@ -202,15 +345,39 @@ export default function MyRentalsScreen() {
                 </Text>
               </View>
 
+              {item.status === "APPROVED" && (
+                <ProgressBar startDate={item.start_date} endDate={item.end_date} />
+              )}
+
               <View style={styles.actions}>
                 {item.status === "APPROVED" && item.payment_status === "UNPAID" && (
-                  <TouchableOpacity
-                    style={styles.payBtn}
-                    onPress={() => router.push("/rentals/qr-scanner" as never)}
-                  >
-                    <Ionicons name="scan-outline" size={14} color={COLORS.white} />
-                    <Text style={styles.payBtnText}>Сканировать QR</Text>
-                  </TouchableOpacity>
+                  <>
+                    <TouchableOpacity
+                      style={[
+                        styles.payBtn,
+                        isPaying && payingId === item.id && styles.payBtnDisabled,
+                      ]}
+                      disabled={isPaying && payingId === item.id}
+                      onPress={() => {
+                        setPayingId(item.id);
+                        payRental(item.id, {
+                          onSettled: () => setPayingId(null),
+                        });
+                      }}
+                    >
+                      <Ionicons name="card-outline" size={14} color={COLORS.white} />
+                      <Text style={styles.payBtnText}>
+                        {isPaying && payingId === item.id ? "Оплата..." : "Оплатить сейчас"}
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.scanBtn}
+                      onPress={() => router.push("/rentals/qr-scanner" as never)}
+                    >
+                      <Ionicons name="scan-outline" size={14} color={COLORS.primary} />
+                      <Text style={styles.scanBtnText}>QR</Text>
+                    </TouchableOpacity>
+                  </>
                 )}
                 {item.status === "APPROVED" && (
                   <TouchableOpacity
@@ -296,6 +463,21 @@ export default function MyRentalsScreen() {
                   ))}
                 </View>
               )}
+
+              <TouchableOpacity
+                style={styles.timelineToggle}
+                onPress={() => toggleTimeline(item.id)}
+              >
+                <Ionicons
+                  name={
+                    expandedTimeline.has(item.id) ? "chevron-up" : "chevron-down"
+                  }
+                  size={14}
+                  color={COLORS.muted}
+                />
+                <Text style={styles.timelineToggleText}>История</Text>
+              </TouchableOpacity>
+              {expandedTimeline.has(item.id) && <Timeline rental={item} />}
             </View>
           );
         }}
@@ -407,6 +589,28 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   payBtnText: { color: COLORS.white, fontWeight: "600", fontSize: 13 },
+  payBtnDisabled: { opacity: 0.6 },
+  scanBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  scanBtnText: { color: COLORS.primary, fontWeight: "600", fontSize: 13 },
+  timelineToggle: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginTop: 10,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+  },
+  timelineToggleText: { fontSize: 13, color: COLORS.muted },
   msgBtn: {
     flexDirection: "row",
     alignItems: "center",

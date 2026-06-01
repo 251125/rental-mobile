@@ -12,11 +12,13 @@ import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuthStore } from "@/store/auth.store";
 import { useLogout } from "@/hooks/use-auth";
+import { useIncomingRentalsCount } from "@/hooks/use-rentals";
 import { COLORS, resolveImageUrl } from "@/constants";
 
 export default function ProfileScreen() {
   const { user } = useAuthStore();
   const { mutate: logout, isPending } = useLogout();
+  const { data: incomingCount = 0 } = useIncomingRentalsCount();
 
   const avatarUri = user?.avatar_url ? resolveImageUrl(user.avatar_url) ?? "" : null;
 
@@ -29,7 +31,8 @@ export default function ProfileScreen() {
     | "lock-closed-outline"
     | "qr-code-outline"
     | "warning-outline"
-    | "ban-outline";
+    | "ban-outline"
+    | "information-circle-outline";
 
   const menuItems: { icon: IoniconsName; label: string; onPress: () => void }[] = [
     {
@@ -71,6 +74,11 @@ export default function ProfileScreen() {
       icon: "ban-outline",
       label: "Заблокированные",
       onPress: () => router.push("/profile/blocked" as any),
+    },
+    {
+      icon: "information-circle-outline",
+      label: "О платформе",
+      onPress: () => router.push("/about" as any),
     },
   ];
 
@@ -114,17 +122,26 @@ export default function ProfileScreen() {
         </View>
 
         <View style={styles.menu}>
-          {menuItems.map((item, i) => (
-            <TouchableOpacity
-              key={i}
-              style={styles.menuItem}
-              onPress={item.onPress}
-            >
-              <Ionicons name={item.icon} size={22} color={COLORS.primary} />
-              <Text style={styles.menuLabel}>{item.label}</Text>
-              <Ionicons name="chevron-forward" size={16} color={COLORS.muted} />
-            </TouchableOpacity>
-          ))}
+          {menuItems.map((item, i) => {
+            const showBadge =
+              item.label === "Входящие заявки" && incomingCount > 0;
+            return (
+              <TouchableOpacity
+                key={i}
+                style={styles.menuItem}
+                onPress={item.onPress}
+              >
+                <Ionicons name={item.icon} size={22} color={COLORS.primary} />
+                <Text style={styles.menuLabel}>{item.label}</Text>
+                {showBadge && (
+                  <View style={styles.incomingBadge}>
+                    <Text style={styles.incomingBadgeText}>{incomingCount}</Text>
+                  </View>
+                )}
+                <Ionicons name="chevron-forward" size={16} color={COLORS.muted} />
+              </TouchableOpacity>
+            );
+          })}
         </View>
 
         <TouchableOpacity
@@ -194,6 +211,15 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   menuLabel: { flex: 1, fontSize: 15, color: COLORS.text },
+  incomingBadge: {
+    backgroundColor: COLORS.danger,
+    borderRadius: 10,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    minWidth: 20,
+    marginRight: 4,
+  },
+  incomingBadgeText: { color: COLORS.white, fontSize: 11, fontWeight: "700", textAlign: "center" },
   logoutBtn: {
     flexDirection: "row",
     alignItems: "center",

@@ -116,6 +116,10 @@ export default function RootLayout() {
               options={{ headerShown: true, title: "Администрирование" }}
             />
             <Stack.Screen
+              name="admin/disputes"
+              options={{ headerShown: true, title: "Споры" }}
+            />
+            <Stack.Screen
               name="profile/change-password"
               options={{ headerShown: true, title: "Смена пароля" }}
             />
@@ -126,6 +130,10 @@ export default function RootLayout() {
             <Stack.Screen
               name="disputes"
               options={{ headerShown: true, title: "Мои споры" }}
+            />
+            <Stack.Screen
+              name="about"
+              options={{ headerShown: true, title: "О платформе" }}
             />
             <Stack.Screen
               name="compare"

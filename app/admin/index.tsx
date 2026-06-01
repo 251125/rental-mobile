@@ -38,10 +38,42 @@ interface AdminCategory {
   _count?: { listings: number };
 }
 
+interface AdminListing {
+  id: string;
+  title: string;
+  city: string;
+  price: number;
+  views_count: number;
+  owner: { id: string; name: string };
+  category: { id: string; name: string };
+  created_at: string;
+}
+
+interface Report {
+  id: string;
+  type: "USER" | "LISTING" | "RENTAL";
+  target_id: string;
+  reason: string;
+  description: string | null;
+  status: "PENDING" | "REVIEWING" | "RESOLVED" | "REJECTED";
+  created_at: string;
+  reporter: { id: string; name: string };
+}
+
+const REPORT_REASON_LABEL: Record<string, string> = {
+  SPAM: "Спам",
+  FRAUD: "Мошенничество",
+  INAPPROPRIATE: "Неприемлемо",
+  DAMAGE: "Порча имущества",
+  OTHER: "Другое",
+};
+
 export default function AdminScreen() {
   const { user } = useAuthStore();
   const qc = useQueryClient();
-  const [activeTab, setActiveTab] = useState<"stats" | "users" | "categories">("stats");
+  const [activeTab, setActiveTab] = useState<
+    "stats" | "users" | "listings" | "categories" | "reports"
+  >("stats");
   const [newCatName, setNewCatName] = useState("");
 
   const { data: stats, isLoading: statsLoading } = useQuery<AdminStats>({
@@ -81,6 +113,33 @@ export default function AdminScreen() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["categories"] }),
   });
 
+  const { data: adminListings, isLoading: listingsLoading } = useQuery<{
+    data: AdminListing[];
+    meta: { total: number };
+  }>({
+    queryKey: ["admin", "listings"],
+    queryFn: () => api.get("/listings?limit=50").then((r) => r.data),
+    enabled: user?.role === "ADMIN" && activeTab === "listings",
+  });
+
+  const { mutate: deleteListing } = useMutation({
+    mutationFn: (id: string) => api.delete(`/admin/listings/${id}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin", "listings"] }),
+  });
+
+  const [reportsFilter, setReportsFilter] = useState<"PENDING" | "ALL">("PENDING");
+  const { data: reports, isLoading: reportsLoading } = useQuery<Report[]>({
+    queryKey: ["admin", "reports"],
+    queryFn: () => api.get("/reports").then((r) => r.data),
+    enabled: user?.role === "ADMIN" && activeTab === "reports",
+  });
+
+  const { mutate: updateReport } = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: string }) =>
+      api.patch(`/reports/${id}/status`, { status }).then((r) => r.data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin", "reports"] }),
+  });
+
   if (user?.role !== "ADMIN") {
     return (
       <SafeAreaView style={styles.safe}>
@@ -92,20 +151,52 @@ export default function AdminScreen() {
     );
   }
 
+  const pendingReports = (reports ?? []).filter((r) => r.status === "PENDING").length;
+
   return (
     <SafeAreaView style={styles.safe}>
+      <TouchableOpacity
+        style={styles.disputesBtn}
+        onPress={() => router.push("/admin/disputes" as never)}
+      >
+        <Ionicons name="shield-half-outline" size={18} color={COLORS.warning} />
+        <Text style={styles.disputesBtnText}>Споры</Text>
+        <Ionicons name="chevron-forward" size={16} color={COLORS.muted} />
+      </TouchableOpacity>
+
       <View style={styles.tabs}>
-        {(["stats", "users", "categories"] as const).map((tab) => (
-          <TouchableOpacity
-            key={tab}
-            style={[styles.tab, activeTab === tab && styles.tabActive]}
-            onPress={() => setActiveTab(tab)}
-          >
-            <Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>
-              {tab === "stats" ? "Статистика" : tab === "users" ? "Пользователи" : "Категории"}
-            </Text>
-          </TouchableOpacity>
-        ))}
+        {(["stats", "users", "listings", "categories", "reports"] as const).map(
+          (tab) => {
+            const label =
+              tab === "stats"
+                ? "Стат."
+                : tab === "users"
+                  ? "Польз."
+                  : tab === "listings"
+                    ? "Объявл."
+                    : tab === "categories"
+                      ? "Катег."
+                      : "Жалобы";
+            return (
+              <TouchableOpacity
+                key={tab}
+                style={[styles.tab, activeTab === tab && styles.tabActive]}
+                onPress={() => setActiveTab(tab)}
+              >
+                <Text
+                  style={[styles.tabText, activeTab === tab && styles.tabTextActive]}
+                >
+                  {label}
+                </Text>
+                {tab === "reports" && pendingReports > 0 && (
+                  <View style={styles.tabBadge}>
+                    <Text style={styles.tabBadgeText}>{pendingReports}</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            );
+          },
+        )}
       </View>
 
       {activeTab === "stats" && (
@@ -159,6 +250,174 @@ export default function AdminScreen() {
             )}
             ItemSeparatorComponent={() => <View style={styles.divider} />}
             contentContainerStyle={styles.listContent}
+          />
+        )
+      )}
+
+      {activeTab === "listings" && (
+        listingsLoading ? <LoadingSpinner /> : (
+          <FlatList
+            data={adminListings?.data ?? []}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <View style={styles.userRow}>
+                <View style={styles.userInfo}>
+                  <Text style={styles.userName} numberOfLines={1}>{item.title}</Text>
+                  <Text style={styles.userEmail}>
+                    {item.city} • {Number(item.price).toLocaleString()} ₸/день
+                  </Text>
+                  <Text style={styles.userRole}>
+                    {item.owner.name} • {item.views_count} просм.
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  onPress={() => router.push(`/listings/${item.id}` as never)}
+                  style={{ paddingRight: 12 }}
+                >
+                  <Ionicons name="open-outline" size={20} color={COLORS.primary} />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() =>
+                    Alert.alert("Удалить объявление?", item.title, [
+                      { text: "Отмена", style: "cancel" },
+                      {
+                        text: "Удалить",
+                        style: "destructive",
+                        onPress: () => deleteListing(item.id),
+                      },
+                    ])
+                  }
+                >
+                  <Ionicons name="trash-outline" size={20} color={COLORS.danger} />
+                </TouchableOpacity>
+              </View>
+            )}
+            ItemSeparatorComponent={() => <View style={styles.divider} />}
+            contentContainerStyle={styles.listContent}
+            ListEmptyComponent={
+              <Text style={styles.emptyText}>Объявлений нет</Text>
+            }
+          />
+        )
+      )}
+
+      {activeTab === "reports" && (
+        reportsLoading ? <LoadingSpinner /> : (
+          <FlatList
+            data={(reports ?? []).filter((r) =>
+              reportsFilter === "PENDING" ? r.status === "PENDING" : true,
+            )}
+            keyExtractor={(r) => r.id}
+            ListHeaderComponent={
+              <View style={styles.reportsFilterRow}>
+                {(["PENDING", "ALL"] as const).map((f) => (
+                  <TouchableOpacity
+                    key={f}
+                    onPress={() => setReportsFilter(f)}
+                    style={[
+                      styles.reportsFilter,
+                      reportsFilter === f && styles.reportsFilterActive,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.reportsFilterText,
+                        reportsFilter === f && styles.reportsFilterTextActive,
+                      ]}
+                    >
+                      {f === "PENDING" ? "Активные" : "Все"}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            }
+            renderItem={({ item }) => (
+              <View style={styles.reportCard}>
+                <View style={styles.reportHeader}>
+                  <Text style={styles.reportType}>
+                    {item.type === "USER"
+                      ? "Пользователь"
+                      : item.type === "LISTING"
+                        ? "Объявление"
+                        : "Аренда"}
+                  </Text>
+                  <View
+                    style={[
+                      styles.reportStatusBadge,
+                      item.status === "PENDING"
+                        ? { backgroundColor: "#fff7ed", borderColor: "#fed7aa" }
+                        : item.status === "RESOLVED"
+                          ? { backgroundColor: "#ecfdf5", borderColor: "#a7f3d0" }
+                          : { backgroundColor: COLORS.background, borderColor: COLORS.border },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.reportStatusText,
+                        item.status === "PENDING"
+                          ? { color: COLORS.warning }
+                          : item.status === "RESOLVED"
+                            ? { color: COLORS.success }
+                            : { color: COLORS.muted },
+                      ]}
+                    >
+                      {item.status}
+                    </Text>
+                  </View>
+                </View>
+                <Text style={styles.reportReason}>
+                  {REPORT_REASON_LABEL[item.reason] ?? item.reason}
+                </Text>
+                {item.description ? (
+                  <Text style={styles.reportDesc}>{item.description}</Text>
+                ) : null}
+                <Text style={styles.reportMeta}>
+                  От {item.reporter?.name} • {new Date(item.created_at).toLocaleString("ru-RU")}
+                </Text>
+                <View style={styles.reportActions}>
+                  <TouchableOpacity
+                    onPress={() => {
+                      const path =
+                        item.type === "USER"
+                          ? `/profile/${item.target_id}`
+                          : item.type === "LISTING"
+                            ? `/listings/${item.target_id}`
+                            : "/rentals/my";
+                      router.push(path as never);
+                    }}
+                    style={styles.reportLinkBtn}
+                  >
+                    <Ionicons name="open-outline" size={14} color={COLORS.primary} />
+                    <Text style={styles.reportLinkText}>Открыть</Text>
+                  </TouchableOpacity>
+                  {item.status === "PENDING" && (
+                    <>
+                      <TouchableOpacity
+                        style={styles.reportResolveBtn}
+                        onPress={() =>
+                          updateReport({ id: item.id, status: "RESOLVED" })
+                        }
+                      >
+                        <Text style={styles.reportResolveText}>Решено</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.reportRejectBtn}
+                        onPress={() =>
+                          updateReport({ id: item.id, status: "REJECTED" })
+                        }
+                      >
+                        <Text style={styles.reportRejectText}>Отклонить</Text>
+                      </TouchableOpacity>
+                    </>
+                  )}
+                </View>
+              </View>
+            )}
+            ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
+            contentContainerStyle={styles.listContent}
+            ListEmptyComponent={
+              <Text style={styles.emptyText}>Жалоб нет</Text>
+            }
           />
         )
       )}
@@ -229,9 +488,11 @@ const styles = StyleSheet.create({
   tab: {
     flex: 1,
     paddingVertical: 12,
+    paddingHorizontal: 4,
     alignItems: "center",
     borderBottomWidth: 2,
     borderBottomColor: "transparent",
+    position: "relative",
   },
   tabActive: { borderBottomColor: COLORS.primary },
   tabText: { fontSize: 13, color: COLORS.muted, fontWeight: "500" },
@@ -310,4 +571,94 @@ const styles = StyleSheet.create({
   catCount: { fontSize: 12, color: COLORS.muted, marginRight: 12 },
   denied: { flex: 1, justifyContent: "center", alignItems: "center", gap: 12 },
   deniedText: { fontSize: 16, color: COLORS.muted },
+  disputesBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: COLORS.white,
+    padding: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  disputesBtnText: { color: COLORS.text, fontWeight: "700", flex: 1 },
+  tabBadge: {
+    position: "absolute",
+    top: 4,
+    right: 4,
+    minWidth: 16,
+    paddingHorizontal: 4,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: COLORS.danger,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  tabBadgeText: { color: COLORS.white, fontSize: 9, fontWeight: "700" },
+  emptyText: {
+    textAlign: "center",
+    color: COLORS.muted,
+    paddingVertical: 40,
+  },
+  reportsFilterRow: {
+    flexDirection: "row",
+    gap: 8,
+    padding: 14,
+  },
+  reportsFilter: {
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.white,
+  },
+  reportsFilterActive: { borderColor: COLORS.primary, backgroundColor: COLORS.primary },
+  reportsFilterText: { color: COLORS.muted, fontSize: 12, fontWeight: "600" },
+  reportsFilterTextActive: { color: COLORS.white },
+  reportCard: {
+    marginHorizontal: 14,
+    backgroundColor: COLORS.white,
+    borderRadius: 12,
+    padding: 12,
+    gap: 6,
+  },
+  reportHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  reportType: { fontSize: 13, fontWeight: "700", color: COLORS.text },
+  reportStatusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 999,
+    borderWidth: 1,
+  },
+  reportStatusText: { fontSize: 11, fontWeight: "700" },
+  reportReason: { fontSize: 14, color: COLORS.text, fontWeight: "600" },
+  reportDesc: { fontSize: 12, color: COLORS.textSecondary },
+  reportMeta: { fontSize: 11, color: COLORS.muted },
+  reportActions: { flexDirection: "row", gap: 8, marginTop: 4, flexWrap: "wrap" },
+  reportLinkBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  reportLinkText: { color: COLORS.primary, fontWeight: "600", fontSize: 12 },
+  reportResolveBtn: {
+    backgroundColor: COLORS.success,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  reportResolveText: { color: COLORS.white, fontWeight: "600", fontSize: 12 },
+  reportRejectBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: COLORS.danger,
+  },
+  reportRejectText: { color: COLORS.danger, fontWeight: "600", fontSize: 12 },
 });

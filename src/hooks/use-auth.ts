@@ -65,6 +65,43 @@ export function useRegister() {
   });
 }
 
+export function useForgotPassword() {
+  return useMutation({
+    mutationFn: (email: string) =>
+      api
+        .post<{ message: string }>("/auth/forgot-password", { email })
+        .then((r) => r.data),
+    onSuccess: () => {
+      Toast.show({
+        type: "success",
+        text1: "Если аккаунт существует, письмо отправлено",
+      });
+    },
+    onError: (error: Error) => {
+      Toast.show({ type: "error", text1: error.message ?? "Ошибка" });
+    },
+  });
+}
+
+export function useResetPassword() {
+  return useMutation({
+    mutationFn: ({ token, password }: { token: string; password: string }) =>
+      api
+        .post<{ message: string }>("/auth/reset-password", { token, password })
+        .then((r) => r.data),
+    onSuccess: () => {
+      Toast.show({ type: "success", text1: "Пароль изменён. Войдите заново." });
+      router.replace("/auth/login");
+    },
+    onError: (error: Error) => {
+      Toast.show({
+        type: "error",
+        text1: error.message ?? "Ссылка недействительна или истекла",
+      });
+    },
+  });
+}
+
 export function useChangePassword() {
   const { logout } = useAuthStore();
   return useMutation({

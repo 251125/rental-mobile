@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "@/services/api";
-import { Dispute } from "@/types";
+import { Dispute, DisputeStatus } from "@/types";
 import Toast from "react-native-toast-message";
 
 export function useMyDisputes() {
@@ -26,6 +26,48 @@ export function useOpenDispute() {
     },
     onError: (e: Error) =>
       Toast.show({ type: "error", text1: e.message ?? "Не удалось открыть" }),
+  });
+}
+
+export function useAdminDisputes(status?: DisputeStatus | "ALL") {
+  return useQuery({
+    queryKey: ["disputes", "admin", status ?? "ALL"],
+    queryFn: () =>
+      api
+        .get<Dispute[]>(
+          `/disputes/admin/all${status && status !== "ALL" ? `?status=${status}` : ""}`,
+        )
+        .then((r) => r.data),
+  });
+}
+
+export function useResolveDispute() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      status,
+      deposit_to_renter,
+      admin_note,
+    }: {
+      id: string;
+      status: DisputeStatus;
+      deposit_to_renter?: number;
+      admin_note?: string;
+    }) =>
+      api
+        .patch(`/disputes/admin/${id}/resolve`, {
+          status,
+          deposit_to_renter,
+          admin_note,
+        })
+        .then((r) => r.data),
+    onSuccess: () => {
+      Toast.show({ type: "success", text1: "Спор разрешён" });
+      void qc.invalidateQueries({ queryKey: ["disputes"] });
+    },
+    onError: (e: Error) =>
+      Toast.show({ type: "error", text1: e.message ?? "Ошибка" }),
   });
 }
 

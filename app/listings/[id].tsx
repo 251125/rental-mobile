@@ -18,17 +18,22 @@ import {
   useListing,
   useDeleteListing,
   useListingAvailability,
+  useSimilarListings,
   ListingAvailability,
 } from "@/hooks/use-listings";
 import { useMyFavorites, useAddFavorite, useRemoveFavorite } from "@/hooks/use-favorites";
 import { useCreateRentalRequest } from "@/hooks/use-rentals";
 import { useOrCreateChat } from "@/hooks/use-chats";
 import { useAuthStore } from "@/store/auth.store";
+import { useCompareStore } from "@/store/compare.store";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import ListingCard from "@/components/ListingCard";
 import { COLORS, resolveImageUrl } from "@/constants";
 import CityMap from "@/components/CityMap";
 import ReportModal from "@/components/ReportModal";
 import TimePicker from "@/components/TimePicker";
+import { saveRecentlyViewed } from "@/lib/recently-viewed";
+import Toast from "react-native-toast-message";
 
 const { width, height: screenHeight } = Dimensions.get("window");
 
@@ -213,6 +218,9 @@ export default function ListingDetailScreen() {
   const { mutate: openChat } = useOrCreateChat();
   const { user } = useAuthStore();
   const { data: availability = [], isLoading: isAvailabilityLoading } = useListingAvailability(id);
+  const { data: similar = [] } = useSimilarListings(id, listing?.category_id ?? "");
+  const { add: addCompare, remove: removeCompare, has: hasCompare, validate: validateCompare } =
+    useCompareStore();
 
   const [rentalModal, setRentalModal] = useState(false);
 
@@ -228,6 +236,13 @@ export default function ListingDetailScreen() {
       ),
     });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Track recently viewed for the home widget
+  useEffect(() => {
+    if (listing) {
+      void saveRecentlyViewed(listing);
+    }
+  }, [listing]);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [returnTime, setReturnTime] = useState("");
@@ -462,10 +477,66 @@ export default function ListingDetailScreen() {
         )}
 
         {!isOwner && (
-          <TouchableOpacity style={styles.reportBtn} onPress={() => setReportModal(true)}>
-            <Ionicons name="flag-outline" size={14} color={COLORS.muted} />
-            <Text style={styles.reportBtnText}>Пожаловаться</Text>
-          </TouchableOpacity>
+          <View style={styles.secondaryActions}>
+            <TouchableOpacity
+              style={styles.reportBtn}
+              onPress={() => setReportModal(true)}
+            >
+              <Ionicons name="flag-outline" size={14} color={COLORS.muted} />
+              <Text style={styles.reportBtnText}>Пожаловаться</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.compareBtn,
+                hasCompare(listing.id) && styles.compareBtnActive,
+              ]}
+              onPress={() => {
+                if (hasCompare(listing.id)) {
+                  removeCompare(listing.id);
+                  return;
+                }
+                const err = validateCompare(listing);
+                if (err) {
+                  Toast.show({ type: "error", text1: err });
+                  return;
+                }
+                addCompare(listing);
+                Toast.show({ type: "success", text1: "Добавлено в сравнение" });
+              }}
+            >
+              <Ionicons
+                name="git-compare-outline"
+                size={14}
+                color={hasCompare(listing.id) ? COLORS.primary : COLORS.muted}
+              />
+              <Text
+                style={[
+                  styles.reportBtnText,
+                  hasCompare(listing.id) && { color: COLORS.primary },
+                ]}
+              >
+                {hasCompare(listing.id) ? "В сравнении" : "Сравнить"}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {similar.length > 0 && (
+          <View style={styles.similarSection}>
+            <Text style={styles.similarTitle}>Похожие объявления</Text>
+            <FlatList
+              horizontal
+              data={similar.filter((s) => s.id !== listing.id).slice(0, 10)}
+              keyExtractor={(it) => it.id}
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ gap: 10 }}
+              renderItem={({ item }) => (
+                <View style={{ width: 200 }}>
+                  <ListingCard listing={item} />
+                </View>
+              )}
+            />
+          </View>
         )}
 
         <ReportModal
@@ -756,12 +827,30 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    alignSelf: "center",
     paddingVertical: 8,
     paddingHorizontal: 14,
-    marginBottom: 16,
   },
   reportBtnText: { fontSize: 13, color: COLORS.muted },
+  secondaryActions: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 6,
+    marginBottom: 16,
+    flexWrap: "wrap",
+  },
+  compareBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  compareBtnActive: { borderColor: COLORS.primary, backgroundColor: COLORS.primaryLight },
+  similarSection: { marginBottom: 24, gap: 10 },
+  similarTitle: { fontSize: 16, fontWeight: "700", color: COLORS.text },
   // Modal
   modalOverlay: {
     flex: 1,

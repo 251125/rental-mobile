@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import {
   View,
   Text,
@@ -12,7 +12,7 @@ import {
   Modal,
   ImageBackground,
 } from "react-native";
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useListings, useCategories } from "@/hooks/use-listings";
 import { useMyFavorites, useAddFavorite, useRemoveFavorite } from "@/hooks/use-favorites";
@@ -20,6 +20,14 @@ import { useAuthStore } from "@/store/auth.store";
 import { useCompareStore } from "@/store/compare.store";
 import ListingCard from "@/components/ListingCard";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import RecentlyViewed from "@/components/RecentlyViewed";
+import {
+  getSavedSearches,
+  saveSearch,
+  deleteSavedSearch,
+  SavedSearch,
+} from "@/lib/saved-searches";
+import Toast from "react-native-toast-message";
 import { COLORS } from "@/constants";
 import { ListingFilters } from "@/types";
 import CityPicker from "@/components/CityPicker";
@@ -136,6 +144,50 @@ export default function HomeScreen() {
   const [priceMax, setPriceMax] = useState("");
   const [sortBy, setSortBy] = useState<"created_at" | "price" | "rating_avg" | "views_count">("created_at");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [savedSearches, setSavedSearches] = useState<SavedSearch[]>([]);
+
+  useFocusEffect(
+    useCallback(() => {
+      let alive = true;
+      void getSavedSearches().then((list) => {
+        if (alive) setSavedSearches(list);
+      });
+      return () => {
+        alive = false;
+      };
+    }, []),
+  );
+
+  const hasMeaningfulFilter =
+    !!filters.search || !!filters.city || !!filters.price_min || !!filters.price_max;
+
+  const handleSaveSearch = async () => {
+    if (!hasMeaningfulFilter) {
+      Toast.show({ type: "info", text1: "Сначала задайте фильтры" });
+      return;
+    }
+    const ok = await saveSearch(filters);
+    if (ok) {
+      Toast.show({ type: "success", text1: "Поиск сохранён" });
+      setSavedSearches(await getSavedSearches());
+    } else {
+      Toast.show({ type: "info", text1: "Уже в сохранённых" });
+    }
+  };
+
+  const applySaved = (s: SavedSearch) => {
+    setFilters(s.filters);
+    setSearch(s.filters.search ?? "");
+    setSelectedCategory(s.filters.category_ids?.[0] ?? null);
+    setCityInput(s.filters.city ?? "");
+    setPriceMin(s.filters.price_min ? String(s.filters.price_min) : "");
+    setPriceMax(s.filters.price_max ? String(s.filters.price_max) : "");
+  };
+
+  const removeSaved = async (id: string) => {
+    await deleteSavedSearch(id);
+    setSavedSearches(await getSavedSearches());
+  };
 
   const activeFilterCount =
     (filters.city ? 1 : 0) +
@@ -251,10 +303,40 @@ export default function HomeScreen() {
         ))}
       </ScrollView>
 
+      {savedSearches.length > 0 && (
+        <View style={styles.savedWrap}>
+          <Text style={styles.savedTitle}>Сохранённые поиски</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.savedRow}
+          >
+            {savedSearches.map((s) => (
+              <View key={s.id} style={styles.savedChip}>
+                <TouchableOpacity onPress={() => applySaved(s)}>
+                  <Text numberOfLines={1} style={styles.savedChipText}>
+                    {s.label}
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => removeSaved(s.id)} hitSlop={6}>
+                  <Ionicons name="close-circle" size={14} color={COLORS.muted} />
+                </TouchableOpacity>
+              </View>
+            ))}
+          </ScrollView>
+        </View>
+      )}
+
       <View style={styles.listingHeader}>
         <Text style={styles.sectionTitle}>
           {data ? `${data.meta.total} объявлений` : "Объявления"}
         </Text>
+        {hasMeaningfulFilter && (
+          <TouchableOpacity onPress={handleSaveSearch} style={styles.saveBtn}>
+            <Ionicons name="bookmark-outline" size={14} color={COLORS.primary} />
+            <Text style={styles.saveBtnText}>Сохранить</Text>
+          </TouchableOpacity>
+        )}
       </View>
     </>
   );
@@ -294,6 +376,7 @@ export default function HomeScreen() {
           ListHeaderComponent={
             <>
               <HeroBanner search={search} onSearch={handleSearch} onChangeSearch={setSearch} />
+              <RecentlyViewed />
               {ListHeader}
             </>
           }
@@ -492,7 +575,43 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     backgroundColor: COLORS.background,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
+  saveBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+  },
+  saveBtnText: { color: COLORS.primary, fontSize: 12, fontWeight: "600" },
+  savedWrap: { paddingTop: 8, backgroundColor: COLORS.background },
+  savedTitle: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: COLORS.muted,
+    paddingHorizontal: 16,
+    marginBottom: 6,
+  },
+  savedRow: { paddingHorizontal: 16, gap: 8 },
+  savedChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: COLORS.white,
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    maxWidth: 220,
+  },
+  savedChipText: { fontSize: 12, color: COLORS.text },
 
   list: { padding: 16, paddingBottom: 120 },
 

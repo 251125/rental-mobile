@@ -3,6 +3,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useAuthStore } from "@/store/auth.store";
 import { COLORS } from "@/constants";
 import { useUnreadCount } from "@/hooks/use-chats";
+import { useIncomingRentalsCount } from "@/hooks/use-rentals";
 import { Text } from "react-native";
 
 function TabBadge({ count }: { count: number }) {
@@ -32,6 +33,7 @@ function TabBadge({ count }: { count: number }) {
 export default function TabsLayout() {
   const { isAuthenticated } = useAuthStore();
   const { data: unreadCount = 0 } = useUnreadCount(isAuthenticated);
+  const { data: incomingCount = 0 } = useIncomingRentalsCount();
 
   return (
     <Tabs
@@ -112,7 +114,10 @@ export default function TabsLayout() {
         options={{
           title: "Профиль",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person-outline" size={size} color={color} />
+            <>
+              <Ionicons name="person-outline" size={size} color={color} />
+              <TabBadge count={incomingCount} />
+            </>
           ),
         }}
       />
