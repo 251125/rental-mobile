@@ -20,7 +20,16 @@ export default function ProfileScreen() {
 
   const avatarUri = user?.avatar_url ? resolveImageUrl(user.avatar_url) ?? "" : null;
 
-  type IoniconsName = "person-outline" | "list-outline" | "time-outline" | "mail-outline" | "shield-outline" | "lock-closed-outline" | "qr-code-outline";
+  type IoniconsName =
+    | "person-outline"
+    | "list-outline"
+    | "time-outline"
+    | "mail-outline"
+    | "shield-outline"
+    | "lock-closed-outline"
+    | "qr-code-outline"
+    | "warning-outline"
+    | "ban-outline";
 
   const menuItems: { icon: IoniconsName; label: string; onPress: () => void }[] = [
     {
@@ -52,6 +61,16 @@ export default function ProfileScreen() {
       icon: "mail-outline",
       label: "Входящие заявки",
       onPress: () => router.push("/rentals/incoming" as any),
+    },
+    {
+      icon: "warning-outline",
+      label: "Мои споры",
+      onPress: () => router.push("/disputes" as any),
+    },
+    {
+      icon: "ban-outline",
+      label: "Заблокированные",
+      onPress: () => router.push("/profile/blocked" as any),
     },
   ];
 

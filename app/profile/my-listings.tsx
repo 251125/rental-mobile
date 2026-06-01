@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -10,7 +10,12 @@ import {
 } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { useMyListings, useDeleteListing } from "@/hooks/use-listings";
+import Toast from "react-native-toast-message";
+import {
+  useMyListings,
+  useDeleteListing,
+  useSetListingVisibility,
+} from "@/hooks/use-listings";
 import ListingCard from "@/components/ListingCard";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { COLORS } from "@/constants";
@@ -18,6 +23,8 @@ import { COLORS } from "@/constants";
 export default function MyListingsScreen() {
   const { data, isLoading } = useMyListings();
   const { mutate: deleteListing } = useDeleteListing();
+  const { mutate: setVisibility } = useSetListingVisibility();
+  const [togglingId, setTogglingId] = useState<string | null>(null);
 
   if (isLoading) return <LoadingSpinner />;
 
@@ -28,8 +35,53 @@ export default function MyListingsScreen() {
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <View>
-            <ListingCard listing={item} />
+            <View style={{ position: "relative" }}>
+              <ListingCard listing={item} />
+              {item.is_hidden && (
+                <View style={styles.hiddenBadge}>
+                  <Ionicons name="eye-off-outline" size={12} color={COLORS.white} />
+                  <Text style={styles.hiddenBadgeText}>Скрыто</Text>
+                </View>
+              )}
+            </View>
             <View style={styles.itemActions}>
+              <TouchableOpacity
+                style={styles.visibilityBtn}
+                disabled={togglingId === item.id}
+                onPress={() => {
+                  setTogglingId(item.id);
+                  setVisibility(
+                    { id: item.id, hidden: !item.is_hidden },
+                    {
+                      onSuccess: () => {
+                        Toast.show({
+                          type: "success",
+                          text1: item.is_hidden
+                            ? "Объявление снова в каталоге"
+                            : "Объявление скрыто",
+                        });
+                        setTogglingId(null);
+                      },
+                      onError: (e: Error) => {
+                        Toast.show({
+                          type: "error",
+                          text1: e.message ?? "Ошибка",
+                        });
+                        setTogglingId(null);
+                      },
+                    },
+                  );
+                }}
+              >
+                <Ionicons
+                  name={item.is_hidden ? "eye-off-outline" : "eye-outline"}
+                  size={14}
+                  color={COLORS.primary}
+                />
+                <Text style={styles.editText}>
+                  {item.is_hidden ? "Показать" : "Скрыть"}
+                </Text>
+              </TouchableOpacity>
               <TouchableOpacity
                 style={styles.editBtn}
                 onPress={() => router.push(`/listings/edit/${item.id}`)}
@@ -94,6 +146,29 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.primary,
   },
+  visibilityBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+  },
+  hiddenBadge: {
+    position: "absolute",
+    top: 8,
+    left: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 999,
+    backgroundColor: "rgba(217, 119, 6, 0.95)",
+  },
+  hiddenBadgeText: { color: COLORS.white, fontSize: 11, fontWeight: "700" },
   editText: { fontSize: 12, color: COLORS.primary, fontWeight: "600" },
   deleteBtn: {
     flexDirection: "row",

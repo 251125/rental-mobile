@@ -21,6 +21,7 @@ import { useOrCreateChat } from "@/hooks/use-chats";
 import { useUploadImage } from "@/hooks/use-listings";
 import RentalStatusBadge from "@/components/RentalStatusBadge";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import DisputeModal from "@/components/DisputeModal";
 import { COLORS, resolveImageUrl, API_URL } from "@/constants";
 import { RentalRequest } from "@/types";
 import api from "@/services/api";
@@ -46,6 +47,7 @@ export default function MyRentalsScreen() {
 
   const [reviewModal, setReviewModal] = useState(false);
   const [selectedRental, setSelectedRental] = useState<RentalRequest | null>(null);
+  const [disputeRental, setDisputeRental] = useState<RentalRequest | null>(null);
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
   const [returnImages, setReturnImages] = useState<Record<string, string[]>>({});
@@ -252,6 +254,36 @@ export default function MyRentalsScreen() {
                     </Text>
                   </TouchableOpacity>
                 )}
+                {item.status === "APPROVED" &&
+                  item.payment_status === "PAID" &&
+                  !item.dispute && (
+                    <TouchableOpacity
+                      style={styles.disputeBtn}
+                      onPress={() => setDisputeRental(item)}
+                    >
+                      <Ionicons
+                        name="warning-outline"
+                        size={14}
+                        color={COLORS.warning}
+                      />
+                      <Text style={styles.disputeBtnText}>Открыть спор</Text>
+                    </TouchableOpacity>
+                  )}
+                {item.dispute && (
+                  <TouchableOpacity
+                    style={styles.disputeOpenBtn}
+                    onPress={() => router.push("/disputes" as never)}
+                  >
+                    <Ionicons
+                      name="shield-outline"
+                      size={14}
+                      color={COLORS.warning}
+                    />
+                    <Text style={styles.disputeBtnText}>
+                      {item.dispute.status === "OPEN" ? "Спор открыт" : "Спор закрыт"}
+                    </Text>
+                  </TouchableOpacity>
+                )}
               </View>
               {(returnImages[item.id] ?? []).length > 0 && (
                 <View style={styles.returnThumbsRow}>
@@ -275,6 +307,14 @@ export default function MyRentalsScreen() {
           </View>
         }
       />
+
+      {disputeRental && (
+        <DisputeModal
+          rental={disputeRental}
+          visible={!!disputeRental}
+          onClose={() => setDisputeRental(null)}
+        />
+      )}
 
       <Modal visible={reviewModal} transparent animationType="slide">
         <View style={styles.modalOverlay}>
@@ -407,6 +447,28 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   returnPhotoBtnText: { color: COLORS.white, fontWeight: "600", fontSize: 13 },
+  disputeBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    borderWidth: 1,
+    borderColor: COLORS.warning,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  disputeOpenBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    borderWidth: 1,
+    borderColor: COLORS.warning,
+    backgroundColor: "#fff7ed",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  disputeBtnText: { color: COLORS.warning, fontWeight: "600", fontSize: 13 },
   returnThumbsRow: {
     flexDirection: "row",
     gap: 8,

@@ -120,6 +120,14 @@ export default function RootLayout() {
               options={{ headerShown: true, title: "Смена пароля" }}
             />
             <Stack.Screen
+              name="profile/blocked"
+              options={{ headerShown: true, title: "Заблокированные" }}
+            />
+            <Stack.Screen
+              name="disputes"
+              options={{ headerShown: true, title: "Мои споры" }}
+            />
+            <Stack.Screen
               name="compare"
               options={{ headerShown: true, title: "Сравнение" }}
             />

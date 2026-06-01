@@ -16,7 +16,9 @@ import { useIncomingRentals, useUpdateRentalStatus, useMarkIncomingSeen } from "
 import { useOrCreateChat } from "@/hooks/use-chats";
 import RentalStatusBadge from "@/components/RentalStatusBadge";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import DisputeModal from "@/components/DisputeModal";
 import { COLORS, resolveImageUrl } from "@/constants";
+import { RentalRequest } from "@/types";
 
 const MOBILE_BASE = typeof window !== "undefined" ? window.location.origin : "http://localhost:8082";
 
@@ -37,6 +39,7 @@ export default function IncomingRentalsScreen() {
   const { mutate: openChat } = useOrCreateChat();
   const { mutate: markSeen } = useMarkIncomingSeen();
   const [qrToken, setQrToken] = useState<string | null>(null);
+  const [disputeRental, setDisputeRental] = useState<RentalRequest | null>(null);
 
   // Clear "new requests" badge when the user opens this screen
   useEffect(() => {
@@ -166,6 +169,34 @@ export default function IncomingRentalsScreen() {
                   {item.payment_status === "PAID" && !item.return_images?.length && (
                     <Text style={styles.returnPhotoHint}>Ожидается фото возврата</Text>
                   )}
+                  {item.payment_status === "PAID" && !item.dispute && (
+                    <TouchableOpacity
+                      style={styles.disputeBtn}
+                      onPress={() => setDisputeRental(item)}
+                    >
+                      <Ionicons
+                        name="warning-outline"
+                        size={14}
+                        color={COLORS.warning}
+                      />
+                      <Text style={styles.disputeBtnText}>Открыть спор</Text>
+                    </TouchableOpacity>
+                  )}
+                  {item.dispute && (
+                    <TouchableOpacity
+                      style={styles.disputeOpenBtn}
+                      onPress={() => router.push("/disputes" as never)}
+                    >
+                      <Ionicons
+                        name="shield-outline"
+                        size={14}
+                        color={COLORS.warning}
+                      />
+                      <Text style={styles.disputeBtnText}>
+                        {item.dispute.status === "OPEN" ? "Спор открыт" : "Спор закрыт"}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
               )}
             </View>
@@ -179,6 +210,14 @@ export default function IncomingRentalsScreen() {
           </View>
         }
       />
+
+      {disputeRental && (
+        <DisputeModal
+          rental={disputeRental}
+          visible={!!disputeRental}
+          onClose={() => setDisputeRental(null)}
+        />
+      )}
 
       <Modal visible={!!qrToken} transparent animationType="fade" onRequestClose={() => setQrToken(null)}>
         <View style={styles.qrOverlay}>
@@ -301,6 +340,28 @@ const styles = StyleSheet.create({
   completeBtnDisabled: { backgroundColor: COLORS.muted, opacity: 0.5 },
   completeBtnText: { color: COLORS.white, fontWeight: "600", fontSize: 14 },
   returnPhotoHint: { fontSize: 11, color: COLORS.muted, textAlign: "center" },
+  disputeBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingVertical: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: COLORS.warning,
+  },
+  disputeOpenBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingVertical: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: COLORS.warning,
+    backgroundColor: "#fff7ed",
+  },
+  disputeBtnText: { color: COLORS.warning, fontWeight: "600", fontSize: 14 },
   empty: { alignItems: "center", paddingTop: 60, gap: 12 },
   emptyText: { fontSize: 15, color: COLORS.muted },
   qrOverlay: {

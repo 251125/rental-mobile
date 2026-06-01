@@ -3,7 +3,7 @@ import {
   View,
   Text,
   Image,
-  FlatList,
+  Alert,
   TouchableOpacity,
   StyleSheet,
   SafeAreaView,
@@ -18,6 +18,11 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import { COLORS, resolveImageUrl } from "@/constants";
 import { Review } from "@/types";
 import ReportModal from "@/components/ReportModal";
+import {
+  useBlockUser,
+  useUnblockUser,
+  useBlockedUsers,
+} from "@/hooks/use-blocks";
 
 export default function PublicProfileScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -28,6 +33,25 @@ export default function PublicProfileScreen() {
 
   const isMe = me?.id === id;
   const [reportVisible, setReportVisible] = useState(false);
+  const { data: blockedList } = useBlockedUsers();
+  const { mutate: blockUser, isPending: isBlocking } = useBlockUser();
+  const { mutate: unblockUser, isPending: isUnblocking } = useUnblockUser();
+  const isBlocked = !!blockedList?.some((b) => b.blocked_id === id);
+
+  const confirmBlock = () => {
+    Alert.alert(
+      "Заблокировать?",
+      "Вы не сможете писать, звонить или арендовать у этого пользователя, а он — у вас. Это можно отменить в любой момент.",
+      [
+        { text: "Отмена", style: "cancel" },
+        {
+          text: "Заблокировать",
+          style: "destructive",
+          onPress: () => blockUser(id),
+        },
+      ],
+    );
+  };
 
   const handleChat = () => {
     openChat(id, {
@@ -71,18 +95,53 @@ export default function PublicProfileScreen() {
           </Text>
 
           {!isMe && (
-            <View style={styles.actionBtns}>
-              <TouchableOpacity style={styles.chatBtn} onPress={handleChat}>
-                <Ionicons name="chatbubble-outline" size={16} color={COLORS.white} />
-                <Text style={styles.chatBtnText}>Написать</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.reportBtn} onPress={() => setReportVisible(true)}>
-                <Ionicons name="flag-outline" size={16} color={COLORS.danger} />
-                <Text style={styles.reportBtnText}>Жалоба</Text>
-              </TouchableOpacity>
-            </View>
+            <>
+              <View style={styles.actionBtns}>
+                <TouchableOpacity style={styles.chatBtn} onPress={handleChat}>
+                  <Ionicons name="chatbubble-outline" size={16} color={COLORS.white} />
+                  <Text style={styles.chatBtnText}>Написать</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.reportBtn} onPress={() => setReportVisible(true)}>
+                  <Ionicons name="flag-outline" size={16} color={COLORS.danger} />
+                  <Text style={styles.reportBtnText}>Жалоба</Text>
+                </TouchableOpacity>
+              </View>
+              {isBlocked ? (
+                <TouchableOpacity
+                  style={styles.unblockBtn}
+                  onPress={() => unblockUser(id)}
+                  disabled={isUnblocking}
+                >
+                  <Ionicons name="shield-outline" size={14} color={COLORS.warning} />
+                  <Text style={styles.unblockText}>
+                    {isUnblocking ? "Разблокировка..." : "Разблокировать"}
+                  </Text>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  style={styles.blockBtn}
+                  onPress={confirmBlock}
+                  disabled={isBlocking}
+                >
+                  <Ionicons name="ban-outline" size={14} color={COLORS.danger} />
+                  <Text style={styles.blockText}>
+                    {isBlocking ? "Блокировка..." : "Заблокировать"}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </>
           )}
         </View>
+
+        {isBlocked && (
+          <View style={styles.blockedNotice}>
+            <Ionicons name="warning-outline" size={16} color={COLORS.warning} />
+            <Text style={styles.blockedNoticeText}>
+              Вы заблокировали этого пользователя. Связь и аренды между вами
+              недоступны, пока не снимете блокировку.
+            </Text>
+          </View>
+        )}
 
         <ReportModal
           visible={reportVisible}
@@ -172,6 +231,46 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff5f5",
   },
   reportBtnText: { color: COLORS.danger, fontWeight: "600", fontSize: 14 },
+  blockBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    marginTop: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: COLORS.danger,
+    backgroundColor: "#fff5f5",
+  },
+  blockText: { color: COLORS.danger, fontWeight: "600", fontSize: 13 },
+  unblockBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    marginTop: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: COLORS.warning,
+    backgroundColor: "#fff7ed",
+  },
+  unblockText: { color: COLORS.warning, fontWeight: "600", fontSize: 13 },
+  blockedNotice: {
+    flexDirection: "row",
+    gap: 8,
+    backgroundColor: "#fff7ed",
+    borderColor: "#fed7aa",
+    borderWidth: 1,
+    borderRadius: 10,
+    padding: 12,
+    marginHorizontal: 16,
+    marginBottom: 16,
+  },
+  blockedNoticeText: { fontSize: 12, color: COLORS.text, flex: 1, lineHeight: 17 },
   reviewsSection: { paddingHorizontal: 16, paddingBottom: 24 },
   sectionTitle: { fontSize: 16, fontWeight: "700", color: COLORS.text, marginBottom: 12 },
   reviewCard: {
