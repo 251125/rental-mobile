@@ -10,13 +10,40 @@ import React, {
 import { io, Socket } from "socket.io-client";
 import { useAuthStore } from "@/store/auth.store";
 import { SOCKET_URL } from "@/constants";
-import { getToken } from "@/services/api";
+import api, { getToken } from "@/services/api";
 
-// @ts-ignore — RTCPeerConnection available in browser
-const ICE_SERVERS = [
+interface IceServer {
+  urls: string | string[];
+  username?: string;
+  credential?: string;
+}
+
+const FALLBACK_ICE_SERVERS: IceServer[] = [
   { urls: "stun:stun.l.google.com:19302" },
   { urls: "stun:stun1.l.google.com:19302" },
 ];
+
+// Cache fetched servers; re-fetch a minute before HMAC creds expire
+let cachedIce: { servers: IceServer[]; expiresAt: number } | null = null;
+
+async function getIceServers(): Promise<IceServer[]> {
+  const now = Date.now();
+  if (cachedIce && cachedIce.expiresAt - 60_000 > now) {
+    return cachedIce.servers;
+  }
+  try {
+    const { data } = await api.get<{ iceServers: IceServer[]; ttl: number }>(
+      "/calls/ice-servers",
+    );
+    cachedIce = {
+      servers: data.iceServers,
+      expiresAt: now + data.ttl * 1000,
+    };
+    return data.iceServers;
+  } catch {
+    return FALLBACK_ICE_SERVERS;
+  }
+}
 
 export type CallStatus = "idle" | "outgoing" | "incoming" | "active";
 
@@ -99,8 +126,9 @@ export function CallProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const createPC = useCallback(
-    (peerId: string): RTCPeerConnection => {
-      const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
+    async (peerId: string): Promise<RTCPeerConnection> => {
+      const iceServers = await getIceServers();
+      const pc = new RTCPeerConnection({ iceServers });
 
       pc.onicecandidate = ({ candidate }: RTCPeerConnectionIceEvent) => {
         if (candidate) {
@@ -148,7 +176,7 @@ export function CallProvider({ children }: { children: ReactNode }) {
       if (callState.status !== "idle") return;
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       localStreamRef.current = stream;
-      const pc = createPC(calleeId);
+      const pc = await createPC(calleeId);
       stream.getTracks().forEach((t: MediaStreamTrack) => pc.addTrack(t, stream));
       pcRef.current = pc;
       const offer = await pc.createOffer();
@@ -171,7 +199,7 @@ export function CallProvider({ children }: { children: ReactNode }) {
       if (callState.status !== "idle") return;
       const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
       localStreamRef.current = stream;
-      const pc = createPC(calleeId);
+      const pc = await createPC(calleeId);
       stream.getTracks().forEach((t: MediaStreamTrack) => pc.addTrack(t, stream));
       pcRef.current = pc;
       const offer = await pc.createOffer();
@@ -197,7 +225,7 @@ export function CallProvider({ children }: { children: ReactNode }) {
       isVideo ? { video: true, audio: true } : { audio: true },
     );
     localStreamRef.current = stream;
-    const pc = createPC(incoming.callerId);
+    const pc = await createPC(incoming.callerId);
     stream.getTracks().forEach((t: MediaStreamTrack) => pc.addTrack(t, stream));
     pcRef.current = pc;
     await pc.setRemoteDescription(new RTCSessionDescription(incoming.offer));
