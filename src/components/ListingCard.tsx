@@ -6,6 +6,7 @@ import { Listing } from "@/types";
 import { COLORS, resolveImageUrl } from "@/constants";
 import { useCompareStore } from "@/store/compare.store";
 import Toast from "react-native-toast-message";
+import { useT } from "@/i18n/useT";
 
 interface Props {
   listing: Listing;
@@ -14,6 +15,7 @@ interface Props {
 }
 
 export default function ListingCard({ listing, onFavoriteToggle, isFavorite }: Props) {
+  const t = useT();
   const imageUrl = resolveImageUrl(listing.images[0]?.image_url);
   const { add, remove, has, validate, items } = useCompareStore();
   const inCompare = has(listing.id);
@@ -29,7 +31,7 @@ export default function ListingCard({ listing, onFavoriteToggle, isFavorite }: P
       return;
     }
     add(listing);
-    Toast.show({ type: "success", text1: "Добавлено к сравнению" });
+    Toast.show({ type: "success", text1: t("Listing.addedToCompare") });
     if (items.length + 1 >= 2) {
       router.push("/compare");
     }
@@ -86,7 +88,7 @@ export default function ListingCard({ listing, onFavoriteToggle, isFavorite }: P
           📍 {listing.city}
         </Text>
         <View style={styles.footer}>
-          <Text style={styles.price}>{Number(listing.price).toLocaleString()} ₸/день</Text>
+          <Text style={styles.price}>{Number(listing.price).toLocaleString()} ₸/{t("Listing.perDayShort")}</Text>
           <View style={styles.rightMeta}>
             <View style={styles.ratingRow}>
               <Ionicons name="star" size={11} color="#f59e0b" />

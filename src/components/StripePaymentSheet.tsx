@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "@/constants";
+import { useT } from "@/i18n/useT";
 
 interface Props {
   visible: boolean;
@@ -34,6 +35,7 @@ function formatExpiry(v: string) {
 type Step = "form" | "processing" | "success";
 
 export default function StripePaymentSheet({ visible, amount, onClose, onSuccess }: Props) {
+  const t = useT();
   const [step, setStep] = useState<Step>("form");
   const [cardNum, setCardNum] = useState("");
   const [expiry, setExpiry] = useState("");
@@ -47,11 +49,11 @@ export default function StripePaymentSheet({ visible, amount, onClose, onSuccess
 
   const validate = () => {
     const e: Record<string, string> = {};
-    if (cardNum.replace(/\s/g, "").length !== 16) e.card = "Введите 16 цифр";
+    if (cardNum.replace(/\s/g, "").length !== 16) e.card = t("Wallet.errCard16");
     const exp = expiry.replace(/\s\/\s/g, "");
-    if (exp.length !== 4) e.expiry = "Укажите ММ/ГГ";
-    if (cvc.length < 3) e.cvc = "Введите CVC";
-    if (!name.trim()) e.name = "Введите имя";
+    if (exp.length !== 4) e.expiry = t("Wallet.errExpiry");
+    if (cvc.length < 3) e.cvc = t("Wallet.errCvc");
+    if (!name.trim()) e.name = t("Wallet.errName");
     return e;
   };
 
@@ -102,7 +104,7 @@ export default function StripePaymentSheet({ visible, amount, onClose, onSuccess
             <View>
               <Text style={styles.stripeTitle}>Rental Platform</Text>
               <Text style={styles.stripeAmount}>{amount.toLocaleString()} ₸</Text>
-              <Text style={styles.stripeSubtitle}>Пополнение кошелька</Text>
+              <Text style={styles.stripeSubtitle}>{t("Wallet.stripeTopUp")}</Text>
             </View>
             <View style={styles.lockBadge}>
               <Ionicons name="lock-closed" size={12} color="#fff" />
@@ -115,13 +117,13 @@ export default function StripePaymentSheet({ visible, amount, onClose, onSuccess
                 <View style={styles.successCircle}>
                   <Ionicons name="checkmark" size={36} color="#fff" />
                 </View>
-                <Text style={styles.resultTitle}>Оплата прошла!</Text>
-                <Text style={styles.resultSub}>{amount.toLocaleString()} ₸ добавлено на кошелёк</Text>
+                <Text style={styles.resultTitle}>{t("Wallet.paymentDone")}</Text>
+                <Text style={styles.resultSub}>{t("Wallet.addedToWallet", { amount: amount.toLocaleString() })}</Text>
               </View>
             ) : step === "processing" ? (
               <View style={styles.resultWrap}>
                 <ActivityIndicator size="large" color="#635BFF" />
-                <Text style={styles.resultSub}>Обрабатываем платёж...</Text>
+                <Text style={styles.resultSub}>{t("Wallet.processing")}</Text>
               </View>
             ) : (
               <>
@@ -129,13 +131,13 @@ export default function StripePaymentSheet({ visible, amount, onClose, onSuccess
                 <View style={styles.hint}>
                   <Ionicons name="information-circle-outline" size={14} color="#92400e" />
                   <Text style={styles.hintText}>
-                    <Text style={{ fontWeight: "700" }}>Тест: </Text>
+                    <Text style={{ fontWeight: "700" }}>{t("Wallet.testHint")}</Text>
                     4242 4242 4242 4242 · 12/28 · 123
                   </Text>
                 </View>
 
                 {/* Card number */}
-                <Text style={styles.label}>Номер карты</Text>
+                <Text style={styles.label}>{t("Wallet.cardNum")}</Text>
                 <TextInput
                   style={inputStyle(errors.card)}
                   value={cardNum}
@@ -154,12 +156,12 @@ export default function StripePaymentSheet({ visible, amount, onClose, onSuccess
                 {/* Expiry + CVC */}
                 <View style={styles.row}>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.label}>Срок</Text>
+                    <Text style={styles.label}>{t("Wallet.expiryLabel")}</Text>
                     <TextInput
                       ref={expiryRef}
                       style={inputStyle(errors.expiry)}
                       value={expiry}
-                      placeholder="ММ / ГГ"
+                      placeholder={t("Wallet.expiryPlaceholder")}
                       placeholderTextColor={COLORS.muted}
                       keyboardType="number-pad"
                       onChangeText={(v) => {
@@ -195,7 +197,7 @@ export default function StripePaymentSheet({ visible, amount, onClose, onSuccess
                 </View>
 
                 {/* Name */}
-                <Text style={styles.label}>Имя на карте</Text>
+                <Text style={styles.label}>{t("Wallet.cardName")}</Text>
                 <TextInput
                   ref={nameRef}
                   style={inputStyle(errors.name)}
@@ -213,17 +215,17 @@ export default function StripePaymentSheet({ visible, amount, onClose, onSuccess
                 {/* Pay button */}
                 <TouchableOpacity style={styles.payBtn} onPress={handlePay}>
                   <Ionicons name="lock-closed" size={16} color="#fff" />
-                  <Text style={styles.payBtnText}>Оплатить {amount.toLocaleString()} ₸</Text>
+                  <Text style={styles.payBtnText}>{t("Wallet.payBtn")} {amount.toLocaleString()} ₸</Text>
                 </TouchableOpacity>
 
                 {/* Footer */}
                 <View style={styles.footer}>
                   <Ionicons name="shield-checkmark-outline" size={13} color={COLORS.muted} />
-                  <Text style={styles.footerText}>Защищено · </Text>
+                  <Text style={styles.footerText}>{t("Wallet.protectedBy")}</Text>
                   <Text style={[styles.footerText, { fontStyle: "italic", fontWeight: "700", color: "#635BFF" }]}>
                     stripe
                   </Text>
-                  <Text style={styles.footerText}> · Тестовый режим</Text>
+                  <Text style={styles.footerText}>{t("Wallet.testModeStr")}</Text>
                 </View>
               </>
             )}

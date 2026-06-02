@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS, KZ_CITIES } from "@/constants";
+import { useT } from "@/i18n/useT";
 
 interface Props {
   value: string;
@@ -17,7 +18,9 @@ interface Props {
   placeholder?: string;
 }
 
-export default function CityPicker({ value, onChange, placeholder = "Выберите город" }: Props) {
+export default function CityPicker({ value, onChange, placeholder }: Props) {
+  const t = useT();
+  const effectivePlaceholder = placeholder ?? t("Listing.selectCity");
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
 
@@ -36,7 +39,7 @@ export default function CityPicker({ value, onChange, placeholder = "Выбер�
       <TouchableOpacity style={styles.trigger} onPress={() => setOpen(true)}>
         <Ionicons name="location-outline" size={16} color={value ? COLORS.primary : COLORS.muted} />
         <Text style={[styles.triggerText, !value && styles.placeholder]}>
-          {value || placeholder}
+          {value || effectivePlaceholder}
         </Text>
         <Ionicons name="chevron-down" size={16} color={COLORS.muted} />
       </TouchableOpacity>
@@ -44,7 +47,7 @@ export default function CityPicker({ value, onChange, placeholder = "Выбер�
       <Modal visible={open} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setOpen(false)}>
         <View style={styles.sheet}>
           <View style={styles.header}>
-            <Text style={styles.headerTitle}>Выберите город</Text>
+            <Text style={styles.headerTitle}>{t("Listing.selectCity")}</Text>
             <TouchableOpacity onPress={() => { setOpen(false); setSearch(""); }}>
               <Ionicons name="close" size={24} color={COLORS.text} />
             </TouchableOpacity>
@@ -56,7 +59,7 @@ export default function CityPicker({ value, onChange, placeholder = "Выбер�
               style={styles.searchInput}
               value={search}
               onChangeText={setSearch}
-              placeholder="Поиск города..."
+              placeholder={t("Listing.citySearch")}
               placeholderTextColor={COLORS.muted}
               autoFocus
             />

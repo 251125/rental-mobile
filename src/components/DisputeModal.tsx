@@ -18,14 +18,7 @@ import { COLORS, resolveImageUrl } from "@/constants";
 import { RentalRequest } from "@/types";
 import { useOpenDispute } from "@/hooks/use-disputes";
 import { useUploadImage } from "@/hooks/use-listings";
-
-const PRESETS = [
-  "Товар сломан / повреждён",
-  "Товар не соответствует описанию",
-  "Владелец удерживает залог несправедливо",
-  "Арендатор повредил товар",
-  "Арендатор не вернул товар вовремя",
-];
+import { useT } from "@/i18n/useT";
 
 interface Props {
   rental: RentalRequest;
@@ -34,6 +27,14 @@ interface Props {
 }
 
 export default function DisputeModal({ rental, visible, onClose }: Props) {
+  const t = useT();
+  const PRESETS = [
+    t("Dispute.preset1"),
+    t("Dispute.preset2"),
+    t("Dispute.preset3"),
+    t("Dispute.preset4"),
+    t("Dispute.preset5"),
+  ];
   const [reason, setReason] = useState("");
   const [description, setDescription] = useState("");
   const [evidence, setEvidence] = useState<string[]>([]);
@@ -51,14 +52,14 @@ export default function DisputeModal({ rental, visible, onClose }: Props) {
   const pickImage = (source: "gallery" | "camera") => {
     void (async () => {
       if (evidence.length >= 6) {
-        Toast.show({ type: "info", text1: "Максимум 6 фото" });
+        Toast.show({ type: "info", text1: t("Dispute.maxPhotos") });
         return;
       }
       let result: ImagePicker.ImagePickerResult;
       if (source === "camera") {
         const perm = await ImagePicker.requestCameraPermissionsAsync();
         if (perm.status !== "granted") {
-          Toast.show({ type: "error", text1: "Нет доступа к камере" });
+          Toast.show({ type: "error", text1: t("Dispute.noCameraAccess") });
           return;
         }
         result = await ImagePicker.launchCameraAsync({ quality: 0.8 });
@@ -78,7 +79,7 @@ export default function DisputeModal({ rental, visible, onClose }: Props) {
         );
         setEvidence((prev) => [...prev, ...urls].slice(0, 6));
       } catch (e: unknown) {
-        const msg = e instanceof Error ? e.message : "Ошибка загрузки";
+        const msg = e instanceof Error ? e.message : t("Dispute.uploadError");
         Toast.show({ type: "error", text1: msg });
       } finally {
         setUploading(false);
@@ -91,16 +92,16 @@ export default function DisputeModal({ rental, visible, onClose }: Props) {
       pickImage("gallery");
       return;
     }
-    Alert.alert("Фото", "Откуда взять?", [
-      { text: "Галерея", onPress: () => pickImage("gallery") },
-      { text: "Камера", onPress: () => pickImage("camera") },
-      { text: "Отмена", style: "cancel" },
+    Alert.alert(t("Dispute.photoSourceTitle"), t("Dispute.photoSourceMsg"), [
+      { text: t("Dispute.gallery"), onPress: () => pickImage("gallery") },
+      { text: t("Dispute.camera"), onPress: () => pickImage("camera") },
+      { text: t("Common.cancel"), style: "cancel" },
     ]);
   };
 
   const handleSubmit = () => {
     if (reason.trim().length < 3) {
-      Toast.show({ type: "error", text1: "Опишите причину" });
+      Toast.show({ type: "error", text1: t("Dispute.reasonRequired") });
       return;
     }
     openDispute(
@@ -131,7 +132,7 @@ export default function DisputeModal({ rental, visible, onClose }: Props) {
         <View style={styles.card}>
           <View style={styles.header}>
             <Ionicons name="warning-outline" size={22} color={COLORS.warning} />
-            <Text style={styles.title}>Открыть спор</Text>
+            <Text style={styles.title}>{t("Dispute.openTitle")}</Text>
             <TouchableOpacity onPress={handleClose} style={styles.closeBtn}>
               <Ionicons name="close" size={22} color={COLORS.muted} />
             </TouchableOpacity>
@@ -147,7 +148,7 @@ export default function DisputeModal({ rental, visible, onClose }: Props) {
             </Text>
 
             <View>
-              <Text style={styles.label}>Причина</Text>
+              <Text style={styles.label}>{t("Dispute.reason")}</Text>
               <View style={styles.presetRow}>
                 {PRESETS.map((p) => (
                   <TouchableOpacity
@@ -174,13 +175,13 @@ export default function DisputeModal({ rental, visible, onClose }: Props) {
                 value={reason}
                 maxLength={255}
                 onChangeText={setReason}
-                placeholder="Кратко опишите причину"
+                placeholder={t("Dispute.reasonPlaceholder")}
                 placeholderTextColor={COLORS.muted}
               />
             </View>
 
             <View>
-              <Text style={styles.label}>Подробности (необязательно)</Text>
+              <Text style={styles.label}>{t("Dispute.detailsLabel")}</Text>
               <TextInput
                 style={[styles.input, { height: 90 }]}
                 value={description}
@@ -188,13 +189,13 @@ export default function DisputeModal({ rental, visible, onClose }: Props) {
                 maxLength={2000}
                 multiline
                 textAlignVertical="top"
-                placeholder="Что произошло, когда и как"
+                placeholder={t("Dispute.detailsPlaceholder")}
                 placeholderTextColor={COLORS.muted}
               />
             </View>
 
             <View>
-              <Text style={styles.label}>Доказательства (до 6 фото)</Text>
+              <Text style={styles.label}>{t("Dispute.evidenceLabel")}</Text>
               {evidence.length > 0 && (
                 <View style={styles.thumbRow}>
                   {evidence.map((url, i) => (
@@ -228,7 +229,7 @@ export default function DisputeModal({ rental, visible, onClose }: Props) {
                   color={COLORS.primary}
                 />
                 <Text style={styles.attachText}>
-                  {uploading ? "Загрузка..." : "Добавить фото"}
+                  {uploading ? t("Dispute.uploadingDots") : t("Dispute.addPhoto")}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -240,7 +241,7 @@ export default function DisputeModal({ rental, visible, onClose }: Props) {
               onPress={handleClose}
               disabled={isPending}
             >
-              <Text style={styles.cancelText}>Отмена</Text>
+              <Text style={styles.cancelText}>{t("Common.cancel")}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.submitBtn, isPending && { opacity: 0.6 }]}
@@ -248,7 +249,7 @@ export default function DisputeModal({ rental, visible, onClose }: Props) {
               disabled={isPending || uploading}
             >
               <Text style={styles.submitText}>
-                {isPending ? "Отправка..." : "Открыть спор"}
+                {isPending ? t("Dispute.sendingShort") : t("Dispute.submit")}
               </Text>
             </TouchableOpacity>
           </View>

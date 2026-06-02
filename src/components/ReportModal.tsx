@@ -12,6 +12,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { COLORS, API_URL } from "@/constants";
 import api from "@/services/api";
 import Toast from "react-native-toast-message";
+import { useT } from "@/i18n/useT";
 
 type ReportType = "USER" | "LISTING" | "RENTAL";
 
@@ -19,14 +20,6 @@ type ReasonOption = {
   label: string;
   value: string;
 };
-
-const REASONS: ReasonOption[] = [
-  { label: "Спам", value: "SPAM" },
-  { label: "Мошенничество", value: "FRAUD" },
-  { label: "Нарушение правил", value: "INAPPROPRIATE" },
-  { label: "Повреждение", value: "DAMAGE" },
-  { label: "Другое", value: "OTHER" },
-];
 
 interface Props {
   visible: boolean;
@@ -36,6 +29,14 @@ interface Props {
 }
 
 export default function ReportModal({ visible, onClose, type, targetId }: Props) {
+  const t = useT();
+  const REASONS: ReasonOption[] = [
+    { label: t("Report.reasonSpam"), value: "SPAM" },
+    { label: t("Report.reasonFraud"), value: "FRAUD" },
+    { label: t("Report.reasonInappropriate"), value: "INAPPROPRIATE" },
+    { label: t("Report.reasonDamage"), value: "DAMAGE" },
+    { label: t("Report.reasonOther"), value: "OTHER" },
+  ];
   const [selectedReason, setSelectedReason] = useState<string | null>(null);
   const [description, setDescription] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -48,7 +49,7 @@ export default function ReportModal({ visible, onClose, type, targetId }: Props)
 
   const handleSubmit = async () => {
     if (!selectedReason) {
-      Toast.show({ type: "error", text1: "Выберите причину жалобы" });
+      Toast.show({ type: "error", text1: t("Report.errReason") });
       return;
     }
     setIsSubmitting(true);
@@ -59,10 +60,10 @@ export default function ReportModal({ visible, onClose, type, targetId }: Props)
         reason: selectedReason,
         description: description.trim() || undefined,
       });
-      Toast.show({ type: "success", text1: "Жалоба отправлена" });
+      Toast.show({ type: "success", text1: t("Report.okSent") });
       handleClose();
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : "Ошибка отправки";
+      const msg = e instanceof Error ? e.message : t("Report.errSend");
       Toast.show({ type: "error", text1: msg });
     } finally {
       setIsSubmitting(false);
@@ -74,13 +75,13 @@ export default function ReportModal({ visible, onClose, type, targetId }: Props)
       <View style={styles.overlay}>
         <View style={styles.card}>
           <View style={styles.header}>
-            <Text style={styles.title}>Пожаловаться</Text>
+            <Text style={styles.title}>{t("Report.title")}</Text>
             <TouchableOpacity onPress={handleClose} style={styles.closeBtn}>
               <Ionicons name="close" size={22} color={COLORS.muted} />
             </TouchableOpacity>
           </View>
 
-          <Text style={styles.subtitle}>Выберите причину</Text>
+          <Text style={styles.subtitle}>{t("Report.selectReason")}</Text>
 
           {REASONS.map((reason) => (
             <TouchableOpacity
@@ -109,7 +110,7 @@ export default function ReportModal({ visible, onClose, type, targetId }: Props)
             style={styles.descInput}
             value={description}
             onChangeText={setDescription}
-            placeholder="Описание (необязательно)"
+            placeholder={t("Report.descPlaceholder")}
             placeholderTextColor={COLORS.muted}
             multiline
             numberOfLines={3}
@@ -118,7 +119,7 @@ export default function ReportModal({ visible, onClose, type, targetId }: Props)
 
           <View style={styles.btns}>
             <TouchableOpacity style={styles.cancelBtn} onPress={handleClose}>
-              <Text style={styles.cancelBtnText}>Отмена</Text>
+              <Text style={styles.cancelBtnText}>{t("Common.cancel")}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.submitBtn, isSubmitting && { opacity: 0.6 }]}
@@ -128,7 +129,7 @@ export default function ReportModal({ visible, onClose, type, targetId }: Props)
               {isSubmitting ? (
                 <ActivityIndicator color={COLORS.white} size="small" />
               ) : (
-                <Text style={styles.submitBtnText}>Отправить</Text>
+                <Text style={styles.submitBtnText}>{t("Report.submit")}</Text>
               )}
             </TouchableOpacity>
           </View>

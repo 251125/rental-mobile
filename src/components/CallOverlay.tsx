@@ -13,6 +13,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useCall } from "@/providers/CallProvider";
 import { COLORS } from "@/constants";
+import { useT } from "@/i18n/useT";
 
 function useTimer(startTime?: number) {
   const [elapsed, setElapsed] = useState(0);
@@ -27,6 +28,7 @@ function useTimer(startTime?: number) {
 }
 
 export default function CallOverlay() {
+  const t = useT();
   const { callState, acceptCall, rejectCall, endCall, toggleMute, localStreamRef, remoteVideoRef, remoteStreamRef } = useCall();
   const timer = useTimer(callState.startTime);
   const pulseAnim = React.useRef(new Animated.Value(1)).current;
@@ -125,8 +127,8 @@ export default function CallOverlay() {
             )}
             <Text style={styles.peerName}>{peerName}</Text>
             <Text style={styles.statusText}>
-              {status === "incoming" && "Входящий звонок..."}
-              {status === "outgoing" && "Вызов..."}
+              {status === "incoming" && t("Chat.incomingCall")}
+              {status === "outgoing" && t("Chat.outgoingCall")}
               {status === "active" && timer}
             </Text>
 
@@ -147,7 +149,7 @@ export default function CallOverlay() {
                   <TouchableOpacity style={[styles.actionBtn, styles.rejectBtn]} onPress={rejectCall}>
                     <Ionicons name="call" size={28} color="#fff" style={{ transform: [{ rotate: "135deg" }] }} />
                   </TouchableOpacity>
-                  <Text style={styles.actionLabel}>Отклонить</Text>
+                  <Text style={styles.actionLabel}>{t("Chat.callReject")}</Text>
                 </View>
                 <View style={styles.actionItem}>
                   <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
@@ -155,7 +157,7 @@ export default function CallOverlay() {
                       <Ionicons name="call" size={28} color="#fff" />
                     </TouchableOpacity>
                   </Animated.View>
-                  <Text style={styles.actionLabel}>Принять</Text>
+                  <Text style={styles.actionLabel}>{t("Chat.callAccept")}</Text>
                 </View>
               </>
             ) : (
@@ -167,13 +169,13 @@ export default function CallOverlay() {
                   >
                     <Ionicons name={isMuted ? "mic-off" : "mic"} size={24} color={isMuted ? COLORS.danger : COLORS.text} />
                   </TouchableOpacity>
-                  <Text style={styles.actionLabel}>{isMuted ? "Включить" : "Выкл. микр."}</Text>
+                  <Text style={styles.actionLabel}>{isMuted ? t("Chat.micOn") : t("Chat.micOff")}</Text>
                 </View>
                 <View style={styles.actionItem}>
                   <TouchableOpacity style={[styles.actionBtn, styles.rejectBtn]} onPress={endCall}>
                     <Ionicons name="call" size={28} color="#fff" style={{ transform: [{ rotate: "135deg" }] }} />
                   </TouchableOpacity>
-                  <Text style={styles.actionLabel}>Завершить</Text>
+                  <Text style={styles.actionLabel}>{t("Chat.hangup")}</Text>
                 </View>
               </>
             )}

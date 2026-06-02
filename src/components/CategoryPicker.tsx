@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "@/constants";
+import { useT } from "@/i18n/useT";
 
 interface Category {
   id: string;
@@ -26,8 +27,10 @@ export default function CategoryPicker({
   categories,
   value,
   onChange,
-  placeholder = "Выберите категорию",
+  placeholder,
 }: Props) {
+  const t = useT();
+  const effectivePlaceholder = placeholder ?? t("Listing.selectCategory");
   const [open, setOpen] = useState(false);
 
   const selected = categories.find((c) => c.id === value);
@@ -46,7 +49,7 @@ export default function CategoryPicker({
           color={value ? COLORS.primary : COLORS.muted}
         />
         <Text style={[styles.triggerText, !value && styles.placeholder]}>
-          {selected?.name || placeholder}
+          {selected?.name || effectivePlaceholder}
         </Text>
         <Ionicons name="chevron-down" size={16} color={COLORS.muted} />
       </TouchableOpacity>
@@ -59,7 +62,7 @@ export default function CategoryPicker({
       >
         <View style={styles.sheet}>
           <View style={styles.header}>
-            <Text style={styles.headerTitle}>Выберите категорию</Text>
+            <Text style={styles.headerTitle}>{t("Listing.selectCategory")}</Text>
             <TouchableOpacity onPress={() => setOpen(false)}>
               <Ionicons name="close" size={24} color={COLORS.text} />
             </TouchableOpacity>
@@ -91,7 +94,7 @@ export default function CategoryPicker({
             }}
             ItemSeparatorComponent={() => <View style={styles.separator} />}
             ListEmptyComponent={
-              <Text style={styles.empty}>Категории не найдены</Text>
+              <Text style={styles.empty}>{t("Listing.categoryNotFound")}</Text>
             }
           />
         </View>
