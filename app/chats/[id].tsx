@@ -19,6 +19,7 @@ import { COLORS } from "@/constants";
 import { Message } from "@/types";
 import { useCall } from "@/providers/CallProvider";
 import { useT } from "@/i18n/useT";
+import ChatTemplatesSheet from "@/components/ChatTemplatesSheet";
 
 export default function ChatScreen() {
   const t = useT();
@@ -33,6 +34,7 @@ export default function ChatScreen() {
     ? chat.participant1_id === user.id ? chat.participant2 : chat.participant1
     : null;
   const [text, setText] = useState("");
+  const [templatesOpen, setTemplatesOpen] = useState(false);
   const listRef = useRef<FlatList>(null);
   const navigation = useNavigation();
 
@@ -134,6 +136,12 @@ export default function ChatScreen() {
           }
         />
         <View style={styles.inputRow}>
+          <TouchableOpacity
+            style={styles.templatesBtn}
+            onPress={() => setTemplatesOpen(true)}
+          >
+            <Ionicons name="list-outline" size={22} color={COLORS.muted} />
+          </TouchableOpacity>
           <TextInput
             style={styles.input}
             value={text}
@@ -151,6 +159,11 @@ export default function ChatScreen() {
             <Ionicons name="send" size={20} color={COLORS.white} />
           </TouchableOpacity>
         </View>
+        <ChatTemplatesSheet
+          visible={templatesOpen}
+          onClose={() => setTemplatesOpen(false)}
+          onPick={(tpl) => setText((cur) => (cur ? `${cur} ${tpl}` : tpl))}
+        />
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -207,6 +220,12 @@ const styles = StyleSheet.create({
     color: COLORS.text,
     maxHeight: 120,
     backgroundColor: COLORS.background,
+  },
+  templatesBtn: {
+    width: 38,
+    height: 38,
+    justifyContent: "center",
+    alignItems: "center",
   },
   sendBtn: {
     width: 42,

@@ -35,6 +35,7 @@ import TimePicker from "@/components/TimePicker";
 import { saveRecentlyViewed } from "@/lib/recently-viewed";
 import Toast from "react-native-toast-message";
 import { useT } from "@/i18n/useT";
+import BlockDatesManager from "@/components/BlockDatesManager";
 
 const { width, height: screenHeight } = Dimensions.get("window");
 
@@ -220,7 +221,15 @@ export default function ListingDetailScreen() {
   const { mutate: deleteListing } = useDeleteListing();
   const { mutate: openChat } = useOrCreateChat();
   const { user } = useAuthStore();
-  const { data: availability = [], isLoading: isAvailabilityLoading } = useListingAvailability(id);
+  const { data: availabilityData, isLoading: isAvailabilityLoading } = useListingAvailability(id);
+  const availability: ListingAvailability[] = [
+    ...(availabilityData?.requests ?? []),
+    ...(availabilityData?.blocked ?? []).map((b) => ({
+      start_date: b.start_date,
+      end_date: b.end_date,
+    })),
+  ];
+  const blockedDates = availabilityData?.blocked ?? [];
   const { data: similar = [] } = useSimilarListings(id, listing?.category_id ?? "");
   const { add: addCompare, remove: removeCompare, has: hasCompare, validate: validateCompare } =
     useCompareStore();
@@ -463,19 +472,22 @@ export default function ListingDetailScreen() {
         </TouchableOpacity>
 
         {isOwner ? (
-          <View style={styles.ownerActions}>
-            <TouchableOpacity
-              style={styles.editBtn}
-              onPress={() => router.push(`/listings/edit/${listing.id}`)}
-            >
-              <Ionicons name="pencil-outline" size={18} color={COLORS.primary} />
-              <Text style={styles.editBtnText}>{t("Listing.editBtn")}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.deleteBtn} onPress={handleDelete}>
-              <Ionicons name="trash-outline" size={18} color={COLORS.danger} />
-              <Text style={styles.deleteBtnText}>{t("Listing.deleteBtn")}</Text>
-            </TouchableOpacity>
-          </View>
+          <>
+            <View style={styles.ownerActions}>
+              <TouchableOpacity
+                style={styles.editBtn}
+                onPress={() => router.push(`/listings/edit/${listing.id}`)}
+              >
+                <Ionicons name="pencil-outline" size={18} color={COLORS.primary} />
+                <Text style={styles.editBtnText}>{t("Listing.editBtn")}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.deleteBtn} onPress={handleDelete}>
+                <Ionicons name="trash-outline" size={18} color={COLORS.danger} />
+                <Text style={styles.deleteBtnText}>{t("Listing.deleteBtn")}</Text>
+              </TouchableOpacity>
+            </View>
+            <BlockDatesManager listingId={listing.id} blocked={blockedDates} />
+          </>
         ) : (
           <View style={styles.actions}>
             <TouchableOpacity style={styles.chatBtn} onPress={handleChat}>
