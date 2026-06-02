@@ -11,9 +11,10 @@ import {
 import { router, useNavigation } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import { COLORS, resolveImageUrl } from "@/constants";
+import { COLORS } from "@/constants";
 import { useBlockedUsers, useUnblockUser } from "@/hooks/use-blocks";
 import { useT } from "@/i18n/useT";
+import UserAvatar from "@/components/UserAvatar";
 
 export default function BlockedUsersScreen() {
   const t = useT();
@@ -43,24 +44,13 @@ export default function BlockedUsersScreen() {
         keyExtractor={(b) => b.id}
         contentContainerStyle={styles.list}
         renderItem={({ item }) => {
-          const avatarUri = item.blocked.avatar_url
-            ? resolveImageUrl(item.blocked.avatar_url) ?? ""
-            : null;
           return (
             <View style={styles.row}>
               <TouchableOpacity
                 style={styles.userBlock}
                 onPress={() => router.push(`/profile/${item.blocked.id}` as never)}
               >
-                {avatarUri ? (
-                  <Image source={{ uri: avatarUri }} style={styles.avatar} />
-                ) : (
-                  <View style={[styles.avatar, styles.avatarPlaceholder]}>
-                    <Text style={styles.avatarLetter}>
-                      {item.blocked.name.charAt(0).toUpperCase()}
-                    </Text>
-                  </View>
-                )}
+                <UserAvatar url={item.blocked.avatar_url} name={item.blocked.name} size={40} />
                 <View style={{ flex: 1 }}>
                   <Text style={styles.name}>{item.blocked.name}</Text>
                   <Text style={styles.since}>

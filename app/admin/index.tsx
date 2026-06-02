@@ -6,9 +6,9 @@ import {
   TouchableOpacity,
   StyleSheet,
   SafeAreaView,
-  Alert,
   TextInput,
 } from "react-native";
+import { confirm } from "@/lib/confirm";
 import { Ionicons } from "@expo/vector-icons";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/services/api";
@@ -243,14 +243,14 @@ export default function AdminScreen() {
                 {item.id !== user?.id && item.role !== "ADMIN" && (
                   <TouchableOpacity
                     onPress={() =>
-                      Alert.alert(t("Admin.deleteUser"), item.name, [
-                        { text: t("Common.cancel"), style: "cancel" },
-                        {
-                          text: t("Profile.deleteShort"),
-                          style: "destructive",
-                          onPress: () => deleteUser(item.id),
-                        },
-                      ])
+                      confirm({
+                        title: t("Admin.deleteUser"),
+                        message: item.name,
+                        cancelText: t("Common.cancel"),
+                        confirmText: t("Profile.deleteShort"),
+                        destructive: true,
+                        onConfirm: () => deleteUser(item.id),
+                      })
                     }
                   >
                     <Ionicons name="trash-outline" size={20} color={COLORS.danger} />
@@ -288,14 +288,14 @@ export default function AdminScreen() {
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={() =>
-                    Alert.alert(t("Admin.deleteListing"), item.title, [
-                      { text: t("Common.cancel"), style: "cancel" },
-                      {
-                        text: t("Profile.deleteShort"),
-                        style: "destructive",
-                        onPress: () => deleteListing(item.id),
-                      },
-                    ])
+                    confirm({
+                      title: t("Admin.deleteListing"),
+                      message: item.title,
+                      cancelText: t("Common.cancel"),
+                      confirmText: t("Profile.deleteShort"),
+                      destructive: true,
+                      onConfirm: () => deleteListing(item.id),
+                    })
                   }
                 >
                   <Ionicons name="trash-outline" size={20} color={COLORS.danger} />
@@ -462,14 +462,14 @@ export default function AdminScreen() {
                   </Text>
                   <TouchableOpacity
                     onPress={() =>
-                      Alert.alert(t("Admin.deleteCategory"), item.name, [
-                        { text: t("Common.cancel"), style: "cancel" },
-                        {
-                          text: t("Profile.deleteShort"),
-                          style: "destructive",
-                          onPress: () => deleteCategory(item.id),
-                        },
-                      ])
+                      confirm({
+                        title: t("Admin.deleteCategory"),
+                        message: item.name,
+                        cancelText: t("Common.cancel"),
+                        confirmText: t("Profile.deleteShort"),
+                        destructive: true,
+                        onConfirm: () => deleteCategory(item.id),
+                      })
                     }
                   >
                     <Ionicons name="trash-outline" size={18} color={COLORS.danger} />

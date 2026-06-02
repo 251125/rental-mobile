@@ -13,9 +13,10 @@ import { Ionicons } from "@expo/vector-icons";
 import { useMyChats } from "@/hooks/use-chats";
 import { useAuthStore } from "@/store/auth.store";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import { COLORS, resolveImageUrl } from "@/constants";
+import { COLORS } from "@/constants";
 import { Chat } from "@/types";
 import { useT } from "@/i18n/useT";
+import UserAvatar from "@/components/UserAvatar";
 
 export default function ChatsScreen() {
   const t = useT();
@@ -58,24 +59,13 @@ export default function ChatsScreen() {
         renderItem={({ item }) => {
           const other = getOtherParticipant(item);
           const last = getLastMessage(item);
-          const avatarUri = other.avatar_url
-            ? resolveImageUrl(other.avatar_url) ?? ""
-            : null;
           return (
             <TouchableOpacity
               style={styles.chatItem}
               onPress={() => router.push(`/chats/${item.id}`)}
             >
               <View style={styles.avatarWrap}>
-                {avatarUri ? (
-                  <Image source={{ uri: avatarUri }} style={styles.avatar} />
-                ) : (
-                  <View style={[styles.avatar, styles.avatarPlaceholder]}>
-                    <Text style={styles.avatarLetter}>
-                      {other.name[0].toUpperCase()}
-                    </Text>
-                  </View>
-                )}
+                <UserAvatar url={other.avatar_url} name={other.name} size={48} />
               </View>
               <View style={styles.chatInfo}>
                 <Text style={styles.chatName}>{other.name}</Text>

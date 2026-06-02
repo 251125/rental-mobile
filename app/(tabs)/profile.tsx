@@ -2,7 +2,6 @@ import React from "react";
 import {
   View,
   Text,
-  Image,
   TouchableOpacity,
   StyleSheet,
   SafeAreaView,
@@ -13,8 +12,9 @@ import { Ionicons } from "@expo/vector-icons";
 import { useAuthStore } from "@/store/auth.store";
 import { useLogout } from "@/hooks/use-auth";
 import { useIncomingRentalsCount } from "@/hooks/use-rentals";
-import { COLORS, resolveImageUrl } from "@/constants";
+import { COLORS } from "@/constants";
 import { useT } from "@/i18n/useT";
+import UserAvatar from "@/components/UserAvatar";
 
 export default function ProfileScreen() {
   const t = useT();
@@ -22,7 +22,6 @@ export default function ProfileScreen() {
   const { mutate: logout, isPending } = useLogout();
   const { data: incomingCount = 0 } = useIncomingRentalsCount();
 
-  const avatarUri = user?.avatar_url ? resolveImageUrl(user.avatar_url) ?? "" : null;
 
   type IoniconsName =
     | "person-outline"
@@ -102,15 +101,7 @@ export default function ProfileScreen() {
       <ScrollView>
         <View style={styles.profileCard}>
           <View style={styles.avatarWrap}>
-            {avatarUri ? (
-              <Image source={{ uri: avatarUri }} style={styles.avatar} />
-            ) : (
-              <View style={[styles.avatar, styles.avatarPlaceholder]}>
-                <Text style={styles.avatarLetter}>
-                  {user?.name?.[0]?.toUpperCase() ?? "?"}
-                </Text>
-              </View>
-            )}
+            <UserAvatar url={user?.avatar_url} name={user?.name} size={88} />
           </View>
           <Text style={styles.name}>{user?.name}</Text>
           <Text style={styles.email}>{user?.email}</Text>

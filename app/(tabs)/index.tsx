@@ -418,7 +418,7 @@ export default function HomeScreen() {
       {compareItems.length > 0 && (
         <TouchableOpacity
           style={styles.compareFab}
-          onPress={() => router.push("/compare")}
+          onPress={() => router.push("/compare" as never)}
         >
           <Ionicons name="git-compare-outline" size={22} color={COLORS.white} />
           <View style={styles.compareBadge}>

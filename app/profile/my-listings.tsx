@@ -6,8 +6,8 @@ import {
   TouchableOpacity,
   StyleSheet,
   SafeAreaView,
-  Alert,
 } from "react-native";
+import { confirm } from "@/lib/confirm";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
@@ -31,14 +31,13 @@ export default function MyListingsScreen() {
   const [togglingId, setTogglingId] = useState<string | null>(null);
 
   const handlePromote = (id: string, title: string) => {
-    Alert.alert(
-      t("Profile.promoteTitle"),
-      `"${title}"`,
-      [
-        { text: t("Common.cancel"), style: "cancel" },
-        { text: t("Profile.promoteBtn"), onPress: () => promoteListing(id) },
-      ],
-    );
+    confirm({
+      title: t("Profile.promoteTitle"),
+      message: `"${title}"`,
+      cancelText: t("Common.cancel"),
+      confirmText: t("Profile.promoteBtn"),
+      onConfirm: () => promoteListing(id),
+    });
   };
 
   if (isLoading) return <LoadingSpinner />;
@@ -114,14 +113,14 @@ export default function MyListingsScreen() {
               <TouchableOpacity
                 style={styles.deleteBtn}
                 onPress={() =>
-                  Alert.alert(t("Profile.deleteTitle"), t("Profile.deleteMsg"), [
-                    { text: t("Common.cancel"), style: "cancel" },
-                    {
-                      text: t("Profile.deleteShort"),
-                      style: "destructive",
-                      onPress: () => deleteListing(item.id),
-                    },
-                  ])
+                  confirm({
+                    title: t("Profile.deleteTitle"),
+                    message: t("Profile.deleteMsg"),
+                    cancelText: t("Common.cancel"),
+                    confirmText: t("Profile.deleteShort"),
+                    destructive: true,
+                    onConfirm: () => deleteListing(item.id),
+                  })
                 }
               >
                 <Ionicons name="trash-outline" size={14} color={COLORS.danger} />

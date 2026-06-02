@@ -17,7 +17,7 @@ interface Props {
 export default function ListingCard({ listing, onFavoriteToggle, isFavorite }: Props) {
   const t = useT();
   const imageUrl = resolveImageUrl(listing.images[0]?.image_url);
-  const { add, remove, has, validate, items } = useCompareStore();
+  const { add, remove, has, items } = useCompareStore();
   const inCompare = has(listing.id);
 
   const toggleCompare = () => {
@@ -25,15 +25,18 @@ export default function ListingCard({ listing, onFavoriteToggle, isFavorite }: P
       remove(listing.id);
       return;
     }
-    const err = validate(listing);
-    if (err) {
-      Toast.show({ type: "error", text1: err });
+    const result = add(listing);
+    if (!result.ok) {
+      Toast.show({ type: "error", text1: "Можно сравнивать не более 3 объявлений" });
       return;
     }
-    add(listing);
-    Toast.show({ type: "success", text1: t("Listing.addedToCompare") });
+    if (result.reason === "category_switched") {
+      Toast.show({ type: "info", text1: `Сравнение сброшено: «${listing.category.name}»` });
+    } else {
+      Toast.show({ type: "success", text1: t("Listing.addedToCompare") });
+    }
     if (items.length + 1 >= 2) {
-      router.push("/compare");
+      router.push("/compare" as never);
     }
   };
 

@@ -7,7 +7,6 @@ import {
   StyleSheet,
   ScrollView,
   Modal,
-  Alert,
   Dimensions,
   FlatList,
   ActivityIndicator,
@@ -36,6 +35,7 @@ import { saveRecentlyViewed } from "@/lib/recently-viewed";
 import Toast from "react-native-toast-message";
 import { useT } from "@/i18n/useT";
 import BlockDatesManager from "@/components/BlockDatesManager";
+import { confirm } from "@/lib/confirm";
 
 const { width, height: screenHeight } = Dimensions.get("window");
 
@@ -117,7 +117,7 @@ function CalendarPicker({ availability, startDate, endDate, onRangeChange }: Cal
       return;
     }
     if (rangeHasBookedDates(startDate, key, availability)) {
-      Alert.alert(t("Listing.unavailable"), t("Listing.unavailableMsg"));
+      Toast.show({ type: "error", text1: t("Listing.unavailable"), text2: t("Listing.unavailableMsg") });
       return;
     }
     onRangeChange(startDate, key);
@@ -231,7 +231,7 @@ export default function ListingDetailScreen() {
   ];
   const blockedDates = availabilityData?.blocked ?? [];
   const { data: similar = [] } = useSimilarListings(id, listing?.category_id ?? "");
-  const { add: addCompare, remove: removeCompare, has: hasCompare, validate: validateCompare } =
+  const { add: addCompare, remove: removeCompare, has: hasCompare } =
     useCompareStore();
 
   const [rentalModal, setRentalModal] = useState(false);
@@ -302,22 +302,22 @@ export default function ListingDetailScreen() {
       {
         onSuccess: () => {
           closeModal();
-          Alert.alert(t("Listing.successTitle"), t("Listing.rentRequestSent"));
+          Toast.show({ type: "success", text1: t("Listing.successTitle"), text2: t("Listing.rentRequestSent") });
         },
-        onError: (e: Error) => Alert.alert(t("Listing.errorTitle"), e.message),
+        onError: (e: Error) => Toast.show({ type: "error", text1: t("Listing.errorTitle"), text2: e.message }),
       },
     );
   };
 
   const handleDelete = () => {
-    Alert.alert(t("Listing.deleteListingTitle"), t("Listing.deleteListingMsg"), [
-      { text: t("Common.cancel"), style: "cancel" },
-      {
-        text: t("Common.delete"),
-        style: "destructive",
-        onPress: () => deleteListing(listing.id, { onSuccess: () => router.back() }),
-      },
-    ]);
+    confirm({
+      title: t("Listing.deleteListingTitle"),
+      message: t("Listing.deleteListingMsg"),
+      cancelText: t("Common.cancel"),
+      confirmText: t("Common.delete"),
+      destructive: true,
+      onConfirm: () => deleteListing(listing.id, { onSuccess: () => router.back() }),
+    });
   };
 
   const handleChat = () => {
@@ -519,13 +519,16 @@ export default function ListingDetailScreen() {
                   removeCompare(listing.id);
                   return;
                 }
-                const err = validateCompare(listing);
-                if (err) {
-                  Toast.show({ type: "error", text1: err });
+                const result = addCompare(listing);
+                if (!result.ok) {
+                  Toast.show({ type: "error", text1: "Можно сравнивать не более 3 объявлений" });
                   return;
                 }
-                addCompare(listing);
-                Toast.show({ type: "success", text1: t("Listing.addedToCompare") });
+                if (result.reason === "category_switched") {
+                  Toast.show({ type: "info", text1: `Сравнение сброшено: «${listing.category.name}»` });
+                } else {
+                  Toast.show({ type: "success", text1: t("Listing.addedToCompare") });
+                }
               }}
             >
               <Ionicons

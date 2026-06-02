@@ -3,12 +3,12 @@ import {
   View,
   Text,
   Image,
-  Alert,
   TouchableOpacity,
   StyleSheet,
   SafeAreaView,
   ScrollView,
 } from "react-native";
+import { confirm } from "@/lib/confirm";
 import { useLocalSearchParams, router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useUser, useUserReviews } from "@/hooks/use-profile";
@@ -24,6 +24,7 @@ import {
   useBlockedUsers,
 } from "@/hooks/use-blocks";
 import { useT } from "@/i18n/useT";
+import UserAvatar from "@/components/UserAvatar";
 
 export default function PublicProfileScreen() {
   const t = useT();
@@ -41,18 +42,14 @@ export default function PublicProfileScreen() {
   const isBlocked = !!blockedList?.some((b) => b.blocked_id === id);
 
   const confirmBlock = () => {
-    Alert.alert(
-      t("Profile.blockTitle"),
-      t("Profile.blockDesc"),
-      [
-        { text: t("Common.cancel"), style: "cancel" },
-        {
-          text: t("Profile.blockUser"),
-          style: "destructive",
-          onPress: () => blockUser(id),
-        },
-      ],
-    );
+    confirm({
+      title: t("Profile.blockTitle"),
+      message: t("Profile.blockDesc"),
+      cancelText: t("Common.cancel"),
+      confirmText: t("Profile.blockUser"),
+      destructive: true,
+      onConfirm: () => blockUser(id),
+    });
   };
 
   const handleChat = () => {
@@ -64,21 +61,11 @@ export default function PublicProfileScreen() {
   if (isLoading) return <LoadingSpinner />;
   if (!user) return null;
 
-  const avatarUri = user.avatar_url ? resolveImageUrl(user.avatar_url) ?? "" : null;
-
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView>
         <View style={styles.profileCard}>
-          {avatarUri ? (
-            <Image source={{ uri: avatarUri }} style={styles.avatar} />
-          ) : (
-            <View style={[styles.avatar, styles.avatarPlaceholder]}>
-              <Text style={styles.avatarLetter}>
-                {user.name[0].toUpperCase()}
-              </Text>
-            </View>
-          )}
+          <UserAvatar url={user.avatar_url} name={user.name} size={88} />
           <Text style={styles.name}>{user.name}</Text>
           <Text style={styles.email}>{user.email}</Text>
           {user.rating_avg && (

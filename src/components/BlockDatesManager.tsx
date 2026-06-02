@@ -6,8 +6,8 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
-  Alert,
 } from "react-native";
+import { confirm } from "@/lib/confirm";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "@/constants";
 import {
@@ -59,10 +59,14 @@ export default function BlockDatesManager({ listingId, blocked }: Props) {
   };
 
   const confirmUnblock = (id: string) => {
-    Alert.alert(t("Listing.blockTitle"), t("Listing.blockedListTitle"), [
-      { text: t("Common.cancel"), style: "cancel" },
-      { text: t("Common.delete"), style: "destructive", onPress: () => unblock(id) },
-    ]);
+    confirm({
+      title: t("Listing.blockTitle"),
+      message: t("Listing.blockedListTitle"),
+      cancelText: t("Common.cancel"),
+      confirmText: t("Common.delete"),
+      destructive: true,
+      onConfirm: () => unblock(id),
+    });
   };
 
   return (

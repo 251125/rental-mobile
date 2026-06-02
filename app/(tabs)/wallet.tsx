@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import {
-  Alert,
   View,
   Text,
   TouchableOpacity,
@@ -8,6 +7,7 @@ import {
   StyleSheet,
   SafeAreaView,
 } from "react-native";
+import { confirm } from "@/lib/confirm";
 import { Ionicons } from "@expo/vector-icons";
 import { useWallet, useTopUp, useSubscribePremium } from "@/hooks/use-wallet";
 import LoadingSpinner from "@/components/LoadingSpinner";
@@ -57,17 +57,17 @@ export default function WalletScreen() {
   };
 
   const handlePremium = () => {
-    Alert.alert(
-      data?.is_premium ? t("Wallet.premiumExtendTitle") : t("Wallet.premiumActivateTitle"),
-      t("Wallet.premiumConfirmDesc"),
-      [
-        { text: t("Common.cancel"), style: "cancel" },
-        {
-          text: data?.is_premium ? t("Wallet.premiumExtend") : t("Wallet.premiumActivate"),
-          onPress: () => subscribePremium(),
-        },
-      ],
-    );
+    confirm({
+      title: data?.is_premium
+        ? t("Wallet.premiumExtendTitle")
+        : t("Wallet.premiumActivateTitle"),
+      message: t("Wallet.premiumConfirmDesc"),
+      confirmText: data?.is_premium
+        ? t("Wallet.premiumExtend")
+        : t("Wallet.premiumActivate"),
+      cancelText: t("Common.cancel"),
+      onConfirm: () => subscribePremium(),
+    });
   };
 
   const isPositive = (t: TransactionType) =>
