@@ -16,6 +16,7 @@ import { useAuthStore } from "@/store/auth.store";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { COLORS } from "@/constants";
 import { router } from "expo-router";
+import { useT } from "@/i18n/useT";
 
 interface AdminStats {
   total_users: number;
@@ -60,15 +61,16 @@ interface Report {
   reporter: { id: string; name: string };
 }
 
-const REPORT_REASON_LABEL: Record<string, string> = {
-  SPAM: "Спам",
-  FRAUD: "Мошенничество",
-  INAPPROPRIATE: "Неприемлемо",
-  DAMAGE: "Порча имущества",
-  OTHER: "Другое",
-};
 
 export default function AdminScreen() {
+  const t = useT();
+  const REPORT_REASON_LABEL: Record<string, string> = {
+    SPAM: t("Admin.reasonSpam"),
+    FRAUD: t("Admin.reasonFraud"),
+    INAPPROPRIATE: t("Admin.reasonInappropriate"),
+    DAMAGE: t("Admin.reasonDamage"),
+    OTHER: t("Admin.reasonOther"),
+  };
   const { user } = useAuthStore();
   const qc = useQueryClient();
   const [activeTab, setActiveTab] = useState<
@@ -177,14 +179,14 @@ export default function AdminScreen() {
           (tab) => {
             const label =
               tab === "stats"
-                ? "Стат."
+                ? t("Admin.tabStats")
                 : tab === "users"
-                  ? "Польз."
+                  ? t("Admin.tabUsers")
                   : tab === "listings"
-                    ? "Объявл."
+                    ? t("Admin.tabListings")
                     : tab === "categories"
-                      ? "Катег."
-                      : "Жалобы";
+                      ? t("Admin.tabCategories")
+                      : t("Admin.tabReports");
             return (
               <TouchableOpacity
                 key={tab}
@@ -211,10 +213,10 @@ export default function AdminScreen() {
         statsLoading ? <LoadingSpinner /> : (
           <View style={styles.statsGrid}>
             {[
-              { label: "Пользователей", value: stats?.total_users, icon: "people-outline" },
-              { label: "Объявлений", value: stats?.total_listings, icon: "list-outline" },
-              { label: "Аренд", value: stats?.total_rentals, icon: "car-outline" },
-              { label: "Выручка (₸)", value: stats?.total_revenue, icon: "cash-outline" },
+              { label: t("Admin.statsUsers"), value: stats?.total_users, icon: "people-outline" },
+              { label: t("Admin.statsListings"), value: stats?.total_listings, icon: "list-outline" },
+              { label: t("Admin.statsRentals"), value: stats?.total_rentals, icon: "car-outline" },
+              { label: t("Admin.statsRevenue"), value: stats?.total_revenue, icon: "cash-outline" },
             ].map((item) => (
               <View key={item.label} style={styles.statCard}>
                 <Ionicons name={item.icon as any} size={24} color={COLORS.primary} />
@@ -241,10 +243,10 @@ export default function AdminScreen() {
                 {item.id !== user?.id && item.role !== "ADMIN" && (
                   <TouchableOpacity
                     onPress={() =>
-                      Alert.alert("Удалить пользователя?", item.name, [
-                        { text: "Отмена", style: "cancel" },
+                      Alert.alert(t("Admin.deleteUser"), item.name, [
+                        { text: t("Common.cancel"), style: "cancel" },
                         {
-                          text: "Удалить",
+                          text: t("Profile.deleteShort"),
                           style: "destructive",
                           onPress: () => deleteUser(item.id),
                         },
@@ -286,10 +288,10 @@ export default function AdminScreen() {
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={() =>
-                    Alert.alert("Удалить объявление?", item.title, [
-                      { text: "Отмена", style: "cancel" },
+                    Alert.alert(t("Admin.deleteListing"), item.title, [
+                      { text: t("Common.cancel"), style: "cancel" },
                       {
-                        text: "Удалить",
+                        text: t("Profile.deleteShort"),
                         style: "destructive",
                         onPress: () => deleteListing(item.id),
                       },
@@ -333,7 +335,7 @@ export default function AdminScreen() {
                         reportsFilter === f && styles.reportsFilterTextActive,
                       ]}
                     >
-                      {f === "PENDING" ? "Активные" : "Все"}
+                      {f === "PENDING" ? t("Admin.reportsActive") : t("Admin.reportsAll")}
                     </Text>
                   </TouchableOpacity>
                 ))}
@@ -344,10 +346,10 @@ export default function AdminScreen() {
                 <View style={styles.reportHeader}>
                   <Text style={styles.reportType}>
                     {item.type === "USER"
-                      ? "Пользователь"
+                      ? t("Admin.reportTypeUser")
                       : item.type === "LISTING"
-                        ? "Объявление"
-                        : "Аренда"}
+                        ? t("Admin.reportTypeListing")
+                        : t("Admin.reportTypeRental")}
                   </Text>
                   <View
                     style={[
@@ -437,7 +439,7 @@ export default function AdminScreen() {
               style={styles.catInput}
               value={newCatName}
               onChangeText={setNewCatName}
-              placeholder="Название категории"
+              placeholder={t("Admin.categoryNamePlaceholder")}
               placeholderTextColor={COLORS.muted}
             />
             <TouchableOpacity
@@ -460,10 +462,10 @@ export default function AdminScreen() {
                   </Text>
                   <TouchableOpacity
                     onPress={() =>
-                      Alert.alert("Удалить категорию?", item.name, [
-                        { text: "Отмена", style: "cancel" },
+                      Alert.alert(t("Admin.deleteCategory"), item.name, [
+                        { text: t("Common.cancel"), style: "cancel" },
                         {
-                          text: "Удалить",
+                          text: t("Profile.deleteShort"),
                           style: "destructive",
                           onPress: () => deleteCategory(item.id),
                         },

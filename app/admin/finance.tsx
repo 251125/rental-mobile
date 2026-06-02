@@ -15,12 +15,7 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import { COLORS } from "@/constants";
 import { useAuthStore } from "@/store/auth.store";
 import { PlatformFinance, PlatformIncomeSource } from "@/types";
-
-const SOURCE_LABEL: Record<PlatformIncomeSource, string> = {
-  COMMISSION: "Комиссия",
-  PROMOTION: "Продвижение",
-  PREMIUM: "Premium",
-};
+import { useT } from "@/i18n/useT";
 
 const SOURCE_ICON: Record<PlatformIncomeSource, keyof typeof Ionicons.glyphMap> = {
   COMMISSION: "trending-up-outline",
@@ -35,6 +30,12 @@ const SOURCE_COLOR: Record<PlatformIncomeSource, string> = {
 };
 
 export default function AdminFinanceScreen() {
+  const t = useT();
+  const SOURCE_LABEL: Record<PlatformIncomeSource, string> = {
+    COMMISSION: t("Admin.commission"),
+    PROMOTION: t("Admin.promotion"),
+    PREMIUM: t("Admin.premium"),
+  };
   const navigation = useNavigation();
   useEffect(() => {
     navigation.setOptions({
@@ -61,7 +62,7 @@ export default function AdminFinanceScreen() {
       <SafeAreaView style={styles.safe}>
         <View style={styles.denied}>
           <Ionicons name="lock-closed-outline" size={48} color={COLORS.border} />
-          <Text style={styles.deniedText}>Доступ запрещён</Text>
+          <Text style={styles.deniedText}>{t("Admin.denied")}</Text>
         </View>
       </SafeAreaView>
     );
@@ -83,7 +84,7 @@ export default function AdminFinanceScreen() {
             {/* Total */}
             <View style={styles.totalCard}>
               <View>
-                <Text style={styles.totalLabel}>Всего за всё время</Text>
+                <Text style={styles.totalLabel}>{t("Admin.totalAllTime")}</Text>
                 <Text style={styles.totalValue}>
                   {Number(data.total).toLocaleString()} ₸
                 </Text>
@@ -112,7 +113,7 @@ export default function AdminFinanceScreen() {
                     {Number(data.totals[s] ?? 0).toLocaleString()} ₸
                   </Text>
                   <Text style={styles.sourceCount}>
-                    {data.counts[s] ?? 0} опер.
+                    {data.counts[s] ?? 0} {t("Admin.operationsShort")}
                   </Text>
                 </View>
               ))}
@@ -123,14 +124,14 @@ export default function AdminFinanceScreen() {
               <View style={styles.activeCard}>
                 <Ionicons name="diamond" size={22} color="#8b5cf6" />
                 <View>
-                  <Text style={styles.activeLabel}>Активных Premium</Text>
+                  <Text style={styles.activeLabel}>{t("Admin.activePremium")}</Text>
                   <Text style={styles.activeValue}>{data.activePremium}</Text>
                 </View>
               </View>
               <View style={styles.activeCard}>
                 <Ionicons name="rocket" size={22} color={COLORS.warning} />
                 <View>
-                  <Text style={styles.activeLabel}>Продвинутых</Text>
+                  <Text style={styles.activeLabel}>{t("Admin.activePromoted")}</Text>
                   <Text style={styles.activeValue}>{data.activePromoted}</Text>
                 </View>
               </View>
@@ -138,7 +139,7 @@ export default function AdminFinanceScreen() {
 
             {/* Daily bars */}
             <View style={styles.chartCard}>
-              <Text style={styles.chartTitle}>Доход за последние 30 дней</Text>
+              <Text style={styles.chartTitle}>{t("Admin.income30d")}</Text>
               <View style={styles.chartRow}>
                 {data.byDay.map((d) => {
                   const h = Math.max(2, (d.total / maxDay) * 80);
@@ -172,7 +173,7 @@ export default function AdminFinanceScreen() {
               </View>
             </View>
 
-            <Text style={styles.recentTitle}>Последние операции</Text>
+            <Text style={styles.recentTitle}>{t("Admin.recentOps")}</Text>
           </View>
         }
         renderItem={({ item: r }) => (

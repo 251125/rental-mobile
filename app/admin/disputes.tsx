@@ -19,24 +19,15 @@ import { COLORS, resolveImageUrl } from "@/constants";
 import { Dispute, DisputeStatus } from "@/types";
 import { useAdminDisputes, useResolveDispute } from "@/hooks/use-disputes";
 import { useAuthStore } from "@/store/auth.store";
+import { useT } from "@/i18n/useT";
 
-const STATUS_META: Record<
-  DisputeStatus,
-  { label: string; color: string; bg: string }
-> = {
-  OPEN: { label: "Открыт", color: COLORS.warning, bg: "#fff7ed" },
-  RESOLVED_FOR_RENTER: { label: "Арендатору", color: COLORS.success, bg: "#ecfdf5" },
-  RESOLVED_FOR_OWNER: { label: "Владельцу", color: COLORS.success, bg: "#ecfdf5" },
-  RESOLVED_SPLIT: { label: "Разделён", color: COLORS.success, bg: "#ecfdf5" },
-  REJECTED: { label: "Отклонён", color: COLORS.muted, bg: "#f3f4f6" },
+const STATUS_VISUAL: Record<DisputeStatus, { color: string; bg: string }> = {
+  OPEN: { color: COLORS.warning, bg: "#fff7ed" },
+  RESOLVED_FOR_RENTER: { color: COLORS.success, bg: "#ecfdf5" },
+  RESOLVED_FOR_OWNER: { color: COLORS.success, bg: "#ecfdf5" },
+  RESOLVED_SPLIT: { color: COLORS.success, bg: "#ecfdf5" },
+  REJECTED: { color: COLORS.muted, bg: "#f3f4f6" },
 };
-
-const OUTCOMES: { value: DisputeStatus; label: string }[] = [
-  { value: "RESOLVED_FOR_RENTER", label: "Вернуть залог арендатору" },
-  { value: "RESOLVED_FOR_OWNER", label: "Залог остаётся владельцу" },
-  { value: "RESOLVED_SPLIT", label: "Разделить" },
-  { value: "REJECTED", label: "Отклонить спор" },
-];
 
 function Gallery({
   urls,
@@ -63,6 +54,13 @@ function Gallery({
 }
 
 function ResolveForm({ dispute }: { dispute: Dispute }) {
+  const t = useT();
+  const OUTCOMES: { value: DisputeStatus; label: string }[] = [
+    { value: "RESOLVED_FOR_RENTER", label: t("Admin.decisionForRenter") },
+    { value: "RESOLVED_FOR_OWNER", label: t("Admin.decisionForOwner") },
+    { value: "RESOLVED_SPLIT", label: t("Admin.decisionSplit") },
+    { value: "REJECTED", label: t("Admin.decisionReject") },
+  ];
   const deposit = Number(dispute.rentalRequest?.listing?.deposit ?? 0);
   const [outcome, setOutcome] = useState<DisputeStatus>("RESOLVED_FOR_RENTER");
   const [splitText, setSplitText] = useState(String(Math.round(deposit / 2)));
@@ -89,7 +87,7 @@ function ResolveForm({ dispute }: { dispute: Dispute }) {
 
   return (
     <View style={styles.resolveBox}>
-      <Text style={styles.resolveTitle}>Решение</Text>
+      <Text style={styles.resolveTitle}>{t("Dispute.adminDecision")}</Text>
       <View style={styles.outcomeGrid}>
         {OUTCOMES.map((o) => (
           <TouchableOpacity
@@ -127,7 +125,7 @@ function ResolveForm({ dispute }: { dispute: Dispute }) {
           </Text>
         </View>
       )}
-      <Text style={styles.label}>Заметка (необязательно)</Text>
+      <Text style={styles.label}>{t("Rental.commentOpt")}</Text>
       <TextInput
         value={note}
         onChangeText={setNote}
@@ -136,7 +134,7 @@ function ResolveForm({ dispute }: { dispute: Dispute }) {
         maxLength={1000}
         textAlignVertical="top"
         style={[styles.input, { minHeight: 70 }]}
-        placeholder="Обоснование решения"
+        placeholder={t("Admin.adminNotePlaceholder")}
         placeholderTextColor={COLORS.muted}
       />
       <TouchableOpacity
@@ -145,7 +143,7 @@ function ResolveForm({ dispute }: { dispute: Dispute }) {
         onPress={handle}
       >
         <Text style={styles.submitText}>
-          {isPending ? "Применение..." : "Применить решение"}
+          {isPending ? t("Admin.applyingDecision") : t("Admin.applyDecisionBtn")}
         </Text>
       </TouchableOpacity>
     </View>
@@ -153,6 +151,14 @@ function ResolveForm({ dispute }: { dispute: Dispute }) {
 }
 
 export default function AdminDisputesScreen() {
+  const t = useT();
+  const STATUS_LABELS: Record<DisputeStatus, string> = {
+    OPEN: t("Admin.disputeStatusOpen"),
+    RESOLVED_FOR_RENTER: t("Admin.disputeForRenter"),
+    RESOLVED_FOR_OWNER: t("Admin.disputeForOwner"),
+    RESOLVED_SPLIT: t("Admin.disputeSplit"),
+    REJECTED: t("Admin.disputeRejected"),
+  };
   const navigation = useNavigation();
   useEffect(() => {
     navigation.setOptions({
@@ -177,7 +183,7 @@ export default function AdminDisputesScreen() {
       <SafeAreaView style={styles.safe}>
         <View style={styles.denied}>
           <Ionicons name="lock-closed-outline" size={48} color={COLORS.border} />
-          <Text style={styles.deniedText}>Доступ запрещён</Text>
+          <Text style={styles.deniedText}>{t("Admin.denied")}</Text>
         </View>
       </SafeAreaView>
     );
@@ -186,16 +192,16 @@ export default function AdminDisputesScreen() {
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.tabs}>
-        {(["open", "all"] as const).map((t) => (
+        {(["open", "all"] as const).map((tabKey) => (
           <TouchableOpacity
-            key={t}
-            onPress={() => setTab(t)}
-            style={[styles.tab, tab === t && styles.tabActive]}
+            key={tabKey}
+            onPress={() => setTab(tabKey)}
+            style={[styles.tab, tab === tabKey && styles.tabActive]}
           >
             <Text
-              style={[styles.tabText, tab === t && styles.tabTextActive]}
+              style={[styles.tabText, tab === tabKey && styles.tabTextActive]}
             >
-              {t === "open" ? "Открытые" : "Все"}
+              {tabKey === "open" ? t("Admin.tabOpen") : t("Admin.tabAll")}
             </Text>
           </TouchableOpacity>
         ))}
@@ -221,7 +227,8 @@ export default function AdminDisputesScreen() {
           }
           renderItem={({ item: d }) => {
             const r = d.rentalRequest!;
-            const meta = STATUS_META[d.status];
+            const meta = STATUS_VISUAL[d.status];
+            const statusLabel = STATUS_LABELS[d.status];
             const deposit = Number(r.listing.deposit);
             const refund = d.deposit_to_renter == null ? null : Number(d.deposit_to_renter);
 
@@ -248,7 +255,7 @@ export default function AdminDisputesScreen() {
                   </TouchableOpacity>
                   <View style={[styles.badge, { backgroundColor: meta.bg }]}>
                     <Text style={[styles.badgeText, { color: meta.color }]}>
-                      {meta.label}
+                      {statusLabel}
                     </Text>
                   </View>
                 </View>
