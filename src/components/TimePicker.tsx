@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "@/constants";
+import { useT } from "@/i18n/useT";
 
 const ITEM_HEIGHT = 48;
 const VISIBLE = 5;
@@ -74,6 +75,7 @@ const HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, "0"));
 const MINUTES = Array.from({ length: 12 }, (_, i) => String(i * 5).padStart(2, "0"));
 
 export default function TimePicker({ value, onChange, onClear }: Props) {
+  const t = useT();
   const [visible, setVisible] = useState(false);
   const [hour, setHour] = useState(() => (value ? value.split(":")[0] : "10"));
   const [minute, setMinute] = useState(() => (value ? value.split(":")[1] : "00"));
@@ -101,7 +103,7 @@ export default function TimePicker({ value, onChange, onClear }: Props) {
       <TouchableOpacity style={styles.trigger} onPress={open} activeOpacity={0.7}>
         <Ionicons name="time-outline" size={18} color={value ? COLORS.primary : COLORS.muted} />
         <Text style={[styles.triggerText, value ? styles.triggerTextActive : null]}>
-          {value || "Выбрать время возврата"}
+          {value || t("Rental.pickReturnTime")}
         </Text>
         {value ? (
           <TouchableOpacity
@@ -119,7 +121,7 @@ export default function TimePicker({ value, onChange, onClear }: Props) {
         <View style={styles.overlay}>
           <View style={styles.sheet}>
             <View style={styles.sheetHeader}>
-              <Text style={styles.sheetTitle}>Время возврата</Text>
+              <Text style={styles.sheetTitle}>{t("Rental.returnTimeTitle")}</Text>
               <TouchableOpacity onPress={() => setVisible(false)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                 <Ionicons name="close" size={22} color={COLORS.muted} />
               </TouchableOpacity>
@@ -127,12 +129,12 @@ export default function TimePicker({ value, onChange, onClear }: Props) {
 
             <View style={styles.drums}>
               <View style={styles.drumWrap}>
-                <Text style={styles.drumLabel}>Часы</Text>
+                <Text style={styles.drumLabel}>{t("Rental.hours")}</Text>
                 <Drum data={HOURS} selected={hour} onSelect={setHour} />
               </View>
               <Text style={styles.colon}>:</Text>
               <View style={styles.drumWrap}>
-                <Text style={styles.drumLabel}>Минуты</Text>
+                <Text style={styles.drumLabel}>{t("Rental.minutes")}</Text>
                 <Drum data={MINUTES} selected={minute} onSelect={setMinute} />
               </View>
             </View>
@@ -141,10 +143,10 @@ export default function TimePicker({ value, onChange, onClear }: Props) {
 
             <View style={styles.actions}>
               <TouchableOpacity style={styles.clearBtn} onPress={clear}>
-                <Text style={styles.clearBtnText}>Сбросить</Text>
+                <Text style={styles.clearBtnText}>{t("Rental.resetShort")}</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.confirmBtn} onPress={confirm}>
-                <Text style={styles.confirmBtnText}>Готово — {hour}:{minute}</Text>
+                <Text style={styles.confirmBtnText}>{t("Rental.done")} — {hour}:{minute}</Text>
               </TouchableOpacity>
             </View>
           </View>

@@ -13,8 +13,10 @@ import { router, useLocalSearchParams } from "expo-router";
 import { useResetPassword } from "@/hooks/use-auth";
 import Toast from "react-native-toast-message";
 import { COLORS } from "@/constants";
+import { useT } from "@/i18n/useT";
 
 export default function ResetPasswordScreen() {
+  const t = useT();
   const { token } = useLocalSearchParams<{ token: string }>();
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -22,15 +24,15 @@ export default function ResetPasswordScreen() {
 
   const handleSubmit = () => {
     if (!token) {
-      Toast.show({ type: "error", text1: "Ссылка недействительна" });
+      Toast.show({ type: "error", text1: t("Auth.linkInvalid") });
       return;
     }
     if (password.length < 8) {
-      Toast.show({ type: "error", text1: "Пароль минимум 8 символов" });
+      Toast.show({ type: "error", text1: t("Auth.passwordMin8Err") });
       return;
     }
     if (password !== confirm) {
-      Toast.show({ type: "error", text1: "Пароли не совпадают" });
+      Toast.show({ type: "error", text1: t("Auth.passwordsDontMatch") });
       return;
     }
     reset({ token, password });
@@ -40,13 +42,13 @@ export default function ResetPasswordScreen() {
     return (
       <View style={[styles.flex, { justifyContent: "center", padding: 24 }]}>
         <Text style={styles.invalid}>
-          Ссылка для сброса недействительна. Запросите новую.
+          {t("Auth.linkInvalidLong")}
         </Text>
         <TouchableOpacity
           style={styles.btn}
           onPress={() => router.replace("/auth/forgot-password" as never)}
         >
-          <Text style={styles.btnText}>Запросить ссылку</Text>
+          <Text style={styles.btnText}>{t("Auth.requestLink")}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -62,22 +64,22 @@ export default function ResetPasswordScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.header}>
-          <Text style={styles.logo}>Новый пароль</Text>
-          <Text style={styles.subtitle}>Введите новый пароль для аккаунта.</Text>
+          <Text style={styles.logo}>{t("Auth.newPasswordTitle")}</Text>
+          <Text style={styles.subtitle}>{t("Auth.newPasswordHint")}</Text>
         </View>
 
         <View style={styles.form}>
-          <Text style={styles.label}>Пароль</Text>
+          <Text style={styles.label}>{t("Auth.passwordLabel")}</Text>
           <TextInput
             style={styles.input}
             value={password}
             onChangeText={setPassword}
             secureTextEntry
-            placeholder="Не менее 8 символов"
+            placeholder={t("Auth.passwordMin8")}
             placeholderTextColor={COLORS.muted}
           />
 
-          <Text style={styles.label}>Повторите пароль</Text>
+          <Text style={styles.label}>{t("Auth.passwordRepeat")}</Text>
           <TextInput
             style={styles.input}
             value={confirm}
@@ -93,7 +95,7 @@ export default function ResetPasswordScreen() {
             disabled={isPending}
           >
             <Text style={styles.btnText}>
-              {isPending ? "Сохранение..." : "Установить пароль"}
+              {isPending ? t("Auth.savingShort") : t("Auth.setPassword")}
             </Text>
           </TouchableOpacity>
         </View>

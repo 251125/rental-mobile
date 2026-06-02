@@ -3,8 +3,10 @@ import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { router, useNavigation } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "@/constants";
+import { useT } from "@/i18n/useT";
 
 export default function QrScannerScreen() {
+  const t = useT();
   const navigation = useNavigation();
   const containerRef = useRef<View>(null);
   const [status, setStatus] = useState<"scanning" | "error" | "found">("scanning");
@@ -12,7 +14,7 @@ export default function QrScannerScreen() {
   const stopRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
-    navigation.setOptions({ headerTitle: "Сканировать QR" });
+    navigation.setOptions({ headerTitle: t("Profile.scanTitle") });
   }, [navigation]);
 
   const handleFound = useCallback((data: string) => {
@@ -23,7 +25,7 @@ export default function QrScannerScreen() {
       router.replace(`/rentals/scan/${match[1]}` as never);
     } else {
       setStatus("error");
-      setErrorMsg("Неверный QR-код. Наведите камеру снова.");
+      setErrorMsg(t("Profile.scanInvalidQr"));
       setTimeout(() => setStatus("scanning"), 2000);
     }
   }, []);
@@ -105,7 +107,7 @@ export default function QrScannerScreen() {
       .catch(() => {
         if (!stopped) {
           setStatus("error");
-          setErrorMsg("Нет доступа к камере. Разрешите доступ в браузере.");
+          setErrorMsg(t("Profile.scanNoCameraAccess"));
         }
       });
 
@@ -128,7 +130,7 @@ export default function QrScannerScreen() {
             ? errorMsg
             : status === "found"
             ? "QR-код считан!"
-            : "Наведите камеру на QR-код"}
+            : t("Profile.scanPointCamera")}
         </Text>
       </View>
 

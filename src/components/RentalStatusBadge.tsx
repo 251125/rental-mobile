@@ -2,16 +2,14 @@ import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { RentalRequestStatus } from "@/types";
 import { COLORS } from "@/constants";
+import { useT } from "@/i18n/useT";
 
-const STATUS_CONFIG: Record<
-  RentalRequestStatus,
-  { label: string; color: string; bg: string }
-> = {
-  PENDING: { label: "Ожидает", color: COLORS.warning, bg: "#fef3c7" },
-  APPROVED: { label: "Одобрено", color: COLORS.success, bg: "#dcfce7" },
-  REJECTED: { label: "Отклонено", color: COLORS.danger, bg: "#fee2e2" },
-  CANCELLED: { label: "Отменено", color: COLORS.muted, bg: "#f3f4f6" },
-  COMPLETED: { label: "Завершено", color: COLORS.primary, bg: COLORS.primaryLight },
+const STATUS_VISUAL: Record<RentalRequestStatus, { color: string; bg: string }> = {
+  PENDING: { color: COLORS.warning, bg: "#fef3c7" },
+  APPROVED: { color: COLORS.success, bg: "#dcfce7" },
+  REJECTED: { color: COLORS.danger, bg: "#fee2e2" },
+  CANCELLED: { color: COLORS.muted, bg: "#f3f4f6" },
+  COMPLETED: { color: COLORS.primary, bg: COLORS.primaryLight },
 };
 
 export default function RentalStatusBadge({
@@ -19,10 +17,18 @@ export default function RentalStatusBadge({
 }: {
   status: RentalRequestStatus;
 }) {
-  const config = STATUS_CONFIG[status];
+  const t = useT();
+  const labels: Record<RentalRequestStatus, string> = {
+    PENDING: t("Rental.statusPending"),
+    APPROVED: t("Rental.statusApproved"),
+    REJECTED: t("Rental.statusRejected"),
+    CANCELLED: t("Rental.statusCancelled"),
+    COMPLETED: t("Rental.statusCompleted"),
+  };
+  const visual = STATUS_VISUAL[status];
   return (
-    <View style={[styles.badge, { backgroundColor: config.bg }]}>
-      <Text style={[styles.text, { color: config.color }]}>{config.label}</Text>
+    <View style={[styles.badge, { backgroundColor: visual.bg }]}>
+      <Text style={[styles.text, { color: visual.color }]}>{labels[status]}</Text>
     </View>
   );
 }

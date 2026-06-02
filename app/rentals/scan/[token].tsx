@@ -15,8 +15,10 @@ import { COLORS, API_URL, resolveImageUrl } from "@/constants";
 import api from "@/services/api";
 import { RentalRequest } from "@/types";
 import Toast from "react-native-toast-message";
+import { useT } from "@/i18n/useT";
 
 export default function ScanPayScreen() {
+  const t = useT();
   const { token } = useLocalSearchParams<{ token: string }>();
   const { user } = useAuthStore();
 
@@ -31,14 +33,14 @@ export default function ScanPayScreen() {
     setIsLoading(true);
     fetch(`${API_URL}/rental-requests/scan/${token}`)
       .then((r) => {
-        if (!r.ok) throw new Error("Недействительная ссылка");
+        if (!r.ok) throw new Error(t("Rental.scanInvalidLink"));
         return r.json() as Promise<RentalRequest>;
       })
       .then((data) => {
         setRental(data);
         if (data.payment_status === "PAID") setPaid(true);
       })
-      .catch((e: Error) => setError(e.message ?? "Ошибка загрузки"))
+      .catch((e: Error) => setError(e.message ?? t("Rental.scanLoadError")))
       .finally(() => setIsLoading(false));
   }, [token]);
 
@@ -48,10 +50,10 @@ export default function ScanPayScreen() {
     try {
       await api.post(`/wallet/pay/${rental.id}`);
       setPaid(true);
-      Toast.show({ type: "success", text1: "Оплата прошла успешно!" });
+      Toast.show({ type: "success", text1: t("Rental.scanPaymentOk") });
       setTimeout(() => router.replace("/rentals/my" as never), 1500);
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : "Ошибка оплаты";
+      const msg = e instanceof Error ? e.message : t("Rental.scanPaymentErr");
       Toast.show({ type: "error", text1: msg });
     } finally {
       setIsPaying(false);
@@ -70,7 +72,7 @@ export default function ScanPayScreen() {
     return (
       <View style={styles.center}>
         <Ionicons name="alert-circle-outline" size={56} color={COLORS.danger} />
-        <Text style={styles.errorText}>{error ?? "Не найдено"}</Text>
+        <Text style={styles.errorText}>{error ?? t("Rental.scanNotFound")}</Text>
       </View>
     );
   }
@@ -79,21 +81,21 @@ export default function ScanPayScreen() {
     return (
       <View style={styles.center}>
         <Text style={styles.paidEmoji}>🎉</Text>
-        <Text style={styles.paidTitle}>Оплачено!</Text>
-        <Text style={styles.paidSub}>Аренда успешно оплачена</Text>
+        <Text style={styles.paidTitle}>{t("Rental.scanPaid")}</Text>
+        <Text style={styles.paidSub}>{t("Rental.scanPaidSub")}</Text>
         <TouchableOpacity
           style={styles.myRentalsBtn}
           onPress={() => router.replace("/rentals/my" as never)}
         >
-          <Text style={styles.myRentalsBtnText}>Мои аренды</Text>
+          <Text style={styles.myRentalsBtnText}>{t("Rental.scanMyRentals")}</Text>
         </TouchableOpacity>
       </View>
     );
   }
 
   const img = rental.listing.images[0];
-  const startDate = new Date(rental.start_date).toLocaleDateString("ru-RU");
-  const endDate = new Date(rental.end_date).toLocaleDateString("ru-RU");
+  const startDate = new Date(rental.start_date).toLocaleDateString();
+  const endDate = new Date(rental.end_date).toLocaleDateString();
   const deposit = Number(rental.deposit ?? 0);
   const totalCharge = Number(rental.total_price) + deposit;
 
@@ -120,7 +122,7 @@ export default function ScanPayScreen() {
       <View style={styles.infoCard}>
         <View style={styles.infoRow}>
           <Ionicons name="calendar-outline" size={18} color={COLORS.primary} />
-          <Text style={styles.infoLabel}>Период аренды</Text>
+          <Text style={styles.infoLabel}>{t("Rental.scanRentalPeriod")}</Text>
           <Text style={styles.infoValue}>
             {startDate} — {endDate}
           </Text>
@@ -128,7 +130,7 @@ export default function ScanPayScreen() {
         <View style={styles.divider} />
         <View style={styles.infoRow}>
           <Ionicons name="pricetag-outline" size={18} color={COLORS.primary} />
-          <Text style={styles.infoLabel}>Стоимость аренды</Text>
+          <Text style={styles.infoLabel}>{t("Rental.scanRentalCost")}</Text>
           <Text style={styles.infoValue}>{Number(rental.total_price).toLocaleString()} ₸</Text>
         </View>
         {deposit > 0 && (
@@ -137,8 +139,8 @@ export default function ScanPayScreen() {
             <View style={styles.infoRow}>
               <Ionicons name="shield-outline" size={18} color={COLORS.warning} />
               <View style={{ flex: 1 }}>
-                <Text style={styles.infoLabel}>Залог</Text>
-                <Text style={styles.depositNote}>возвращается после завершения</Text>
+                <Text style={styles.infoLabel}>{t("Listing.deposit")}</Text>
+                <Text style={styles.depositNote}>{t("Rental.scanDepositReturned")}</Text>
               </View>
               <Text style={styles.infoValue}>{deposit.toLocaleString()} ₸</Text>
             </View>
@@ -147,7 +149,7 @@ export default function ScanPayScreen() {
         <View style={styles.divider} />
         <View style={styles.infoRow}>
           <Ionicons name="cash-outline" size={18} color={COLORS.primary} />
-          <Text style={styles.infoLabel}>Итого к оплате</Text>
+          <Text style={styles.infoLabel}>{t("Rental.scanTotalToPay")}</Text>
           <Text style={[styles.infoValue, styles.totalPrice]}>
             {totalCharge.toLocaleString()} ₸
           </Text>
@@ -156,7 +158,7 @@ export default function ScanPayScreen() {
 
       {rental.renter && (
         <View style={styles.renterCard}>
-          <Text style={styles.renterCardTitle}>Арендатор</Text>
+          <Text style={styles.renterCardTitle}>{t("Rental.scanRenter")}</Text>
           <View style={styles.renterRow}>
             {rental.renter.avatar_url ? (
               <Image
@@ -177,10 +179,10 @@ export default function ScanPayScreen() {
 
       {!user ? (
         <View style={styles.loginPrompt}>
-          <Text style={styles.loginPromptText}>Войдите чтобы оплатить</Text>
+          <Text style={styles.loginPromptText}>{t("Rental.scanLoginToPay")}</Text>
           <Link href="/auth/login" asChild>
             <TouchableOpacity style={styles.loginBtn}>
-              <Text style={styles.loginBtnText}>Войти</Text>
+              <Text style={styles.loginBtnText}>{t("Rental.scanLoginBtn")}</Text>
             </TouchableOpacity>
           </Link>
         </View>
@@ -193,7 +195,7 @@ export default function ScanPayScreen() {
           {isPaying ? (
             <ActivityIndicator color={COLORS.white} />
           ) : (
-            <Text style={styles.payBtnText}>Оплатить {totalCharge.toLocaleString()} ₸</Text>
+            <Text style={styles.payBtnText}>{t("Rental.scanPayBtn")} {totalCharge.toLocaleString()} ₸</Text>
           )}
         </TouchableOpacity>
       )}

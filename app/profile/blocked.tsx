@@ -13,8 +13,10 @@ import { Ionicons } from "@expo/vector-icons";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { COLORS, resolveImageUrl } from "@/constants";
 import { useBlockedUsers, useUnblockUser } from "@/hooks/use-blocks";
+import { useT } from "@/i18n/useT";
 
 export default function BlockedUsersScreen() {
+  const t = useT();
   const navigation = useNavigation();
   useEffect(() => {
     navigation.setOptions({
@@ -62,8 +64,7 @@ export default function BlockedUsersScreen() {
                 <View style={{ flex: 1 }}>
                   <Text style={styles.name}>{item.blocked.name}</Text>
                   <Text style={styles.since}>
-                    Заблокирован{" "}
-                    {new Date(item.created_at).toLocaleDateString("ru-RU")}
+                    {new Date(item.created_at).toLocaleDateString()}
                   </Text>
                 </View>
               </TouchableOpacity>
@@ -73,7 +74,7 @@ export default function BlockedUsersScreen() {
                 disabled={isPending}
               >
                 <Ionicons name="shield-outline" size={14} color={COLORS.warning} />
-                <Text style={styles.unblockText}>Разблок.</Text>
+                <Text style={styles.unblockText}>{t("Profile.unblockShort")}</Text>
               </TouchableOpacity>
             </View>
           );
@@ -81,7 +82,7 @@ export default function BlockedUsersScreen() {
         ListEmptyComponent={
           <View style={styles.empty}>
             <Ionicons name="ban-outline" size={48} color={COLORS.border} />
-            <Text style={styles.emptyText}>Список пуст</Text>
+            <Text style={styles.emptyText}>{t("Profile.blockedEmpty")}</Text>
           </View>
         }
       />
