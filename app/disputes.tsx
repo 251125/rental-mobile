@@ -21,44 +21,28 @@ import { Dispute, DisputeStatus } from "@/types";
 import { useMyDisputes, useAddDisputeEvidence } from "@/hooks/use-disputes";
 import { useUploadImage } from "@/hooks/use-listings";
 import { useAuthStore } from "@/store/auth.store";
+import { useT } from "@/i18n/useT";
 
-const STATUS_META: Record<
+const STATUS_VISUAL: Record<
   DisputeStatus,
-  { label: string; color: string; bg: string; icon: keyof typeof Ionicons.glyphMap }
+  { color: string; bg: string; icon: keyof typeof Ionicons.glyphMap }
 > = {
-  OPEN: {
-    label: "На рассмотрении",
-    color: COLORS.warning,
-    bg: "#fff7ed",
-    icon: "time-outline",
-  },
-  RESOLVED_FOR_RENTER: {
-    label: "В пользу арендатора",
-    color: COLORS.success,
-    bg: "#ecfdf5",
-    icon: "checkmark-circle-outline",
-  },
-  RESOLVED_FOR_OWNER: {
-    label: "В пользу владельца",
-    color: COLORS.success,
-    bg: "#ecfdf5",
-    icon: "checkmark-circle-outline",
-  },
-  RESOLVED_SPLIT: {
-    label: "Разделён",
-    color: COLORS.success,
-    bg: "#ecfdf5",
-    icon: "checkmark-circle-outline",
-  },
-  REJECTED: {
-    label: "Отклонён",
-    color: COLORS.muted,
-    bg: "#f3f4f6",
-    icon: "close-circle-outline",
-  },
+  OPEN: { color: COLORS.warning, bg: "#fff7ed", icon: "time-outline" },
+  RESOLVED_FOR_RENTER: { color: COLORS.success, bg: "#ecfdf5", icon: "checkmark-circle-outline" },
+  RESOLVED_FOR_OWNER: { color: COLORS.success, bg: "#ecfdf5", icon: "checkmark-circle-outline" },
+  RESOLVED_SPLIT: { color: COLORS.success, bg: "#ecfdf5", icon: "checkmark-circle-outline" },
+  REJECTED: { color: COLORS.muted, bg: "#f3f4f6", icon: "close-circle-outline" },
 };
 
 export default function MyDisputesScreen() {
+  const t = useT();
+  const STATUS_LABELS: Record<DisputeStatus, string> = {
+    OPEN: t("Dispute.statusOpen"),
+    RESOLVED_FOR_RENTER: t("Dispute.statusForRenter"),
+    RESOLVED_FOR_OWNER: t("Dispute.statusForOwner"),
+    RESOLVED_SPLIT: t("Dispute.statusSplit"),
+    REJECTED: t("Dispute.statusRejected"),
+  };
   const navigation = useNavigation();
   useEffect(() => {
     navigation.setOptions({
@@ -86,7 +70,7 @@ export default function MyDisputesScreen() {
       if (source === "camera") {
         const perm = await ImagePicker.requestCameraPermissionsAsync();
         if (perm.status !== "granted") {
-          Toast.show({ type: "error", text1: "Нет доступа к камере" });
+          Toast.show({ type: "error", text1: t("Dispute.noCameraAccess") });
           return;
         }
         result = await ImagePicker.launchCameraAsync({ quality: 0.8 });
@@ -106,7 +90,7 @@ export default function MyDisputesScreen() {
         );
         addEvidence({ id: dispute.id, images: urls });
       } catch (e: unknown) {
-        const msg = e instanceof Error ? e.message : "Ошибка загрузки";
+        const msg = e instanceof Error ? e.message : t("Dispute.uploadError");
         Toast.show({ type: "error", text1: msg });
       } finally {
         setUploadingId(null);
@@ -117,10 +101,10 @@ export default function MyDisputesScreen() {
       void pick("gallery");
       return;
     }
-    Alert.alert("Доказательства", "Откуда взять?", [
-      { text: "Галерея", onPress: () => void pick("gallery") },
-      { text: "Камера", onPress: () => void pick("camera") },
-      { text: "Отмена", style: "cancel" },
+    Alert.alert(t("Dispute.evidenceTitle"), t("Dispute.evidenceFrom"), [
+      { text: t("Dispute.gallery"), onPress: () => void pick("gallery") },
+      { text: t("Dispute.camera"), onPress: () => void pick("camera") },
+      { text: t("Common.cancel"), style: "cancel" },
     ]);
   };
 
@@ -137,7 +121,8 @@ export default function MyDisputesScreen() {
           const iAmRenter = r.renter_id === me?.id;
           const myEvidence = iAmRenter ? d.renter_evidence : d.owner_evidence;
           const theirEvidence = iAmRenter ? d.owner_evidence : d.renter_evidence;
-          const meta = STATUS_META[d.status];
+          const meta = STATUS_VISUAL[d.status];
+          const statusLabel = STATUS_LABELS[d.status];
           const deposit = Number(r.listing.deposit);
           const refund = d.deposit_to_renter == null ? null : Number(d.deposit_to_renter);
 
@@ -168,15 +153,14 @@ export default function MyDisputesScreen() {
                       {d.reason}
                     </Text>
                     <Text style={styles.meta}>
-                      Открыт {new Date(d.created_at).toLocaleDateString("ru-RU")} • Залог:{" "}
-                      {deposit.toLocaleString()} ₸
+                      {t("Dispute.depositLine", { date: new Date(d.created_at).toLocaleDateString(), amount: deposit.toLocaleString() })}
                     </Text>
                   </View>
                 </TouchableOpacity>
                 <View style={[styles.badge, { backgroundColor: meta.bg }]}>
                   <Ionicons name={meta.icon} size={12} color={meta.color} />
                   <Text style={[styles.badgeText, { color: meta.color }]}>
-                    {meta.label}
+                    {statusLabel}
                   </Text>
                 </View>
               </View>
@@ -190,7 +174,7 @@ export default function MyDisputesScreen() {
               <View style={styles.evidenceRow}>
                 <View style={styles.evidenceCol}>
                   <Text style={styles.evidenceLabel}>
-                    Ваши фото ({myEvidence.length})
+                    {t("Dispute.yourPhotos", { count: myEvidence.length })}
                   </Text>
                   <EvidenceGallery urls={myEvidence} onPick={setLightbox} />
                   {d.status === "OPEN" && (
@@ -209,14 +193,16 @@ export default function MyDisputesScreen() {
                         color={COLORS.primary}
                       />
                       <Text style={styles.addBtnText}>
-                        {uploadingId === d.id ? "Загрузка..." : "Добавить"}
+                        {uploadingId === d.id ? t("Dispute.uploadingDots") : t("Dispute.addBtn")}
                       </Text>
                     </TouchableOpacity>
                   )}
                 </View>
                 <View style={styles.evidenceCol}>
                   <Text style={styles.evidenceLabel}>
-                    Фото {iAmRenter ? "владельца" : "арендатора"} ({theirEvidence.length})
+                    {iAmRenter
+                      ? t("Dispute.theirOwnerPhotos", { count: theirEvidence.length })
+                      : t("Dispute.theirRenterPhotos", { count: theirEvidence.length })}
                   </Text>
                   <EvidenceGallery urls={theirEvidence} onPick={setLightbox} />
                 </View>
@@ -224,11 +210,10 @@ export default function MyDisputesScreen() {
 
               {d.status !== "OPEN" && (
                 <View style={styles.resolutionBox}>
-                  <Text style={styles.resolutionTitle}>Решение администрации</Text>
+                  <Text style={styles.resolutionTitle}>{t("Dispute.adminDecision")}</Text>
                   {refund !== null && (
                     <Text style={styles.resolutionText}>
-                      Арендатору: {refund.toLocaleString()} ₸ • Владельцу:{" "}
-                      {(deposit - refund).toLocaleString()} ₸
+                      {t("Dispute.decisionSplit", { renter: refund.toLocaleString(), owner: (deposit - refund).toLocaleString() })}
                     </Text>
                   )}
                   {d.admin_note ? (
@@ -242,7 +227,7 @@ export default function MyDisputesScreen() {
         ListEmptyComponent={
           <View style={styles.empty}>
             <Ionicons name="shield-checkmark-outline" size={48} color={COLORS.border} />
-            <Text style={styles.emptyText}>Споров пока нет</Text>
+            <Text style={styles.emptyText}>{t("Dispute.empty")}</Text>
           </View>
         }
       />
@@ -278,8 +263,9 @@ function EvidenceGallery({
   urls: string[];
   onPick: (u: string) => void;
 }) {
+  const t = useT();
   if (!urls.length) {
-    return <Text style={styles.emptyEvidence}>Нет фото</Text>;
+    return <Text style={styles.emptyEvidence}>{t("Dispute.noPhotos")}</Text>;
   }
   return (
     <View style={styles.thumbRow}>

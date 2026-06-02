@@ -14,8 +14,10 @@ import * as ImagePicker from "expo-image-picker";
 import { useAuthStore } from "@/store/auth.store";
 import { useUpdateProfile } from "@/hooks/use-profile";
 import { COLORS, resolveImageUrl } from "@/constants";
+import { useT } from "@/i18n/useT";
 
 export default function EditProfileScreen() {
+  const t = useT();
   const { user } = useAuthStore();
   const { mutate: updateProfile, isPending } = useUpdateProfile();
 
@@ -74,26 +76,26 @@ export default function EditProfileScreen() {
               <Ionicons name="camera" size={16} color={COLORS.white} />
             </View>
           </TouchableOpacity>
-          <Text style={styles.avatarHint}>Нажмите, чтобы изменить фото</Text>
+          <Text style={styles.avatarHint}>{t("Profile.avatarHint")}</Text>
         </View>
 
-        <Text style={styles.label}>Имя</Text>
+        <Text style={styles.label}>{t("Auth.name")}</Text>
         <TextInput
           style={styles.input}
           value={name}
           onChangeText={setName}
-          placeholder="Ваше имя"
+          placeholder={t("Profile.yourName")}
           placeholderTextColor={COLORS.muted}
         />
 
-        <Text style={styles.label}>Email</Text>
+        <Text style={styles.label}>{t("Auth.email")}</Text>
         <TextInput
           style={[styles.input, styles.inputDisabled]}
           value={user?.email ?? ""}
           editable={false}
           placeholderTextColor={COLORS.muted}
         />
-        <Text style={styles.hint}>Email нельзя изменить</Text>
+        <Text style={styles.hint}></Text>
 
         <TouchableOpacity
           style={[styles.saveBtn, isPending && { opacity: 0.6 }]}
@@ -101,7 +103,7 @@ export default function EditProfileScreen() {
           disabled={isPending}
         >
           <Text style={styles.saveBtnText}>
-            {isPending ? "Сохраняем..." : "Сохранить"}
+            {isPending ? t("Profile.saving") : t("Profile.save")}
           </Text>
         </TouchableOpacity>
       </View>

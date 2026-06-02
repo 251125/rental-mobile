@@ -16,8 +16,10 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import { COLORS, resolveImageUrl } from "@/constants";
 import Toast from "react-native-toast-message";
 import CityPicker from "@/components/CityPicker";
+import { useT } from "@/i18n/useT";
 
 export default function EditListingScreen() {
+  const t = useT();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data: listing, isLoading } = useListing(id);
   const { data: categories } = useCategories();
@@ -77,11 +79,11 @@ export default function EditListingScreen() {
       { id, data: formData },
       {
         onSuccess: () => {
-          Toast.show({ type: "success", text1: "Объявление обновлено" });
+          Toast.show({ type: "success", text1: t("Listing.updateOk") });
           router.back();
         },
         onError: (err) => {
-          Toast.show({ type: "error", text1: err.message ?? "Ошибка" });
+          Toast.show({ type: "error", text1: err.message ?? t("Listing.genericError") });
         },
       },
     );
@@ -93,10 +95,10 @@ export default function EditListingScreen() {
   return (
     <ScrollView style={styles.container} keyboardShouldPersistTaps="handled">
       <View style={styles.section}>
-        <Text style={styles.label}>Заголовок</Text>
+        <Text style={styles.label}>{t("Listing.titleLabel")}</Text>
         <TextInput style={styles.input} value={title} onChangeText={setTitle} placeholderTextColor={COLORS.muted} />
 
-        <Text style={styles.label}>Описание</Text>
+        <Text style={styles.label}>{t("Listing.description")}</Text>
         <TextInput
           style={[styles.input, styles.textarea]}
           value={description}
@@ -107,16 +109,16 @@ export default function EditListingScreen() {
           placeholderTextColor={COLORS.muted}
         />
 
-        <Text style={styles.label}>Цена (₸/день)</Text>
+        <Text style={styles.label}>{t("Listing.priceLabel")}</Text>
         <TextInput style={styles.input} value={price} onChangeText={setPrice} keyboardType="numeric" placeholderTextColor={COLORS.muted} />
 
-        <Text style={styles.label}>Залог (₸)</Text>
+        <Text style={styles.label}>{t("Listing.depositLabel")}</Text>
         <TextInput style={styles.input} value={deposit} onChangeText={setDeposit} keyboardType="numeric" placeholderTextColor={COLORS.muted} />
 
-        <Text style={styles.label}>Город</Text>
+        <Text style={styles.label}>{t("Listing.city")}</Text>
         <CityPicker value={city} onChange={setCity} />
 
-        <Text style={styles.label}>Категория</Text>
+        <Text style={styles.label}>{t("Listing.category")}</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           {categories?.map((cat) => (
             <TouchableOpacity
@@ -131,7 +133,7 @@ export default function EditListingScreen() {
           ))}
         </ScrollView>
 
-        <Text style={styles.label}>Текущие фото</Text>
+        <Text style={styles.label}>{t("Listing.currentPhotos")}</Text>
         <View style={styles.imagesGrid}>
           {listing.images.map((img) => (
             <Image
@@ -142,7 +144,7 @@ export default function EditListingScreen() {
           ))}
         </View>
 
-        <Text style={styles.label}>Добавить новые фото</Text>
+        <Text style={styles.label}>{t("Listing.addNewPhotos")}</Text>
         <View style={styles.imagesGrid}>
           {newImages.map((uri) => (
             <View key={uri} style={styles.imgWrap}>
@@ -167,7 +169,7 @@ export default function EditListingScreen() {
           onPress={handleSave}
           disabled={isPending}
         >
-          <Text style={styles.submitText}>{isPending ? "Сохраняем..." : "Сохранить"}</Text>
+          <Text style={styles.submitText}>{isPending ? t("Listing.savingShort") : t("Listing.saveBtn")}</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>

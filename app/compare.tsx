@@ -12,26 +12,27 @@ import { router, useNavigation } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useCompareStore } from "@/store/compare.store";
 import { COLORS, resolveImageUrl } from "@/constants";
+import { useT } from "@/i18n/useT";
 
 const { width } = Dimensions.get("window");
 const COL = Math.max((width - 32) / 3, 100);
 
-const ROWS: { label: string; key: string; format?: (v: unknown) => string }[] = [
-  { label: "Цена/день", key: "price", format: (v) => `${Number(v).toLocaleString()} ₸` },
-  { label: "Залог", key: "deposit", format: (v) => `${Number(v).toLocaleString()} ₸` },
-  { label: "Рейтинг", key: "rating_avg", format: (v) => v ? `★ ${parseFloat(String(v)).toFixed(1)}` : "—" },
-  { label: "Просмотры", key: "views_count", format: (v) => String(v) },
-  { label: "Город", key: "city" },
-  { label: "Категория", key: "category", format: (v) => (v as { name: string })?.name ?? "—" },
-];
-
 export default function CompareScreen() {
+  const t = useT();
+  const ROWS: { label: string; key: string; format?: (v: unknown) => string }[] = [
+    { label: t("Compare.rowPrice"), key: "price", format: (v) => `${Number(v).toLocaleString()} ₸` },
+    { label: t("Compare.rowDeposit"), key: "deposit", format: (v) => `${Number(v).toLocaleString()} ₸` },
+    { label: t("Compare.rowRating"), key: "rating_avg", format: (v) => v ? `★ ${parseFloat(String(v)).toFixed(1)}` : "—" },
+    { label: t("Compare.rowViews"), key: "views_count", format: (v) => String(v) },
+    { label: t("Compare.rowCity"), key: "city" },
+    { label: t("Compare.rowCategory"), key: "category", format: (v) => (v as { name: string })?.name ?? "—" },
+  ];
   const navigation = useNavigation();
   const { items, remove, clear } = useCompareStore();
 
   useEffect(() => {
     navigation.setOptions({
-      title: "Сравнение",
+      title: t("Compare.title"),
       headerLeft: () => (
         <TouchableOpacity
           onPress={() => navigation.canGoBack() ? navigation.goBack() : router.replace("/(tabs)")}
@@ -48,7 +49,7 @@ export default function CompareScreen() {
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             style={{ marginRight: 4 }}
           >
-            <Text style={{ fontSize: 13, color: COLORS.danger, fontWeight: "600" }}>Очистить</Text>
+            <Text style={{ fontSize: 13, color: COLORS.danger, fontWeight: "600" }}>{t("Compare.clear")}</Text>
           </TouchableOpacity>
         ) : null,
     });
@@ -58,14 +59,12 @@ export default function CompareScreen() {
     return (
       <View style={styles.empty}>
         <Ionicons name="git-compare-outline" size={56} color={COLORS.border} />
-        <Text style={styles.emptyTitle}>Нет объявлений для сравнения</Text>
+        <Text style={styles.emptyTitle}>{t("Compare.emptyTitle")}</Text>
         <Text style={styles.emptyText}>
-          Нажмите{" "}
-          <Ionicons name="git-compare-outline" size={14} color={COLORS.muted} />
-          {" "}на карточке объявления чтобы добавить его сюда
+          {t("Compare.emptyHint")}
         </Text>
         <TouchableOpacity style={styles.browseBtn} onPress={() => router.replace("/(tabs)")}>
-          <Text style={styles.browseBtnText}>Смотреть объявления</Text>
+          <Text style={styles.browseBtnText}>{t("Compare.browseBtn")}</Text>
         </TouchableOpacity>
       </View>
     );

@@ -20,8 +20,10 @@ import { usePromoteListing } from "@/hooks/use-wallet";
 import ListingCard from "@/components/ListingCard";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { COLORS } from "@/constants";
+import { useT } from "@/i18n/useT";
 
 export default function MyListingsScreen() {
+  const t = useT();
   const { data, isLoading } = useMyListings();
   const { mutate: deleteListing } = useDeleteListing();
   const { mutate: setVisibility } = useSetListingVisibility();
@@ -30,11 +32,11 @@ export default function MyListingsScreen() {
 
   const handlePromote = (id: string, title: string) => {
     Alert.alert(
-      "Продвинуть объявление?",
-      `Спишется 500 ₸ с баланса. "${title}" попадёт в топ каталога на 7 дней.`,
+      t("Profile.promoteTitle"),
+      `"${title}"`,
       [
-        { text: "Отмена", style: "cancel" },
-        { text: "Продвинуть", onPress: () => promoteListing(id) },
+        { text: t("Common.cancel"), style: "cancel" },
+        { text: t("Profile.promoteBtn"), onPress: () => promoteListing(id) },
       ],
     );
   };
@@ -53,7 +55,7 @@ export default function MyListingsScreen() {
               {item.is_hidden && (
                 <View style={styles.hiddenBadge}>
                   <Ionicons name="eye-off-outline" size={12} color={COLORS.white} />
-                  <Text style={styles.hiddenBadgeText}>Скрыто</Text>
+                  <Text style={styles.hiddenBadgeText}>{t("Listing.hidden")}</Text>
                 </View>
               )}
             </View>
@@ -63,7 +65,7 @@ export default function MyListingsScreen() {
                 onPress={() => handlePromote(item.id, item.title)}
               >
                 <Ionicons name="rocket-outline" size={14} color={COLORS.warning} />
-                <Text style={styles.promoteText}>Поднять</Text>
+                <Text style={styles.promoteText}>{t("Profile.promoteShort")}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.visibilityBtn}
@@ -77,15 +79,15 @@ export default function MyListingsScreen() {
                         Toast.show({
                           type: "success",
                           text1: item.is_hidden
-                            ? "Объявление снова в каталоге"
-                            : "Объявление скрыто",
+                            ? t("Profile.listingShown")
+                            : t("Profile.listingHidden"),
                         });
                         setTogglingId(null);
                       },
                       onError: (e: Error) => {
                         Toast.show({
                           type: "error",
-                          text1: e.message ?? "Ошибка",
+                          text1: e.message ?? t("Listing.genericError"),
                         });
                         setTogglingId(null);
                       },
@@ -99,7 +101,7 @@ export default function MyListingsScreen() {
                   color={COLORS.primary}
                 />
                 <Text style={styles.editText}>
-                  {item.is_hidden ? "Показать" : "Скрыть"}
+                  {item.is_hidden ? t("Profile.showBtn") : t("Profile.hideBtn")}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -107,15 +109,15 @@ export default function MyListingsScreen() {
                 onPress={() => router.push(`/listings/edit/${item.id}`)}
               >
                 <Ionicons name="pencil-outline" size={14} color={COLORS.primary} />
-                <Text style={styles.editText}>Редактировать</Text>
+                <Text style={styles.editText}>{t("Profile.editShort")}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.deleteBtn}
                 onPress={() =>
-                  Alert.alert("Удалить?", "Объявление будет удалено.", [
-                    { text: "Отмена", style: "cancel" },
+                  Alert.alert(t("Profile.deleteTitle"), t("Profile.deleteMsg"), [
+                    { text: t("Common.cancel"), style: "cancel" },
                     {
-                      text: "Удалить",
+                      text: t("Profile.deleteShort"),
                       style: "destructive",
                       onPress: () => deleteListing(item.id),
                     },
@@ -123,7 +125,7 @@ export default function MyListingsScreen() {
                 }
               >
                 <Ionicons name="trash-outline" size={14} color={COLORS.danger} />
-                <Text style={styles.deleteText}>Удалить</Text>
+                <Text style={styles.deleteText}>{t("Profile.deleteShort")}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -132,12 +134,12 @@ export default function MyListingsScreen() {
         ListEmptyComponent={
           <View style={styles.empty}>
             <Ionicons name="list-outline" size={48} color={COLORS.border} />
-            <Text style={styles.emptyText}>Объявлений нет</Text>
+            <Text style={styles.emptyText}>{t("Profile.emptyListings")}</Text>
             <TouchableOpacity
               style={styles.createBtn}
               onPress={() => router.push("/listings/create")}
             >
-              <Text style={styles.createBtnText}>Создать объявление</Text>
+              <Text style={styles.createBtnText}>{t("Profile.createListing")}</Text>
             </TouchableOpacity>
           </View>
         }

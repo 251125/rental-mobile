@@ -12,8 +12,10 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useChangePassword } from "@/hooks/use-auth";
 import { COLORS } from "@/constants";
+import { useT } from "@/i18n/useT";
 
 export default function ChangePasswordScreen() {
+  const t = useT();
   const navigation = useNavigation();
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -26,7 +28,7 @@ export default function ChangePasswordScreen() {
 
   useEffect(() => {
     navigation.setOptions({
-      title: "Смена пароля",
+      title: t("Profile.changePasswordTitle"),
       headerLeft: () => (
         <TouchableOpacity
           onPress={() => navigation.canGoBack() ? navigation.goBack() : router.replace("/(tabs)/profile")}
@@ -59,17 +61,17 @@ export default function ChangePasswordScreen() {
           <Ionicons name="lock-closed" size={36} color={COLORS.primary} />
         </View>
         <Text style={styles.subtitle}>
-          Введите текущий пароль и придумайте новый (минимум 6 символов)
+          {t("Profile.passwordMin6")}
         </Text>
 
-        <Text style={styles.label}>Текущий пароль</Text>
+        <Text style={styles.label}>{t("Profile.currentPassword")}</Text>
         <View style={styles.inputRow}>
           <TextInput
             style={styles.input}
             value={currentPassword}
             onChangeText={setCurrentPassword}
             secureTextEntry={!showCurrent}
-            placeholder="Введите текущий пароль"
+            placeholder={t("Profile.currentPasswordPlaceholder")}
             placeholderTextColor={COLORS.muted}
             autoCapitalize="none"
           />
@@ -85,14 +87,14 @@ export default function ChangePasswordScreen() {
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.label}>Новый пароль</Text>
+        <Text style={styles.label}>{t("Profile.newPassword")}</Text>
         <View style={styles.inputRow}>
           <TextInput
             style={styles.input}
             value={newPassword}
             onChangeText={setNewPassword}
             secureTextEntry={!showNew}
-            placeholder="Минимум 6 символов"
+            placeholder={t("Profile.newPasswordPlaceholder")}
             placeholderTextColor={COLORS.muted}
             autoCapitalize="none"
           />
@@ -108,17 +110,17 @@ export default function ChangePasswordScreen() {
           </TouchableOpacity>
         </View>
         {tooShort && (
-          <Text style={styles.errorText}>Пароль должен содержать минимум 6 символов</Text>
+          <Text style={styles.errorText}>{t("Profile.passwordMin6")}</Text>
         )}
 
-        <Text style={styles.label}>Подтвердите новый пароль</Text>
+        <Text style={styles.label}>{t("Profile.confirmNewPassword")}</Text>
         <View style={styles.inputRow}>
           <TextInput
             style={[styles.input, mismatch && styles.inputError]}
             value={confirmPassword}
             onChangeText={setConfirmPassword}
             secureTextEntry={!showConfirm}
-            placeholder="Повторите новый пароль"
+            placeholder={t("Profile.repeatNewPassword")}
             placeholderTextColor={COLORS.muted}
             autoCapitalize="none"
           />
@@ -134,7 +136,7 @@ export default function ChangePasswordScreen() {
           </TouchableOpacity>
         </View>
         {mismatch && (
-          <Text style={styles.errorText}>Пароли не совпадают</Text>
+          <Text style={styles.errorText}>{t("Profile.passwordsDontMatch")}</Text>
         )}
 
         <TouchableOpacity
@@ -144,7 +146,7 @@ export default function ChangePasswordScreen() {
         >
           <Ionicons name="lock-closed-outline" size={18} color={COLORS.white} style={{ marginRight: 8 }} />
           <Text style={styles.submitText}>
-            {isPending ? "Сохраняем..." : "Изменить пароль"}
+            {isPending ? t("Profile.saving") : t("Profile.changePasswordBtn")}
           </Text>
         </TouchableOpacity>
       </View>

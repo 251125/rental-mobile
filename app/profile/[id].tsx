@@ -23,8 +23,10 @@ import {
   useUnblockUser,
   useBlockedUsers,
 } from "@/hooks/use-blocks";
+import { useT } from "@/i18n/useT";
 
 export default function PublicProfileScreen() {
+  const t = useT();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data: user, isLoading } = useUser(id);
   const { data: reviews } = useUserReviews(id);
@@ -40,12 +42,12 @@ export default function PublicProfileScreen() {
 
   const confirmBlock = () => {
     Alert.alert(
-      "Заблокировать?",
-      "Вы не сможете писать, звонить или арендовать у этого пользователя, а он — у вас. Это можно отменить в любой момент.",
+      t("Profile.blockTitle"),
+      t("Profile.blockDesc"),
       [
-        { text: "Отмена", style: "cancel" },
+        { text: t("Common.cancel"), style: "cancel" },
         {
-          text: "Заблокировать",
+          text: t("Profile.blockUser"),
           style: "destructive",
           onPress: () => blockUser(id),
         },
@@ -86,12 +88,12 @@ export default function PublicProfileScreen() {
                 {parseFloat(user.rating_avg).toFixed(1)}
               </Text>
               <Text style={styles.reviewsCount}>
-                ({user.reviews_count} отзывов)
+                ({user.reviews_count})
               </Text>
             </View>
           )}
           <Text style={styles.since}>
-            На платформе с {new Date(user.created_at).toLocaleDateString("ru-RU")}
+            {t("Profile.joinedOn", { date: new Date(user.created_at).toLocaleDateString() })}
           </Text>
 
           {!isMe && (
@@ -99,11 +101,11 @@ export default function PublicProfileScreen() {
               <View style={styles.actionBtns}>
                 <TouchableOpacity style={styles.chatBtn} onPress={handleChat}>
                   <Ionicons name="chatbubble-outline" size={16} color={COLORS.white} />
-                  <Text style={styles.chatBtnText}>Написать</Text>
+                  <Text style={styles.chatBtnText}>{t("Profile.writeBtn")}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.reportBtn} onPress={() => setReportVisible(true)}>
                   <Ionicons name="flag-outline" size={16} color={COLORS.danger} />
-                  <Text style={styles.reportBtnText}>Жалоба</Text>
+                  <Text style={styles.reportBtnText}>{t("Profile.reportShort")}</Text>
                 </TouchableOpacity>
               </View>
               {isBlocked ? (
@@ -114,7 +116,7 @@ export default function PublicProfileScreen() {
                 >
                   <Ionicons name="shield-outline" size={14} color={COLORS.warning} />
                   <Text style={styles.unblockText}>
-                    {isUnblocking ? "Разблокировка..." : "Разблокировать"}
+                    {isUnblocking ? t("Profile.unblocking") : t("Profile.unblockUser")}
                   </Text>
                 </TouchableOpacity>
               ) : (
@@ -125,7 +127,7 @@ export default function PublicProfileScreen() {
                 >
                   <Ionicons name="ban-outline" size={14} color={COLORS.danger} />
                   <Text style={styles.blockText}>
-                    {isBlocking ? "Блокировка..." : "Заблокировать"}
+                    {isBlocking ? t("Profile.blocking") : t("Profile.blockUser")}
                   </Text>
                 </TouchableOpacity>
               )}
@@ -137,8 +139,7 @@ export default function PublicProfileScreen() {
           <View style={styles.blockedNotice}>
             <Ionicons name="warning-outline" size={16} color={COLORS.warning} />
             <Text style={styles.blockedNoticeText}>
-              Вы заблокировали этого пользователя. Связь и аренды между вами
-              недоступны, пока не снимете блокировку.
+              {t("Profile.blockDesc")}
             </Text>
           </View>
         )}
@@ -152,7 +153,7 @@ export default function PublicProfileScreen() {
 
         {reviews && reviews.length > 0 && (
           <View style={styles.reviewsSection}>
-            <Text style={styles.sectionTitle}>Отзывы</Text>
+            <Text style={styles.sectionTitle}>{t("Profile.reviewsLabel")}</Text>
             {reviews.map((review: Review) => (
               <View key={review.id} style={styles.reviewCard}>
                 <View style={styles.reviewHeader}>

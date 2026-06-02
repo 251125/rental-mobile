@@ -17,8 +17,10 @@ import { COLORS } from "@/constants";
 import Toast from "react-native-toast-message";
 import CityPicker from "@/components/CityPicker";
 import CategoryPicker from "@/components/CategoryPicker";
+import { useT } from "@/i18n/useT";
 
 export default function CreateListingScreen() {
+  const t = useT();
   const navigation = useNavigation();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -64,7 +66,7 @@ export default function CreateListingScreen() {
   const takePhoto = async () => {
     const perm = await ImagePicker.requestCameraPermissionsAsync();
     if (perm.status !== "granted") {
-      Toast.show({ type: "error", text1: "Нет доступа к камере" });
+      Toast.show({ type: "error", text1: t("Listing.noCameraAccess") });
       return;
     }
     const result = await ImagePicker.launchCameraAsync({ quality: 0.8 });
@@ -78,7 +80,7 @@ export default function CreateListingScreen() {
 
   const handleCreate = async () => {
     if (!title || !price || !city || !categoryId) {
-      Toast.show({ type: "error", text1: "Заполните все обязательные поля" });
+      Toast.show({ type: "error", text1: t("Listing.fillRequired") });
       return;
     }
 
@@ -88,7 +90,7 @@ export default function CreateListingScreen() {
       try {
         image_urls = await Promise.all(images.map((uri) => uploadImage(uri)));
       } catch {
-        Toast.show({ type: "error", text1: "Ошибка загрузки фото" });
+        Toast.show({ type: "error", text1: t("Listing.photoUploadError") });
         setIsUploading(false);
         return;
       }
@@ -99,11 +101,11 @@ export default function CreateListingScreen() {
       { title, description, price, deposit: deposit || "0", city, category_id: categoryId, image_urls },
       {
         onSuccess: () => {
-          Toast.show({ type: "success", text1: "Объявление создано!" });
+          Toast.show({ type: "success", text1: t("Listing.createOk") });
           router.replace("/" as never);
         },
         onError: (err) => {
-          Toast.show({ type: "error", text1: err.message ?? "Ошибка" });
+          Toast.show({ type: "error", text1: err.message ?? t("Listing.genericError") });
         },
       },
     );
@@ -112,28 +114,28 @@ export default function CreateListingScreen() {
   return (
     <ScrollView style={styles.container} keyboardShouldPersistTaps="handled">
       <View style={styles.section}>
-        <Text style={styles.label}>Заголовок *</Text>
+        <Text style={styles.label}>{t("Listing.titleStar")}</Text>
         <TextInput
           style={styles.input}
           value={title}
           onChangeText={setTitle}
-          placeholder="Название объявления"
+          placeholder={t("Listing.titlePlaceholder")}
           placeholderTextColor={COLORS.muted}
         />
 
-        <Text style={styles.label}>Описание</Text>
+        <Text style={styles.label}>{t("Listing.description")}</Text>
         <TextInput
           style={[styles.input, styles.textarea]}
           value={description}
           onChangeText={setDescription}
-          placeholder="Подробное описание..."
+          placeholder={t("Listing.descPlaceholder")}
           placeholderTextColor={COLORS.muted}
           multiline
           numberOfLines={4}
           textAlignVertical="top"
         />
 
-        <Text style={styles.label}>Цена в день (₸) *</Text>
+        <Text style={styles.label}>{t("Listing.pricePerDayStar")}</Text>
         <TextInput
           style={styles.input}
           value={price}
@@ -143,7 +145,7 @@ export default function CreateListingScreen() {
           placeholderTextColor={COLORS.muted}
         />
 
-        <Text style={styles.label}>Залог (₸)</Text>
+        <Text style={styles.label}>{t("Listing.depositPlaceholder")}</Text>
         <TextInput
           style={styles.input}
           value={deposit}
@@ -153,17 +155,17 @@ export default function CreateListingScreen() {
           placeholderTextColor={COLORS.muted}
         />
 
-        <Text style={styles.label}>Город *</Text>
+        <Text style={styles.label}>{t("Listing.cityStar")}</Text>
         <CityPicker value={city} onChange={setCity} />
 
-        <Text style={styles.label}>Категория *</Text>
+        <Text style={styles.label}>{t("Listing.categoryStar")}</Text>
         <CategoryPicker
           categories={categories ?? []}
           value={categoryId}
           onChange={setCategoryId}
         />
 
-        <Text style={styles.label}>Фотографии (до 5)</Text>
+        <Text style={styles.label}>{t("Listing.photosLabelMax")}</Text>
         <View style={styles.imagesGrid}>
           {images.map((uri) => (
             <View key={uri} style={styles.imgWrap}>
@@ -181,11 +183,11 @@ export default function CreateListingScreen() {
           <View style={styles.photoBtnsRow}>
             <TouchableOpacity style={styles.photoBtn} onPress={pickImages}>
               <Ionicons name="images-outline" size={18} color={COLORS.primary} />
-              <Text style={styles.photoBtnText}>Добавить фото</Text>
+              <Text style={styles.photoBtnText}>{t("Listing.photoFromGallery")}</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.photoBtn} onPress={takePhoto}>
               <Ionicons name="camera-outline" size={18} color={COLORS.primary} />
-              <Text style={styles.photoBtnText}>Сфотографировать</Text>
+              <Text style={styles.photoBtnText}>{t("Listing.photoFromCamera")}</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -196,7 +198,7 @@ export default function CreateListingScreen() {
           disabled={isPending || isUploading}
         >
           <Text style={styles.submitText}>
-            {isUploading ? "Загружаем фото..." : isPending ? "Создаём..." : "Создать объявление"}
+            {isUploading ? t("Listing.uploadingPhotos") : isPending ? t("Listing.creating") : t("Listing.createListingBtn")}
           </Text>
         </TouchableOpacity>
       </View>
