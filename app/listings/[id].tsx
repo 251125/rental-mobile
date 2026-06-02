@@ -34,6 +34,7 @@ import ReportModal from "@/components/ReportModal";
 import TimePicker from "@/components/TimePicker";
 import { saveRecentlyViewed } from "@/lib/recently-viewed";
 import Toast from "react-native-toast-message";
+import { useT } from "@/i18n/useT";
 
 const { width, height: screenHeight } = Dimensions.get("window");
 
@@ -90,6 +91,7 @@ interface CalendarPickerProps {
 }
 
 function CalendarPicker({ availability, startDate, endDate, onRangeChange }: CalendarPickerProps) {
+  const t = useT();
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const [calYear, setCalYear] = useState(today.getFullYear());
@@ -114,7 +116,7 @@ function CalendarPicker({ availability, startDate, endDate, onRangeChange }: Cal
       return;
     }
     if (rangeHasBookedDates(startDate, key, availability)) {
-      Alert.alert("Недоступно", "В выбранном диапазоне есть занятые даты. Выберите другой период.");
+      Alert.alert(t("Listing.unavailable"), t("Listing.unavailableMsg"));
       return;
     }
     onRangeChange(startDate, key);
@@ -189,15 +191,15 @@ function CalendarPicker({ availability, startDate, endDate, onRangeChange }: Cal
       <View style={calSt.legend}>
         <View style={calSt.legendItem}>
           <View style={[calSt.legendDot, { backgroundColor: COLORS.primary }]} />
-          <Text style={calSt.legendText}>Выбрано</Text>
+          <Text style={calSt.legendText}>{t("Listing.selected")}</Text>
         </View>
         <View style={calSt.legendItem}>
           <View style={[calSt.legendDot, { backgroundColor: "#dbeafe" }]} />
-          <Text style={calSt.legendText}>Диапазон</Text>
+          <Text style={calSt.legendText}>{t("Listing.rangeLabel")}</Text>
         </View>
         <View style={calSt.legendItem}>
           <View style={[calSt.legendDot, { backgroundColor: "#fee2e2" }]} />
-          <Text style={calSt.legendText}>Занято</Text>
+          <Text style={calSt.legendText}>{t("Listing.occupied")}</Text>
         </View>
       </View>
     </View>
@@ -207,6 +209,7 @@ function CalendarPicker({ availability, startDate, endDate, onRangeChange }: Cal
 // ── Main screen ───────────────────────────────────────────────────────────
 
 export default function ListingDetailScreen() {
+  const t = useT();
   const { id } = useLocalSearchParams<{ id: string }>();
   const navigation = useNavigation();
   const { data: listing, isLoading } = useListing(id);
@@ -290,18 +293,18 @@ export default function ListingDetailScreen() {
       {
         onSuccess: () => {
           closeModal();
-          Alert.alert("Успешно", "Заявка на аренду отправлена! Ожидайте подтверждения владельца.");
+          Alert.alert(t("Listing.successTitle"), t("Listing.rentRequestSent"));
         },
-        onError: (e: Error) => Alert.alert("Ошибка", e.message),
+        onError: (e: Error) => Alert.alert(t("Listing.errorTitle"), e.message),
       },
     );
   };
 
   const handleDelete = () => {
-    Alert.alert("Удалить объявление?", "Это действие необратимо", [
-      { text: "Отмена", style: "cancel" },
+    Alert.alert(t("Listing.deleteListingTitle"), t("Listing.deleteListingMsg"), [
+      { text: t("Common.cancel"), style: "cancel" },
       {
-        text: "Удалить",
+        text: t("Common.delete"),
         style: "destructive",
         onPress: () => deleteListing(listing.id, { onSuccess: () => router.back() }),
       },
@@ -378,22 +381,22 @@ export default function ListingDetailScreen() {
 
         <View style={styles.priceRow}>
           <Text style={styles.price}>{Number(listing.price).toLocaleString()} ₸/день</Text>
-          <Text style={styles.deposit}>Залог: {Number(listing.deposit).toLocaleString()} ₸</Text>
+          <Text style={styles.deposit}>{t("Listing.depositLine", { amount: Number(listing.deposit).toLocaleString() })}</Text>
         </View>
 
         <View style={styles.safeBadge}>
           <Ionicons name="shield-checkmark" size={15} color={COLORS.success} />
-          <Text style={styles.safeBadgeText}>Безопасная аренда</Text>
+          <Text style={styles.safeBadgeText}>{t("Listing.safeRental")}</Text>
         </View>
 
         <View style={styles.divider} />
 
-        <Text style={styles.sectionTitle}>Описание</Text>
+        <Text style={styles.sectionTitle}>{t("Listing.description")}</Text>
         <Text style={styles.description}>{listing.description}</Text>
 
         <View style={styles.divider} />
 
-        <Text style={styles.sectionTitle}>Занятые даты</Text>
+        <Text style={styles.sectionTitle}>{t("Listing.bookedDates")}</Text>
         {isAvailabilityLoading ? (
           <ActivityIndicator size="small" color={COLORS.primary} style={{ marginVertical: 8 }} />
         ) : availability.length > 0 ? (
@@ -408,12 +411,12 @@ export default function ListingDetailScreen() {
             ))}
           </View>
         ) : (
-          <Text style={styles.noBooked}>Нет забронированных дат</Text>
+          <Text style={styles.noBooked}>{t("Listing.noBookedDates")}</Text>
         )}
 
         <View style={styles.divider} />
 
-        <Text style={styles.sectionTitle}>Местоположение</Text>
+        <Text style={styles.sectionTitle}>{t("Listing.location")}</Text>
         <CityMap city={listing.city} />
 
         <View style={styles.divider} />
@@ -466,21 +469,21 @@ export default function ListingDetailScreen() {
               onPress={() => router.push(`/listings/edit/${listing.id}`)}
             >
               <Ionicons name="pencil-outline" size={18} color={COLORS.primary} />
-              <Text style={styles.editBtnText}>Редактировать</Text>
+              <Text style={styles.editBtnText}>{t("Listing.editBtn")}</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.deleteBtn} onPress={handleDelete}>
               <Ionicons name="trash-outline" size={18} color={COLORS.danger} />
-              <Text style={styles.deleteBtnText}>Удалить</Text>
+              <Text style={styles.deleteBtnText}>{t("Listing.deleteBtn")}</Text>
             </TouchableOpacity>
           </View>
         ) : (
           <View style={styles.actions}>
             <TouchableOpacity style={styles.chatBtn} onPress={handleChat}>
               <Ionicons name="chatbubble-outline" size={18} color={COLORS.primary} />
-              <Text style={styles.chatBtnText}>Написать</Text>
+              <Text style={styles.chatBtnText}>{t("Listing.writeBtn")}</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.rentBtn} onPress={() => setRentalModal(true)}>
-              <Text style={styles.rentBtnText}>Арендовать</Text>
+              <Text style={styles.rentBtnText}>{t("Listing.rentBtn")}</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -492,7 +495,7 @@ export default function ListingDetailScreen() {
               onPress={() => setReportModal(true)}
             >
               <Ionicons name="flag-outline" size={14} color={COLORS.muted} />
-              <Text style={styles.reportBtnText}>Пожаловаться</Text>
+              <Text style={styles.reportBtnText}>{t("Listing.reportBtn")}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[
@@ -510,7 +513,7 @@ export default function ListingDetailScreen() {
                   return;
                 }
                 addCompare(listing);
-                Toast.show({ type: "success", text1: "Добавлено в сравнение" });
+                Toast.show({ type: "success", text1: t("Listing.addedToCompare") });
               }}
             >
               <Ionicons
@@ -524,7 +527,7 @@ export default function ListingDetailScreen() {
                   hasCompare(listing.id) && { color: COLORS.primary },
                 ]}
               >
-                {hasCompare(listing.id) ? "В сравнении" : "Сравнить"}
+                {hasCompare(listing.id) ? t("Listing.inCompare") : t("Listing.compareBtn")}
               </Text>
             </TouchableOpacity>
           </View>
@@ -532,7 +535,7 @@ export default function ListingDetailScreen() {
 
         {similar.length > 0 && (
           <View style={styles.similarSection}>
-            <Text style={styles.similarTitle}>Похожие объявления</Text>
+            <Text style={styles.similarTitle}>{t("Listing.similarListings")}</Text>
             <FlatList
               horizontal
               data={similar.filter((s) => s.id !== listing.id).slice(0, 10)}
@@ -561,7 +564,7 @@ export default function ListingDetailScreen() {
         <View style={styles.modalOverlay}>
           <View style={[styles.modalCard, { maxHeight: screenHeight * 0.88 }]}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Выберите даты аренды</Text>
+              <Text style={styles.modalTitle}>{t("Listing.pickDatesTitle")}</Text>
               <TouchableOpacity onPress={closeModal} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                 <Ionicons name="close" size={24} color={COLORS.muted} />
               </TouchableOpacity>
@@ -578,19 +581,19 @@ export default function ListingDetailScreen() {
               {startDate ? (
                 <View style={styles.selectedDatesRow}>
                   <View style={styles.selectedDateChip}>
-                    <Text style={styles.selectedDateLabel}>Начало</Text>
+                    <Text style={styles.selectedDateLabel}>{t("Listing.startLabel")}</Text>
                     <Text style={styles.selectedDateValue}>{formatDateRu(startDate)}</Text>
                   </View>
                   <Ionicons name="arrow-forward" size={18} color={COLORS.muted} />
                   <View style={[styles.selectedDateChip, !endDate && styles.selectedDateChipEmpty]}>
-                    <Text style={styles.selectedDateLabel}>Конец</Text>
+                    <Text style={styles.selectedDateLabel}>{t("Listing.endLabel")}</Text>
                     <Text style={[styles.selectedDateValue, !endDate && { color: COLORS.muted }]}>
                       {endDate ? formatDateRu(endDate) : "не выбрано"}
                     </Text>
                   </View>
                 </View>
               ) : (
-                <Text style={styles.dateHint}>Нажмите на день начала аренды</Text>
+                <Text style={styles.dateHint}>{t("Listing.dateHint")}</Text>
               )}
 
               {startDate && endDate && (
@@ -603,7 +606,7 @@ export default function ListingDetailScreen() {
 
               {startDate && endDate && (
                 <View style={styles.costCard}>
-                  <Text style={styles.costTitle}>Расчёт стоимости</Text>
+                  <Text style={styles.costTitle}>{t("Listing.costTitle")}</Text>
                   {useHourly ? (
                     <View style={styles.costRow}>
                       <Text style={styles.costLabel}>
@@ -618,18 +621,18 @@ export default function ListingDetailScreen() {
                     </View>
                   )}
                   <View style={styles.costRow}>
-                    <Text style={styles.costLabel}>Залог (возвратный)</Text>
+                    <Text style={styles.costLabel}>{t("Listing.depositRefundable")}</Text>
                     <Text style={styles.costValue}>{Number(listing.deposit).toLocaleString()} ₸</Text>
                   </View>
                   <View style={[styles.costRow, styles.costTotalRow]}>
-                    <Text style={styles.costTotalLabel}>Итого</Text>
+                    <Text style={styles.costTotalLabel}>{t("Listing.totalLabel")}</Text>
                     <Text style={styles.costTotalValue}>{Math.round(totalCost).toLocaleString()} ₸</Text>
                   </View>
                 </View>
               )}
 
               <View style={styles.agreementBox}>
-                <Text style={styles.agreementTitle}>Договор аренды</Text>
+                <Text style={styles.agreementTitle}>{t("Listing.agreementTitle")}</Text>
                 <ScrollView style={styles.agreementScroll} nestedScrollEnabled scrollEnabled>
                   <Text style={styles.agreementText}>
                     {"1. Арендатор обязуется вернуть имущество в надлежащем состоянии.\n\n2. В случае повреждения или утери арендованного имущества арендатор несёт полную материальную ответственность.\n\n3. Залог удерживается до подтверждения возврата имущества владельцем.\n\n4. Срок аренды определяется выбранными датами. Продление допускается по согласованию с арендодателем.\n\n5. Арендатор не вправе передавать имущество третьим лицам без письменного согласия арендодателя.\n\n6. Платформа выступает посредником и не несёт ответственности за состояние имущества."}
@@ -643,13 +646,13 @@ export default function ListingDetailScreen() {
                   <View style={[styles.checkbox, agreed && styles.checkboxChecked]}>
                     {agreed && <Ionicons name="checkmark" size={14} color={COLORS.white} />}
                   </View>
-                  <Text style={styles.checkboxLabel}>Я прочитал(а) и принимаю условия договора</Text>
+                  <Text style={styles.checkboxLabel}>{t("Listing.agreementCheckbox")}</Text>
                 </TouchableOpacity>
               </View>
 
               <View style={styles.modalBtns}>
                 <TouchableOpacity style={styles.modalCancel} onPress={closeModal}>
-                  <Text style={styles.modalCancelText}>Отмена</Text>
+                  <Text style={styles.modalCancelText}>{t("Listing.modalCancel")}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[styles.modalConfirm, (!canSubmit || isRenting) && { opacity: 0.45 }]}
@@ -657,7 +660,7 @@ export default function ListingDetailScreen() {
                   disabled={!canSubmit || isRenting}
                 >
                   <Text style={styles.modalConfirmText}>
-                    {isRenting ? "Отправка..." : "Отправить заявку"}
+                    {isRenting ? t("Listing.sendingRequest") : t("Listing.sendRequest")}
                   </Text>
                 </TouchableOpacity>
               </View>

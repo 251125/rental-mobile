@@ -31,6 +31,7 @@ import Toast from "react-native-toast-message";
 import { COLORS } from "@/constants";
 import { ListingFilters } from "@/types";
 import CityPicker from "@/components/CityPicker";
+import { useT } from "@/i18n/useT";
 
 // ─── Hero ─────────────────────────────────────────────────────────────────────
 
@@ -39,12 +40,13 @@ function HeroBanner({ search, onSearch, onChangeSearch }: {
   onSearch: () => void;
   onChangeSearch: (v: string) => void;
 }) {
+  const t = useT();
   return (
     <View style={hero.wrap}>
       <View style={hero.gradient}>
-        <Text style={hero.tag}>🇰🇿 Платформа аренды Казахстана</Text>
-        <Text style={hero.title}>Арендуй что угодно,{"\n"}когда угодно</Text>
-        <Text style={hero.sub}>Сотни объявлений рядом с тобой</Text>
+        <Text style={hero.tag}>{t("Home.heroBadge")}</Text>
+        <Text style={hero.title}>{t("Home.heroTitle")}</Text>
+        <Text style={hero.sub}>{t("Home.heroSub")}</Text>
 
         <View style={hero.searchRow}>
           <View style={hero.searchWrap}>
@@ -53,7 +55,7 @@ function HeroBanner({ search, onSearch, onChangeSearch }: {
               style={hero.searchInput}
               value={search}
               onChangeText={onChangeSearch}
-              placeholder="Что хочешь арендовать?"
+              placeholder={t("Home.searchPlaceholder")}
               placeholderTextColor="#94a3b8"
               onSubmitEditing={onSearch}
               returnKeyType="search"
@@ -133,6 +135,7 @@ const hero = StyleSheet.create({
 // ─── Home screen ──────────────────────────────────────────────────────────────
 
 export default function HomeScreen() {
+  const t = useT();
   const { user } = useAuthStore();
   const { items: compareItems } = useCompareStore();
   const [filters, setFilters] = useState<ListingFilters>({ page: 1, limit: 20, sortBy: "created_at", sortOrder: "desc" });
@@ -163,7 +166,7 @@ export default function HomeScreen() {
 
   const handleSaveSearch = async () => {
     if (!hasMeaningfulFilter) {
-      Toast.show({ type: "info", text1: "Сначала задайте фильтры" });
+      Toast.show({ type: "info", text1: t("Home.filtersFirst") });
       return;
     }
     const ok = await saveSearch(filters);
@@ -245,19 +248,19 @@ export default function HomeScreen() {
   };
 
   const SORT_OPTIONS: { label: string; sortBy: typeof sortBy; sortOrder: typeof sortOrder }[] = [
-    { label: "Сначала новые", sortBy: "created_at", sortOrder: "desc" },
-    { label: "Сначала старые", sortBy: "created_at", sortOrder: "asc" },
-    { label: "Цена: дешевле", sortBy: "price", sortOrder: "asc" },
-    { label: "Цена: дороже", sortBy: "price", sortOrder: "desc" },
-    { label: "По рейтингу", sortBy: "rating_avg", sortOrder: "desc" },
-    { label: "По просмотрам", sortBy: "views_count", sortOrder: "desc" },
+    { label: t("Home.sortNewest"), sortBy: "created_at", sortOrder: "desc" },
+    { label: t("Home.sortOldest"), sortBy: "created_at", sortOrder: "asc" },
+    { label: t("Home.sortPriceAsc"), sortBy: "price", sortOrder: "asc" },
+    { label: t("Home.sortPriceDesc"), sortBy: "price", sortOrder: "desc" },
+    { label: t("Home.sortRating"), sortBy: "rating_avg", sortOrder: "desc" },
+    { label: t("Home.sortRating"), sortBy: "views_count", sortOrder: "desc" },
   ];
 
   const ListHeader = (
     <>
       {/* Categories */}
       <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Категории</Text>
+        <Text style={styles.sectionTitle}>{t("Home.categories")}</Text>
         <TouchableOpacity
           style={[styles.filterBtn, activeFilterCount > 0 && styles.filterBtnActive]}
           onPress={() => setShowFilters(true)}
@@ -443,7 +446,7 @@ export default function HomeScreen() {
           </View>
 
           <Text style={styles.filterLabel}>Город</Text>
-          <CityPicker value={cityInput} onChange={setCityInput} placeholder="Любой город" />
+          <CityPicker value={cityInput} onChange={setCityInput} placeholder={t("Home.anyCity")} />
 
           <Text style={styles.filterLabel}>Цена (₸/день)</Text>
           <View style={styles.priceRow}>
@@ -451,7 +454,7 @@ export default function HomeScreen() {
               style={[styles.filterInput, styles.priceInput]}
               value={priceMin}
               onChangeText={setPriceMin}
-              placeholder="От"
+              placeholder={t("Home.priceFrom")}
               placeholderTextColor={COLORS.muted}
               keyboardType="numeric"
             />
@@ -460,7 +463,7 @@ export default function HomeScreen() {
               style={[styles.filterInput, styles.priceInput]}
               value={priceMax}
               onChangeText={setPriceMax}
-              placeholder="До"
+              placeholder={t("Home.priceTo")}
               placeholderTextColor={COLORS.muted}
               keyboardType="numeric"
             />
