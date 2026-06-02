@@ -18,8 +18,10 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import { COLORS } from "@/constants";
 import { Message } from "@/types";
 import { useCall } from "@/providers/CallProvider";
+import { useT } from "@/i18n/useT";
 
 export default function ChatScreen() {
+  const t = useT();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { messages, isLoading, sendMessage } = useChatMessages(id);
   const { user } = useAuthStore();
@@ -62,9 +64,9 @@ export default function ChatScreen() {
       try { data = JSON.parse(item.content); } catch {}
       const fmt = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
       const label =
-        data.outcome === "completed" ? `Звонок ${fmt(data.duration ?? 0)}`
-        : data.outcome === "rejected" ? "Звонок отклонён"
-        : "Пропущенный звонок";
+        data.outcome === "completed" ? `${t("Chat.callShort")} ${fmt(data.duration ?? 0)}`
+        : data.outcome === "rejected" ? t("Chat.callRejected")
+        : t("Chat.callMissed");
       const icon = data.outcome === "completed" ? "📞" : "📵";
       return (
         <View style={styles.callMsgRow}>
@@ -127,7 +129,7 @@ export default function ChatScreen() {
           }
           ListEmptyComponent={
             <View style={styles.empty}>
-              <Text style={styles.emptyText}>Начните общение</Text>
+              <Text style={styles.emptyText}>{t("Chat.startConversation")}</Text>
             </View>
           }
         />
@@ -136,7 +138,7 @@ export default function ChatScreen() {
             style={styles.input}
             value={text}
             onChangeText={setText}
-            placeholder="Сообщение..."
+            placeholder={t("Chat.messagePlaceholder")}
             placeholderTextColor={COLORS.muted}
             multiline
             maxLength={1000}

@@ -14,55 +14,12 @@ import { useAuthStore } from "@/store/auth.store";
 import { useCategories } from "@/hooks/use-listings";
 import { COLORS } from "@/constants";
 import api from "@/services/api";
+import { useT } from "@/i18n/useT";
 
 interface Stats {
   listings: number;
   users: number;
 }
-
-const HOW_IT_WORKS = [
-  {
-    icon: "search-outline" as const,
-    step: "01",
-    title: "Найди нужное",
-    desc: "Ищи по категориям, городу и цене.",
-  },
-  {
-    icon: "people-outline" as const,
-    step: "02",
-    title: "Договорись",
-    desc: "Отправь заявку, владелец одобрит и согласуете условия.",
-  },
-  {
-    icon: "checkmark-circle-outline" as const,
-    step: "03",
-    title: "Пользуйся",
-    desc: "Забери вещь, верни и оставь отзыв.",
-  },
-];
-
-const PROS = [
-  {
-    icon: "shield-checkmark-outline" as const,
-    title: "Безопасность",
-    desc: "Все сделки защищены. Залог гарантирует возврат вещи.",
-  },
-  {
-    icon: "star-outline" as const,
-    title: "Рейтинги",
-    desc: "Отзывы помогают выбрать надёжного партнёра.",
-  },
-  {
-    icon: "flash-outline" as const,
-    title: "Быстро",
-    desc: "Создай объявление за пару минут и зарабатывай.",
-  },
-  {
-    icon: "people-circle-outline" as const,
-    title: "Сообщество",
-    desc: "Тысячи пользователей по всему Казахстану.",
-  },
-];
 
 const CATEGORY_ICON: Record<string, keyof typeof Ionicons.glyphMap> = {
   Cars: "car-outline",
@@ -74,6 +31,18 @@ const CATEGORY_ICON: Record<string, keyof typeof Ionicons.glyphMap> = {
 };
 
 export default function AboutScreen() {
+  const t = useT();
+  const HOW_IT_WORKS = [
+    { icon: "search-outline" as const, step: "01", title: t("About.step1Title"), desc: t("About.step1Desc") },
+    { icon: "people-outline" as const, step: "02", title: t("About.step2Title"), desc: t("About.step2Desc") },
+    { icon: "checkmark-circle-outline" as const, step: "03", title: t("About.step3Title"), desc: t("About.step3Desc") },
+  ];
+  const PROS = [
+    { icon: "shield-checkmark-outline" as const, title: t("About.proSafetyTitle"), desc: t("About.proSafetyDesc") },
+    { icon: "star-outline" as const, title: t("About.proRatingsTitle"), desc: t("About.proRatingsDesc") },
+    { icon: "flash-outline" as const, title: t("About.proFastTitle"), desc: t("About.proFastDesc") },
+    { icon: "people-circle-outline" as const, title: t("About.proCommunityTitle"), desc: t("About.proCommunityDesc") },
+  ];
   const navigation = useNavigation();
   useEffect(() => {
     navigation.setOptions({
@@ -106,25 +75,24 @@ export default function AboutScreen() {
         {/* Hero */}
         <View style={styles.hero}>
           <Text style={styles.heroTitle}>
-            Арендуй что угодно,{"\n"}когда угодно
+            {t("About.heroTitle")}
           </Text>
           <Text style={styles.heroSubtitle}>
-            Платформа для аренды вещей между людьми. Найди нужное рядом или
-            сдай своё и зарабатывай.
+            {t("About.heroSubtitle")}
           </Text>
           <View style={styles.heroBtns}>
             <TouchableOpacity
               style={styles.primaryBtn}
               onPress={() => router.push("/" as never)}
             >
-              <Text style={styles.primaryBtnText}>Смотреть объявления</Text>
+              <Text style={styles.primaryBtnText}>{t("About.viewListings")}</Text>
             </TouchableOpacity>
             {!isAuthenticated && (
               <TouchableOpacity
                 style={styles.outlineBtn}
                 onPress={() => router.push("/auth/register" as never)}
               >
-                <Text style={styles.outlineBtnText}>Регистрация</Text>
+                <Text style={styles.outlineBtnText}>{t("About.register")}</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -132,13 +100,13 @@ export default function AboutScreen() {
 
         {/* Stats */}
         <View style={styles.statsRow}>
-          <StatItem icon="cube-outline" value={`${stats?.listings ?? "…"}`} label="Объявлений" />
-          <StatItem icon="people-outline" value={`${stats?.users ?? "…"}`} label="Юзеров" />
-          <StatItem icon="time-outline" value="24/7" label="Поддержка" />
+          <StatItem icon="cube-outline" value={`${stats?.listings ?? "…"}`} label={t("About.statsListings")} />
+          <StatItem icon="people-outline" value={`${stats?.users ?? "…"}`} label={t("About.statsUsers")} />
+          <StatItem icon="time-outline" value="24/7" label={t("About.statsSupport")} />
         </View>
 
         {/* How it works */}
-        <Text style={styles.sectionTitle}>Как это работает</Text>
+        <Text style={styles.sectionTitle}>{t("About.howItWorks")}</Text>
         <View style={styles.col}>
           {HOW_IT_WORKS.map((step) => (
             <View key={step.step} style={styles.howCard}>
@@ -157,7 +125,7 @@ export default function AboutScreen() {
         </View>
 
         {/* Why us */}
-        <Text style={styles.sectionTitle}>Почему Rental?</Text>
+        <Text style={styles.sectionTitle}>{t("About.whyRental")}</Text>
         <View style={styles.grid2}>
           {PROS.map((p) => (
             <View key={p.title} style={styles.proCard}>
@@ -173,7 +141,7 @@ export default function AboutScreen() {
         {/* Categories */}
         {popular.length > 0 && (
           <>
-            <Text style={styles.sectionTitle}>Популярные категории</Text>
+            <Text style={styles.sectionTitle}>{t("About.popularCategories")}</Text>
             <View style={styles.grid2}>
               {popular.map((c) => (
                 <TouchableOpacity
@@ -198,15 +166,15 @@ export default function AboutScreen() {
         {/* CTA */}
         {!isAuthenticated && (
           <View style={styles.cta}>
-            <Text style={styles.ctaTitle}>Готов начать?</Text>
+            <Text style={styles.ctaTitle}>{t("About.ctaTitle")}</Text>
             <Text style={styles.ctaText}>
-              Зарегистрируйся бесплатно и начни арендовать или сдавать вещи.
+              {t("About.ctaText")}
             </Text>
             <TouchableOpacity
               style={styles.ctaBtn}
               onPress={() => router.push("/auth/register" as never)}
             >
-              <Text style={styles.ctaBtnText}>Зарегистрироваться</Text>
+              <Text style={styles.ctaBtnText}>{t("About.ctaBtn")}</Text>
             </TouchableOpacity>
           </View>
         )}

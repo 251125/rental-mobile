@@ -19,10 +19,12 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import DisputeModal from "@/components/DisputeModal";
 import { COLORS, resolveImageUrl } from "@/constants";
 import { RentalRequest } from "@/types";
+import { useT } from "@/i18n/useT";
 
 const MOBILE_BASE = typeof window !== "undefined" ? window.location.origin : "http://localhost:8082";
 
 export default function IncomingRentalsScreen() {
+  const t = useT();
   const navigation = useNavigation();
   useEffect(() => {
     navigation.setOptions({
@@ -117,7 +119,7 @@ export default function IncomingRentalsScreen() {
                     disabled={isPending}
                   >
                     <Ionicons name="checkmark" size={16} color={COLORS.white} />
-                    <Text style={styles.approveBtnText}>Одобрить</Text>
+                    <Text style={styles.approveBtnText}>{t("Rental.approveBtn")}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={styles.rejectBtn}
@@ -125,7 +127,7 @@ export default function IncomingRentalsScreen() {
                     disabled={isPending}
                   >
                     <Ionicons name="close" size={16} color={COLORS.danger} />
-                    <Text style={styles.rejectBtnText}>Отклонить</Text>
+                    <Text style={styles.rejectBtnText}>{t("Rental.rejectBtn")}</Text>
                   </TouchableOpacity>
                 </View>
               )}
@@ -152,7 +154,7 @@ export default function IncomingRentalsScreen() {
                         }
                       >
                         <Ionicons name="chatbubble-outline" size={16} color={COLORS.primary} />
-                        <Text style={styles.msgBtnText}>Написать</Text>
+                        <Text style={styles.msgBtnText}>{t("Rental.writeBtn")}</Text>
                       </TouchableOpacity>
                     )}
                   </View>
@@ -164,10 +166,10 @@ export default function IncomingRentalsScreen() {
                     onPress={() => updateStatus({ id: item.id, status: "COMPLETED" })}
                     disabled={isPending || item.payment_status !== "PAID" || !item.return_images?.length}
                   >
-                    <Text style={styles.completeBtnText}>Завершить</Text>
+                    <Text style={styles.completeBtnText}>{t("Rental.completeBtn")}</Text>
                   </TouchableOpacity>
                   {item.payment_status === "PAID" && !item.return_images?.length && (
-                    <Text style={styles.returnPhotoHint}>Ожидается фото возврата</Text>
+                    <Text style={styles.returnPhotoHint}>{t("Rental.waitingReturnPhoto")}</Text>
                   )}
                   {item.payment_status === "PAID" && !item.dispute && (
                     <TouchableOpacity
@@ -179,7 +181,7 @@ export default function IncomingRentalsScreen() {
                         size={14}
                         color={COLORS.warning}
                       />
-                      <Text style={styles.disputeBtnText}>Открыть спор</Text>
+                      <Text style={styles.disputeBtnText}>{t("Rental.openDisputeBtn")}</Text>
                     </TouchableOpacity>
                   )}
                   {item.dispute && (
@@ -193,7 +195,7 @@ export default function IncomingRentalsScreen() {
                         color={COLORS.warning}
                       />
                       <Text style={styles.disputeBtnText}>
-                        {item.dispute.status === "OPEN" ? "Спор открыт" : "Спор закрыт"}
+                        {item.dispute.status === "OPEN" ? t("Rental.disputeOpenLabel") : t("Rental.disputeClosedLabel")}
                       </Text>
                     </TouchableOpacity>
                   )}
@@ -206,7 +208,7 @@ export default function IncomingRentalsScreen() {
         ListEmptyComponent={
           <View style={styles.empty}>
             <Ionicons name="mail-outline" size={48} color={COLORS.border} />
-            <Text style={styles.emptyText}>Входящих заявок нет</Text>
+            <Text style={styles.emptyText}>{t("Rental.emptyIncoming")}</Text>
           </View>
         }
       />
@@ -223,14 +225,14 @@ export default function IncomingRentalsScreen() {
         <View style={styles.qrOverlay}>
           <View style={styles.qrSheet}>
             <Text style={styles.qrTitle}>QR-код для оплаты</Text>
-            <Text style={styles.qrSub}>Покажите арендатору для оплаты</Text>
+            <Text style={styles.qrSub}>{t("Rental.qrShowToRenter")}</Text>
             {qrToken && (
               <View style={styles.qrBox}>
                 <QRCode value={`${MOBILE_BASE}/rentals/scan/${qrToken}`} size={220} />
               </View>
             )}
             <TouchableOpacity style={styles.qrCloseBtn} onPress={() => setQrToken(null)}>
-              <Text style={styles.qrCloseBtnText}>Закрыть</Text>
+              <Text style={styles.qrCloseBtnText}>{t("Rental.qrClose")}</Text>
             </TouchableOpacity>
           </View>
         </View>
