@@ -27,6 +27,7 @@ import { COLORS, resolveImageUrl, API_URL } from "@/constants";
 import { RentalRequest } from "@/types";
 import api from "@/services/api";
 import Toast from "react-native-toast-message";
+import { useT } from "@/i18n/useT";
 
 function calcProgress(startDate: string, endDate: string): number {
   const now = Date.now();
@@ -48,15 +49,16 @@ function daysElapsed(startDate: string): number {
 }
 
 function ProgressBar({ startDate, endDate }: { startDate: string; endDate: string }) {
+  const t = useT();
   const pct = calcProgress(startDate, endDate);
   const elapsed = Math.min(daysElapsed(startDate), daysBetween(startDate, endDate));
   const total = daysBetween(startDate, endDate);
   return (
     <View style={progressStyles.wrap}>
       <View style={progressStyles.labelRow}>
-        <Text style={progressStyles.label}>Прогресс аренды</Text>
+        <Text style={progressStyles.label}>{t("Rental.progressLabel")}</Text>
         <Text style={progressStyles.label}>
-          {elapsed} дн. из {total}
+          {elapsed} / {total}
         </Text>
       </View>
       <View style={progressStyles.track}>
@@ -72,22 +74,31 @@ interface TimelineStep {
   date?: string;
 }
 
-function buildTimeline(rental: RentalRequest): TimelineStep[] {
+function buildTimeline(
+  rental: RentalRequest,
+  labels: { created: string; approved: string; payment: string; completed: string },
+): TimelineStep[] {
   const approvedDone = rental.status === "APPROVED" || rental.status === "COMPLETED";
   const approvedFailed = rental.status === "REJECTED" || rental.status === "CANCELLED";
   return [
-    { label: "Заявка создана", status: "done", date: rental.created_at },
+    { label: labels.created, status: "done", date: rental.created_at },
     {
-      label: "Одобрено",
+      label: labels.approved,
       status: approvedDone ? "done" : approvedFailed ? "failed" : "pending",
     },
-    { label: "Оплата", status: rental.payment_status === "PAID" ? "done" : "pending" },
-    { label: "Завершено", status: rental.status === "COMPLETED" ? "done" : "pending" },
+    { label: labels.payment, status: rental.payment_status === "PAID" ? "done" : "pending" },
+    { label: labels.completed, status: rental.status === "COMPLETED" ? "done" : "pending" },
   ];
 }
 
 function Timeline({ rental }: { rental: RentalRequest }) {
-  const steps = buildTimeline(rental);
+  const t = useT();
+  const steps = buildTimeline(rental, {
+    created: t("Rental.stageCreated"),
+    approved: t("Rental.stageApproved"),
+    payment: t("Rental.stagePayment"),
+    completed: t("Rental.stageCompleted"),
+  });
   return (
     <View style={timelineStyles.wrap}>
       {steps.map((step, i) => (
@@ -160,6 +171,7 @@ const timelineStyles = StyleSheet.create({
 });
 
 export default function MyRentalsScreen() {
+  const t = useT();
   const navigation = useNavigation();
   useEffect(() => {
     navigation.setOptions({
@@ -218,9 +230,9 @@ export default function MyRentalsScreen() {
             ...prev,
             [rentalId]: [...(prev[rentalId] ?? []), ...urls],
           }));
-          Toast.show({ type: "success", text1: "Фото возврата загружены" });
+          Toast.show({ type: "success", text1: t("Rental.returnPhotosUploaded") });
         } catch (e: unknown) {
-          const msg = e instanceof Error ? e.message : "Ошибка загрузки";
+          const msg = e instanceof Error ? e.message : t("Rental.uploadError");
           Toast.show({ type: "error", text1: msg });
         } finally {
           setUploadingId(null);
@@ -229,16 +241,16 @@ export default function MyRentalsScreen() {
       input.click();
       return;
     }
-    Alert.alert("Фото возврата", "Выберите способ", [
+    Alert.alert(t("Rental.returnPhotosTitle"), t("Rental.pickMethod"), [
       {
-        text: "Галерея",
+        text: t("Rental.gallery"),
         onPress: () => pickReturnPhoto(rentalId, "gallery"),
       },
       {
-        text: "Камера",
+        text: t("Rental.camera"),
         onPress: () => pickReturnPhoto(rentalId, "camera"),
       },
-      { text: "Отмена", style: "cancel" },
+      { text: t("Common.cancel"), style: "cancel" },
     ]);
   };
 
@@ -247,7 +259,7 @@ export default function MyRentalsScreen() {
     if (source === "camera") {
       const perm = await ImagePicker.requestCameraPermissionsAsync();
       if (perm.status !== "granted") {
-        Toast.show({ type: "error", text1: "Нет доступа к камере" });
+        Toast.show({ type: "error", text1: t("Rental.noCameraAccess") });
         return;
       }
       result = await ImagePicker.launchCameraAsync({ quality: 0.8 });
@@ -268,7 +280,7 @@ export default function MyRentalsScreen() {
         ...prev,
         [rentalId]: [...(prev[rentalId] ?? []), url],
       }));
-      Toast.show({ type: "success", text1: "Фото возврата загружено" });
+      Toast.show({ type: "success", text1: t("Rental.returnPhotoUploaded") });
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Ошибка загрузки";
       Toast.show({ type: "error", text1: msg });
@@ -341,7 +353,7 @@ export default function MyRentalsScreen() {
                       : { color: COLORS.warning },
                   ]}
                 >
-                  {item.payment_status === "PAID" ? "Оплачено" : "Не оплачено"}
+                  {item.payment_status === "PAID" ? t("Rental.paid") : t("Rental.unpaid")}
                 </Text>
               </View>
 
@@ -367,7 +379,7 @@ export default function MyRentalsScreen() {
                     >
                       <Ionicons name="card-outline" size={14} color={COLORS.white} />
                       <Text style={styles.payBtnText}>
-                        {isPaying && payingId === item.id ? "Оплата..." : "Оплатить сейчас"}
+                        {isPaying && payingId === item.id ? t("Rental.paying") : t("Rental.payNow")}
                       </Text>
                     </TouchableOpacity>
                     <TouchableOpacity
@@ -389,7 +401,7 @@ export default function MyRentalsScreen() {
                     }
                   >
                     <Ionicons name="chatbubble-outline" size={14} color={COLORS.primary} />
-                    <Text style={styles.msgBtnText}>Написать</Text>
+                    <Text style={styles.msgBtnText}>{t("Rental.writeBtn")}</Text>
                   </TouchableOpacity>
                 )}
                 {(item.status === "PENDING" || item.status === "APPROVED") && (
@@ -397,7 +409,7 @@ export default function MyRentalsScreen() {
                     style={styles.cancelBtn}
                     onPress={() => cancelRental(item.id)}
                   >
-                    <Text style={styles.cancelBtnText}>Отменить</Text>
+                    <Text style={styles.cancelBtnText}>{t("Rental.cancelBtn")}</Text>
                   </TouchableOpacity>
                 )}
                 {canReview(item) && (
@@ -406,7 +418,7 @@ export default function MyRentalsScreen() {
                     onPress={() => { setSelectedRental(item); setReviewModal(true); }}
                   >
                     <Ionicons name="star-outline" size={14} color={COLORS.primary} />
-                    <Text style={styles.reviewBtnText}>Оставить отзыв</Text>
+                    <Text style={styles.reviewBtnText}>{t("Rental.leaveReview")}</Text>
                   </TouchableOpacity>
                 )}
                 {item.status === "APPROVED" && item.payment_status === "PAID" && (
@@ -417,7 +429,7 @@ export default function MyRentalsScreen() {
                   >
                     <Ionicons name="camera-outline" size={14} color={COLORS.white} />
                     <Text style={styles.returnPhotoBtnText}>
-                      {uploadingId === item.id ? "Загрузка..." : "Фото возврата"}
+                      {uploadingId === item.id ? t("Rental.uploadingShort") : t("Rental.returnPhotoShort")}
                     </Text>
                   </TouchableOpacity>
                 )}
@@ -433,7 +445,7 @@ export default function MyRentalsScreen() {
                         size={14}
                         color={COLORS.warning}
                       />
-                      <Text style={styles.disputeBtnText}>Открыть спор</Text>
+                      <Text style={styles.disputeBtnText}>{t("Rental.openDisputeBtn")}</Text>
                     </TouchableOpacity>
                   )}
                 {item.dispute && (
@@ -447,7 +459,7 @@ export default function MyRentalsScreen() {
                       color={COLORS.warning}
                     />
                     <Text style={styles.disputeBtnText}>
-                      {item.dispute.status === "OPEN" ? "Спор открыт" : "Спор закрыт"}
+                      {item.dispute.status === "OPEN" ? t("Rental.disputeOpenLabel") : t("Rental.disputeClosedLabel")}
                     </Text>
                   </TouchableOpacity>
                 )}
@@ -475,7 +487,7 @@ export default function MyRentalsScreen() {
                   size={14}
                   color={COLORS.muted}
                 />
-                <Text style={styles.timelineToggleText}>История</Text>
+                <Text style={styles.timelineToggleText}>{t("Rental.historyBtn")}</Text>
               </TouchableOpacity>
               {expandedTimeline.has(item.id) && <Timeline rental={item} />}
             </View>
@@ -485,7 +497,7 @@ export default function MyRentalsScreen() {
         ListEmptyComponent={
           <View style={styles.empty}>
             <Ionicons name="car-outline" size={48} color={COLORS.border} />
-            <Text style={styles.emptyText}>Заявок на аренду нет</Text>
+            <Text style={styles.emptyText}>{t("Rental.emptyMy")}</Text>
           </View>
         }
       />
@@ -501,7 +513,7 @@ export default function MyRentalsScreen() {
       <Modal visible={reviewModal} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Оставить отзыв</Text>
+            <Text style={styles.modalTitle}>{t("Rental.reviewModalTitle")}</Text>
             <View style={styles.starsRow}>
               {[1, 2, 3, 4, 5].map((s) => (
                 <TouchableOpacity key={s} onPress={() => setRating(s)}>
@@ -517,7 +529,7 @@ export default function MyRentalsScreen() {
               style={styles.reviewInput}
               value={comment}
               onChangeText={setComment}
-              placeholder="Комментарий (необязательно)"
+              placeholder={t("Rental.commentOpt")}
               placeholderTextColor={COLORS.muted}
               multiline
               numberOfLines={3}
@@ -528,7 +540,7 @@ export default function MyRentalsScreen() {
                 style={styles.modalCancel}
                 onPress={() => setReviewModal(false)}
               >
-                <Text style={styles.modalCancelText}>Отмена</Text>
+                <Text style={styles.modalCancelText}>{t("Common.cancel")}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.modalConfirm, isReviewing && { opacity: 0.6 }]}
@@ -536,7 +548,7 @@ export default function MyRentalsScreen() {
                 disabled={isReviewing}
               >
                 <Text style={styles.modalConfirmText}>
-                  {isReviewing ? "..." : "Отправить"}
+                  {isReviewing ? t("Rental.sendShortPending") : t("Rental.sendShort")}
                 </Text>
               </TouchableOpacity>
             </View>
