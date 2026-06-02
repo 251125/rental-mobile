@@ -12,8 +12,10 @@ import {
 import { router } from "expo-router";
 import { useForgotPassword } from "@/hooks/use-auth";
 import { COLORS } from "@/constants";
+import { useT } from "@/i18n/useT";
 
 export default function ForgotPasswordScreen() {
+  const t = useT();
   const [email, setEmail] = useState("");
   const { mutate: forgot, isPending, isSuccess } = useForgotPassword();
 
@@ -32,14 +34,14 @@ export default function ForgotPasswordScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.header}>
-          <Text style={styles.logo}>Восстановление</Text>
+          <Text style={styles.logo}>{t("Auth.resetTitle")}</Text>
           <Text style={styles.subtitle}>
-            Введите email — пришлём ссылку для сброса пароля.
+            {t("Auth.resetHint")}
           </Text>
         </View>
 
         <View style={styles.form}>
-          <Text style={styles.label}>Email</Text>
+          <Text style={styles.label}>{t("Auth.email")}</Text>
           <TextInput
             style={styles.input}
             value={email}
@@ -57,15 +59,14 @@ export default function ForgotPasswordScreen() {
             disabled={isPending || !email}
           >
             <Text style={styles.btnText}>
-              {isPending ? "Отправка..." : "Отправить ссылку"}
+              {isPending ? t("Common.loading") : t("Auth.resetSubmit")}
             </Text>
           </TouchableOpacity>
 
           {isSuccess && (
             <View style={styles.successBox}>
               <Text style={styles.successText}>
-                Если аккаунт существует, мы отправили письмо.
-                Откройте ссылку из письма на этом устройстве.
+                {t("Auth.resetOk")}
               </Text>
             </View>
           )}
@@ -75,8 +76,8 @@ export default function ForgotPasswordScreen() {
             onPress={() => router.replace("/auth/login")}
           >
             <Text style={styles.linkText}>
-              Вспомнили пароль?{" "}
-              <Text style={styles.linkAccent}>Войти</Text>
+              {t("Auth.haveAccount")}{" "}
+              <Text style={styles.linkAccent}>{t("Auth.signIn")}</Text>
             </Text>
           </TouchableOpacity>
         </View>

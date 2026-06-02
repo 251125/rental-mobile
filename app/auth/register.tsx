@@ -12,8 +12,10 @@ import {
 import { router } from "expo-router";
 import { useRegister } from "@/hooks/use-auth";
 import { COLORS } from "@/constants";
+import { useT } from "@/i18n/useT";
 
 export default function RegisterScreen() {
+  const t = useT();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -35,20 +37,20 @@ export default function RegisterScreen() {
       >
         <View style={styles.header}>
           <Text style={styles.logo}>Diplom Rental</Text>
-          <Text style={styles.subtitle}>Создайте аккаунт</Text>
+          <Text style={styles.subtitle}>{t("Auth.welcomeNew")}</Text>
         </View>
 
         <View style={styles.form}>
-          <Text style={styles.label}>Имя</Text>
+          <Text style={styles.label}>{t("Auth.name")}</Text>
           <TextInput
             style={styles.input}
             value={name}
             onChangeText={setName}
-            placeholder="Ваше имя"
+            placeholder={t("Auth.name")}
             placeholderTextColor={COLORS.muted}
           />
 
-          <Text style={styles.label}>Email</Text>
+          <Text style={styles.label}>{t("Auth.email")}</Text>
           <TextInput
             style={styles.input}
             value={email}
@@ -60,13 +62,13 @@ export default function RegisterScreen() {
             placeholderTextColor={COLORS.muted}
           />
 
-          <Text style={styles.label}>Пароль</Text>
+          <Text style={styles.label}>{t("Auth.password")}</Text>
           <TextInput
             style={styles.input}
             value={password}
             onChangeText={setPassword}
             secureTextEntry
-            placeholder="минимум 6 символов"
+            placeholder="••••••••"
             placeholderTextColor={COLORS.muted}
           />
 
@@ -76,7 +78,7 @@ export default function RegisterScreen() {
             disabled={isPending}
           >
             <Text style={styles.btnText}>
-              {isPending ? "Регистрация..." : "Зарегистрироваться"}
+              {isPending ? t("Auth.signingUp") : t("Auth.signUp")}
             </Text>
           </TouchableOpacity>
 
@@ -85,8 +87,8 @@ export default function RegisterScreen() {
             onPress={() => router.back()}
           >
             <Text style={styles.linkText}>
-              Уже есть аккаунт?{" "}
-              <Text style={styles.linkAccent}>Войти</Text>
+              {t("Auth.haveAccount")}{" "}
+              <Text style={styles.linkAccent}>{t("Auth.signIn")}</Text>
             </Text>
           </TouchableOpacity>
         </View>

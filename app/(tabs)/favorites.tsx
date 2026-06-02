@@ -11,8 +11,10 @@ import { useMyFavorites, useRemoveFavorite } from "@/hooks/use-favorites";
 import ListingCard from "@/components/ListingCard";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { COLORS } from "@/constants";
+import { useT } from "@/i18n/useT";
 
 export default function FavoritesScreen() {
+  const t = useT();
   const { data: favorites, isLoading } = useMyFavorites();
   const { mutate: removeFav } = useRemoveFavorite();
 
@@ -21,7 +23,7 @@ export default function FavoritesScreen() {
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
-        <Text style={styles.title}>Избранное</Text>
+        <Text style={styles.title}>{t("Favorites.title")}</Text>
       </View>
       <FlatList
         data={favorites ?? []}
@@ -37,7 +39,7 @@ export default function FavoritesScreen() {
         ListEmptyComponent={
           <View style={styles.empty}>
             <Ionicons name="heart-outline" size={48} color={COLORS.border} />
-            <Text style={styles.emptyText}>Нет избранных объявлений</Text>
+            <Text style={styles.emptyText}>{t("Favorites.empty")}</Text>
           </View>
         }
       />

@@ -14,17 +14,18 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import StripePaymentSheet from "@/components/StripePaymentSheet";
 import { COLORS } from "@/constants";
 import { Transaction, TransactionType } from "@/types";
+import { useT } from "@/i18n/useT";
 
 const QUICK_AMOUNTS = [1000, 5000, 10000, 50000];
 
-const TX_LABELS: Record<TransactionType, { label: string; icon: string }> = {
-  DEPOSIT: { label: "Пополнение", icon: "arrow-down-circle-outline" },
-  PAYMENT: { label: "Оплата аренды", icon: "arrow-up-circle-outline" },
-  INCOME: { label: "Доход", icon: "cash-outline" },
-  REFUND: { label: "Возврат", icon: "refresh-circle-outline" },
-  PLATFORM_FEE: { label: "Комиссия платформы", icon: "remove-circle-outline" },
-  PROMOTION: { label: "Продвижение", icon: "rocket-outline" },
-  PREMIUM: { label: "Premium-подписка", icon: "diamond-outline" },
+const TX_ICONS: Record<TransactionType, string> = {
+  DEPOSIT: "arrow-down-circle-outline",
+  PAYMENT: "arrow-up-circle-outline",
+  INCOME: "cash-outline",
+  REFUND: "refresh-circle-outline",
+  PLATFORM_FEE: "remove-circle-outline",
+  PROMOTION: "rocket-outline",
+  PREMIUM: "diamond-outline",
 };
 
 const TX_COLORS: Record<TransactionType, string> = {
@@ -38,20 +39,31 @@ const TX_COLORS: Record<TransactionType, string> = {
 };
 
 export default function WalletScreen() {
+  const t = useT();
   const { data, isLoading, refetch } = useWallet();
   const { mutate: topUp } = useTopUp();
   const { mutate: subscribePremium } = useSubscribePremium();
   const [stripeVisible, setStripeVisible] = useState(false);
   const [pendingAmount, setPendingAmount] = useState(0);
 
+  const TX_LABELS: Record<TransactionType, string> = {
+    DEPOSIT: t("Wallet.txDeposit"),
+    PAYMENT: t("Wallet.txPayment"),
+    INCOME: t("Wallet.txIncome"),
+    REFUND: t("Wallet.txRefund"),
+    PLATFORM_FEE: t("Wallet.txFee"),
+    PROMOTION: t("Wallet.txPromotion"),
+    PREMIUM: t("Wallet.txPremium"),
+  };
+
   const handlePremium = () => {
     Alert.alert(
-      data?.is_premium ? "Продлить Premium?" : "Активировать Premium?",
-      "С баланса спишется 2 000 ₸ за 30 дней Premium. Если подписка ещё активна, срок продлится на 30 дней.",
+      data?.is_premium ? t("Wallet.premiumExtendTitle") : t("Wallet.premiumActivateTitle"),
+      t("Wallet.premiumConfirmDesc"),
       [
-        { text: "Отмена", style: "cancel" },
+        { text: t("Common.cancel"), style: "cancel" },
         {
-          text: data?.is_premium ? "Продлить" : "Активировать",
+          text: data?.is_premium ? t("Wallet.premiumExtend") : t("Wallet.premiumActivate"),
           onPress: () => subscribePremium(),
         },
       ],
@@ -74,18 +86,19 @@ export default function WalletScreen() {
   if (isLoading) return <LoadingSpinner />;
 
   const renderTx = ({ item }: { item: Transaction }) => {
-    const cfg = TX_LABELS[item.type] ?? { label: item.type, icon: "ellipse-outline" };
+    const label = TX_LABELS[item.type] ?? item.type;
+    const icon = TX_ICONS[item.type] ?? "ellipse-outline";
     const color = TX_COLORS[item.type] ?? COLORS.muted;
     const positive = isPositive(item.type);
     return (
       <View style={styles.txRow}>
         <View style={[styles.txIcon, { backgroundColor: color + "20" }]}>
-          <Ionicons name={cfg.icon as any} size={20} color={color} />
+          <Ionicons name={icon as any} size={20} color={color} />
         </View>
         <View style={styles.txBody}>
-          <Text style={styles.txLabel}>{cfg.label}</Text>
+          <Text style={styles.txLabel}>{label}</Text>
           <Text style={styles.txDesc} numberOfLines={1}>{item.description}</Text>
-          <Text style={styles.txDate}>{new Date(item.created_at).toLocaleDateString("ru-RU")}</Text>
+          <Text style={styles.txDate}>{new Date(item.created_at).toLocaleDateString()}</Text>
         </View>
         <Text style={[styles.txAmount, { color }]}>
           {positive ? "+" : "−"}{Math.abs(Number(item.amount)).toLocaleString()} ₸
@@ -106,7 +119,7 @@ export default function WalletScreen() {
           <>
             {/* Header */}
             <View style={styles.header}>
-              <Text style={styles.title}>Кошелёк</Text>
+              <Text style={styles.title}>{t("Wallet.title")}</Text>
             </View>
 
             {/* Balance card */}
@@ -118,7 +131,7 @@ export default function WalletScreen() {
               <Text style={styles.balance}>
                 {Number(data?.balance ?? 0).toLocaleString()} ₸
               </Text>
-              <Text style={styles.balanceSub}>Доступно для оплаты аренды</Text>
+              <Text style={styles.balanceSub}>{t("Wallet.balanceHint")}</Text>
             </View>
 
             {/* Premium card */}
@@ -134,15 +147,15 @@ export default function WalletScreen() {
                 </View>
                 <View style={{ flex: 1 }}>
                   <View style={styles.premiumTitleRow}>
-                    <Text style={styles.premiumTitle}>Premium</Text>
+                    <Text style={styles.premiumTitle}>{t("Wallet.premium")}</Text>
                     {data?.is_premium && data.premium_until && (
                       <Text style={styles.premiumUntil}>
-                        до {new Date(data.premium_until).toLocaleDateString("ru-RU")}
+                        {t("Wallet.premiumUntil", { date: new Date(data.premium_until).toLocaleDateString() })}
                       </Text>
                     )}
                   </View>
                   <Text style={styles.premiumDesc}>
-                    Без комиссии, статистика, бейдж, неограниченные объявления.
+                    {t("Wallet.premiumDesc")}
                   </Text>
                 </View>
               </View>
@@ -151,14 +164,14 @@ export default function WalletScreen() {
                 onPress={handlePremium}
               >
                 <Text style={styles.premiumBtnText}>
-                  {data?.is_premium ? "Продлить" : "2 000 ₸"}
+                  {data?.is_premium ? t("Wallet.premiumExtend") : "2 000 ₸"}
                 </Text>
               </TouchableOpacity>
             </View>
 
             {/* Quick top-up */}
             <View style={styles.topUpSection}>
-              <Text style={styles.sectionTitle}>Пополнить картой</Text>
+              <Text style={styles.sectionTitle}>{t("Wallet.topUpCard")}</Text>
               <View style={styles.quickGrid}>
                 {QUICK_AMOUNTS.map((amt) => (
                   <TouchableOpacity
@@ -176,28 +189,28 @@ export default function WalletScreen() {
                 onPress={() => openStripe(2000)}
               >
                 <Ionicons name="card-outline" size={18} color="#635BFF" />
-                <Text style={styles.customBtnText}>Другая сумма</Text>
+                <Text style={styles.customBtnText}>{t("Wallet.customAmount")}</Text>
                 <Ionicons name="chevron-forward" size={16} color="#635BFF" />
               </TouchableOpacity>
 
               {/* Stripe badge */}
               <View style={styles.stripeBadge}>
                 <Ionicons name="shield-checkmark-outline" size={12} color={COLORS.muted} />
-                <Text style={styles.stripeBadgeText}>Защищено · </Text>
+                <Text style={styles.stripeBadgeText}>{t("Wallet.stripeProtected")}</Text>
                 <Text style={[styles.stripeBadgeText, { fontStyle: "italic", fontWeight: "700", color: "#635BFF" }]}>
                   stripe
                 </Text>
-                <Text style={styles.stripeBadgeText}> · Тест</Text>
+                <Text style={styles.stripeBadgeText}>{t("Wallet.stripeTest")}</Text>
               </View>
             </View>
 
-            <Text style={styles.sectionTitle2}>История операций</Text>
+            <Text style={styles.sectionTitle2}>{t("Wallet.transactions")}</Text>
           </>
         }
         ListEmptyComponent={
           <View style={styles.empty}>
             <Ionicons name="receipt-outline" size={44} color={COLORS.border} />
-            <Text style={styles.emptyText}>Операций пока нет</Text>
+            <Text style={styles.emptyText}>{t("Wallet.noTransactions")}</Text>
           </View>
         }
       />

@@ -12,8 +12,10 @@ import {
 import { router } from "expo-router";
 import { useLogin } from "@/hooks/use-auth";
 import { COLORS } from "@/constants";
+import { useT } from "@/i18n/useT";
 
 export default function LoginScreen() {
+  const t = useT();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const { mutate: login, isPending } = useLogin();
@@ -34,11 +36,11 @@ export default function LoginScreen() {
       >
         <View style={styles.header}>
           <Text style={styles.logo}>Diplom Rental</Text>
-          <Text style={styles.subtitle}>Войдите в аккаунт</Text>
+          <Text style={styles.subtitle}>{t("Auth.welcomeBack")}</Text>
         </View>
 
         <View style={styles.form}>
-          <Text style={styles.label}>Email</Text>
+          <Text style={styles.label}>{t("Auth.email")}</Text>
           <TextInput
             style={styles.input}
             value={email}
@@ -50,7 +52,7 @@ export default function LoginScreen() {
             placeholderTextColor={COLORS.muted}
           />
 
-          <Text style={styles.label}>Пароль</Text>
+          <Text style={styles.label}>{t("Auth.password")}</Text>
           <TextInput
             style={styles.input}
             value={password}
@@ -66,7 +68,7 @@ export default function LoginScreen() {
             disabled={isPending}
           >
             <Text style={styles.btnText}>
-              {isPending ? "Входим..." : "Войти"}
+              {isPending ? t("Auth.signingIn") : t("Auth.signIn")}
             </Text>
           </TouchableOpacity>
 
@@ -74,7 +76,7 @@ export default function LoginScreen() {
             style={styles.forgotBtn}
             onPress={() => router.push("/auth/forgot-password" as never)}
           >
-            <Text style={styles.linkAccent}>Забыли пароль?</Text>
+            <Text style={styles.linkAccent}>{t("Auth.forgotPassword")}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -82,8 +84,8 @@ export default function LoginScreen() {
             onPress={() => router.push("/auth/register")}
           >
             <Text style={styles.linkText}>
-              Нет аккаунта?{" "}
-              <Text style={styles.linkAccent}>Зарегистрироваться</Text>
+              {t("Auth.noAccount")}{" "}
+              <Text style={styles.linkAccent}>{t("Auth.signUp")}</Text>
             </Text>
           </TouchableOpacity>
         </View>

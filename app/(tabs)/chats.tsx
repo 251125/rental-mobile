@@ -15,8 +15,10 @@ import { useAuthStore } from "@/store/auth.store";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { COLORS, resolveImageUrl } from "@/constants";
 import { Chat } from "@/types";
+import { useT } from "@/i18n/useT";
 
 export default function ChatsScreen() {
+  const t = useT();
   const { user } = useAuthStore();
   const { data: chats, isLoading } = useMyChats(true);
 
@@ -37,9 +39,9 @@ export default function ChatsScreen() {
     try {
       const d = JSON.parse(msg.content) as { outcome: string; duration?: number };
       const fmt = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
-      if (d.outcome === "completed") return `📞 Звонок ${fmt(d.duration ?? 0)}`;
-      if (d.outcome === "rejected") return "📵 Звонок отклонён";
-      return "📵 Пропущенный звонок";
+      if (d.outcome === "completed") return `📞 ${fmt(d.duration ?? 0)}`;
+      if (d.outcome === "rejected") return `📵 ${t("Chat.callRejected")}`;
+      return `📵 ${t("Chat.callMissed")}`;
     } catch { return msg.content; }
   };
 
@@ -48,7 +50,7 @@ export default function ChatsScreen() {
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
-        <Text style={styles.title}>Чаты</Text>
+        <Text style={styles.title}>{t("Nav.chats")}</Text>
       </View>
       <FlatList
         data={chats ?? []}
@@ -79,7 +81,7 @@ export default function ChatsScreen() {
                 <Text style={styles.chatName}>{other.name}</Text>
                 {last && (
                   <Text style={styles.lastMsg} numberOfLines={1}>
-                    {last.sender_id === user?.id && last.type !== "call" ? "Вы: " : ""}
+                    {last.sender_id === user?.id && last.type !== "call" ? `${t("Chat.youPrefix")}: ` : ""}
                     {formatPreview(last)}
                   </Text>
                 )}
@@ -100,9 +102,9 @@ export default function ChatsScreen() {
               size={48}
               color={COLORS.border}
             />
-            <Text style={styles.emptyText}>Чатов пока нет</Text>
+            <Text style={styles.emptyText}>{t("Chat.noMessages")}</Text>
             <Text style={styles.emptyHint}>
-              Напишите владельцу объявления, чтобы начать чат
+              {t("Chat.noMessagesHint")}
             </Text>
           </View>
         }
