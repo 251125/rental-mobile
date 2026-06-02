@@ -5,6 +5,7 @@ import { COLORS } from "@/constants";
 import { useUnreadCount } from "@/hooks/use-chats";
 import { useIncomingRentalsCount } from "@/hooks/use-rentals";
 import { Text } from "react-native";
+import { useT } from "@/i18n/useT";
 
 function TabBadge({ count }: { count: number }) {
   if (!count) return null;
@@ -31,6 +32,7 @@ function TabBadge({ count }: { count: number }) {
 }
 
 export default function TabsLayout() {
+  const t = useT();
   const { isAuthenticated } = useAuthStore();
   const { data: unreadCount = 0 } = useUnreadCount(isAuthenticated);
   const { data: incomingCount = 0 } = useIncomingRentalsCount();
@@ -60,7 +62,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: "Главная",
+          title: t("Nav.home"),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="home-outline" size={size} color={color} />
           ),
@@ -69,7 +71,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="favorites"
         options={{
-          title: "Избранное",
+          title: t("Nav.favorites"),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="heart-outline" size={size} color={color} />
           ),
@@ -78,7 +80,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="chats"
         options={{
-          title: "Чаты",
+          title: t("Nav.chats"),
           tabBarIcon: ({ color, size, focused }) => (
             <>
               <Ionicons
@@ -94,7 +96,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="map"
         options={{
-          title: "Карта",
+          title: "Map",
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="map-outline" size={size} color={color} />
           ),
@@ -103,7 +105,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="wallet"
         options={{
-          title: "Кошелёк",
+          title: t("Nav.wallet"),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="wallet-outline" size={size} color={color} />
           ),
@@ -112,7 +114,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: "Профиль",
+          title: t("Nav.profile"),
           tabBarIcon: ({ color, size }) => (
             <>
               <Ionicons name="person-outline" size={size} color={color} />

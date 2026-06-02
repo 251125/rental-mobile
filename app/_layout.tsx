@@ -12,6 +12,8 @@ import { COLORS } from "@/constants";
 import { CallProvider } from "@/providers/CallProvider";
 import { NotificationsProvider } from "@/providers/NotificationsProvider";
 import CallOverlay from "@/components/CallOverlay";
+import { useLocaleStore } from "@/store/locale.store";
+import { useT } from "@/i18n/useT";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -23,6 +25,7 @@ function AuthInitializer({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
   const triedRef = useRef(false);
   const { setAuth, logout } = useAuthStore();
+  const hydrateLocale = useLocaleStore((s) => s.hydrate);
 
   useEffect(() => {
     if (triedRef.current) return;
@@ -30,6 +33,7 @@ function AuthInitializer({ children }: { children: React.ReactNode }) {
 
     const init = async () => {
       try {
+        await hydrateLocale();
         // Always probe /users/me. The api interceptor will:
         //   - attach the saved access_token if present
         //   - silently refresh via /auth/refresh on 401 (using the
@@ -59,6 +63,93 @@ function AuthInitializer({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function AppStack() {
+  const t = useT();
+  return (
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="index" />
+      <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="auth" />
+      <Stack.Screen
+        name="listings/[id]"
+        options={{ headerShown: true, title: t("Listing.detail") }}
+      />
+      <Stack.Screen
+        name="listings/create"
+        options={{ headerShown: true, title: t("Listing.createTitle") }}
+      />
+      <Stack.Screen
+        name="listings/edit/[id]"
+        options={{ headerShown: true, title: t("Listing.editTitle") }}
+      />
+      <Stack.Screen
+        name="rentals/my"
+        options={{ headerShown: true, title: t("Rental.myRentals") }}
+      />
+      <Stack.Screen
+        name="rentals/incoming"
+        options={{ headerShown: true, title: t("Rental.incoming") }}
+      />
+      <Stack.Screen
+        name="rentals/scan/[token]"
+        options={{ headerShown: true, title: t("Rental.qrTitle") }}
+      />
+      <Stack.Screen
+        name="profile/[id]"
+        options={{ headerShown: true, title: t("Profile.title") }}
+      />
+      <Stack.Screen
+        name="profile/my-listings"
+        options={{ headerShown: true, title: t("Nav.myListings") }}
+      />
+      <Stack.Screen
+        name="profile/edit"
+        options={{ headerShown: true, title: t("Profile.edit") }}
+      />
+      <Stack.Screen
+        name="profile/language"
+        options={{ headerShown: true, title: t("Locale.title") }}
+      />
+      <Stack.Screen
+        name="chats/[id]"
+        options={{ headerShown: true, title: t("Chat.title") }}
+      />
+      <Stack.Screen
+        name="admin/index"
+        options={{ headerShown: true, title: t("Nav.admin") }}
+      />
+      <Stack.Screen
+        name="admin/disputes"
+        options={{ headerShown: true, title: t("Dispute.myTitle") }}
+      />
+      <Stack.Screen
+        name="admin/finance"
+        options={{ headerShown: true, title: t("Wallet.title") }}
+      />
+      <Stack.Screen
+        name="profile/change-password"
+        options={{ headerShown: true, title: t("Profile.changePassword") }}
+      />
+      <Stack.Screen
+        name="profile/blocked"
+        options={{ headerShown: true, title: t("Nav.blocked") }}
+      />
+      <Stack.Screen
+        name="disputes"
+        options={{ headerShown: true, title: t("Dispute.myTitle") }}
+      />
+      <Stack.Screen
+        name="about"
+        options={{ headerShown: true, title: t("About.title") }}
+      />
+      <Stack.Screen
+        name="compare"
+        options={{ headerShown: true, title: t("Compare.title") }}
+      />
+    </Stack>
+  );
+}
+
 export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -67,83 +158,7 @@ export default function RootLayout() {
         <AuthInitializer>
           <NotificationsProvider>
           <CallProvider>
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="index" />
-            <Stack.Screen name="(tabs)" />
-            <Stack.Screen name="auth" />
-            <Stack.Screen
-              name="listings/[id]"
-              options={{ headerShown: true, title: "Объявление" }}
-            />
-            <Stack.Screen
-              name="listings/create"
-              options={{ headerShown: true, title: "Новое объявление" }}
-            />
-            <Stack.Screen
-              name="listings/edit/[id]"
-              options={{ headerShown: true, title: "Редактировать" }}
-            />
-            <Stack.Screen
-              name="rentals/my"
-              options={{ headerShown: true, title: "Мои аренды" }}
-            />
-            <Stack.Screen
-              name="rentals/incoming"
-              options={{ headerShown: true, title: "Входящие заявки" }}
-            />
-            <Stack.Screen
-              name="rentals/scan/[token]"
-              options={{ headerShown: true, title: "Оплата аренды" }}
-            />
-            <Stack.Screen
-              name="profile/[id]"
-              options={{ headerShown: true, title: "Профиль" }}
-            />
-            <Stack.Screen
-              name="profile/my-listings"
-              options={{ headerShown: true, title: "Мои объявления" }}
-            />
-            <Stack.Screen
-              name="profile/edit"
-              options={{ headerShown: true, title: "Редактировать профиль" }}
-            />
-            <Stack.Screen
-              name="chats/[id]"
-              options={{ headerShown: true, title: "Чат" }}
-            />
-            <Stack.Screen
-              name="admin/index"
-              options={{ headerShown: true, title: "Администрирование" }}
-            />
-            <Stack.Screen
-              name="admin/disputes"
-              options={{ headerShown: true, title: "Споры" }}
-            />
-            <Stack.Screen
-              name="admin/finance"
-              options={{ headerShown: true, title: "Финансы платформы" }}
-            />
-            <Stack.Screen
-              name="profile/change-password"
-              options={{ headerShown: true, title: "Смена пароля" }}
-            />
-            <Stack.Screen
-              name="profile/blocked"
-              options={{ headerShown: true, title: "Заблокированные" }}
-            />
-            <Stack.Screen
-              name="disputes"
-              options={{ headerShown: true, title: "Мои споры" }}
-            />
-            <Stack.Screen
-              name="about"
-              options={{ headerShown: true, title: "О платформе" }}
-            />
-            <Stack.Screen
-              name="compare"
-              options={{ headerShown: true, title: "Сравнение" }}
-            />
-          </Stack>
+          <AppStack />
           <CallOverlay />
           </CallProvider>
           </NotificationsProvider>

@@ -14,8 +14,10 @@ import { useAuthStore } from "@/store/auth.store";
 import { useLogout } from "@/hooks/use-auth";
 import { useIncomingRentalsCount } from "@/hooks/use-rentals";
 import { COLORS, resolveImageUrl } from "@/constants";
+import { useT } from "@/i18n/useT";
 
 export default function ProfileScreen() {
+  const t = useT();
   const { user } = useAuthStore();
   const { mutate: logout, isPending } = useLogout();
   const { data: incomingCount = 0 } = useIncomingRentalsCount();
@@ -32,52 +34,54 @@ export default function ProfileScreen() {
     | "qr-code-outline"
     | "warning-outline"
     | "ban-outline"
-    | "information-circle-outline";
+    | "information-circle-outline"
+    | "language-outline";
 
-  const menuItems: { icon: IoniconsName; label: string; onPress: () => void }[] = [
+  const menuItems: { icon: IoniconsName; label: string; onPress: () => void; key?: string }[] = [
     {
       icon: "person-outline",
-      label: "Редактировать профиль",
+      label: t("Profile.edit"),
       onPress: () => router.push("/profile/edit" as any),
     },
     {
       icon: "lock-closed-outline",
-      label: "Сменить пароль",
+      label: t("Profile.changePassword"),
       onPress: () => router.push("/profile/change-password" as any),
     },
     {
+      icon: "language-outline",
+      label: t("Nav.language"),
+      onPress: () => router.push("/profile/language" as any),
+    },
+    {
       icon: "list-outline",
-      label: "Мои объявления",
+      label: t("Nav.myListings"),
       onPress: () => router.push("/profile/my-listings" as any),
     },
     {
       icon: "time-outline",
-      label: "Мои аренды",
-      onPress: () => router.push("/rentals/my" as any),
-    },
-    {
-      icon: "qr-code-outline",
-      label: "Оплата по QR",
+      label: t("Nav.myRentals"),
       onPress: () => router.push("/rentals/my" as any),
     },
     {
       icon: "mail-outline",
-      label: "Входящие заявки",
+      key: "incoming",
+      label: t("Nav.incoming"),
       onPress: () => router.push("/rentals/incoming" as any),
     },
     {
       icon: "warning-outline",
-      label: "Мои споры",
+      label: t("Nav.disputes"),
       onPress: () => router.push("/disputes" as any),
     },
     {
       icon: "ban-outline",
-      label: "Заблокированные",
+      label: t("Nav.blocked"),
       onPress: () => router.push("/profile/blocked" as any),
     },
     {
       icon: "information-circle-outline",
-      label: "О платформе",
+      label: t("Nav.about"),
       onPress: () => router.push("/about" as any),
     },
   ];
@@ -85,7 +89,7 @@ export default function ProfileScreen() {
   if (user?.role === "ADMIN") {
     menuItems.push({
       icon: "shield-outline",
-      label: "Панель администратора",
+      label: t("Nav.admin"),
       onPress: () => router.push("/admin" as any),
     });
   }
@@ -93,7 +97,7 @@ export default function ProfileScreen() {
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
-        <Text style={styles.title}>Профиль</Text>
+        <Text style={styles.title}>{t("Profile.title")}</Text>
       </View>
       <ScrollView>
         <View style={styles.profileCard}>
@@ -115,7 +119,7 @@ export default function ProfileScreen() {
               <Ionicons name="star" size={14} color="#f59e0b" />
               <Text style={styles.rating}>{parseFloat(user.rating_avg).toFixed(1)}</Text>
               <Text style={styles.reviewsCount}>
-                ({user.reviews_count} отзывов)
+                ({user.reviews_count})
               </Text>
             </View>
           )}
@@ -123,8 +127,7 @@ export default function ProfileScreen() {
 
         <View style={styles.menu}>
           {menuItems.map((item, i) => {
-            const showBadge =
-              item.label === "Входящие заявки" && incomingCount > 0;
+            const showBadge = item.key === "incoming" && incomingCount > 0;
             return (
               <TouchableOpacity
                 key={i}
@@ -151,7 +154,7 @@ export default function ProfileScreen() {
         >
           <Ionicons name="log-out-outline" size={20} color={COLORS.danger} />
           <Text style={styles.logoutText}>
-            {isPending ? "Выход..." : "Выйти"}
+            {isPending ? t("Common.loading") : t("Nav.logout")}
           </Text>
         </TouchableOpacity>
       </ScrollView>
