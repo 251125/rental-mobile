@@ -13,6 +13,7 @@ import { router } from "expo-router";
 import { useLogin } from "@/hooks/use-auth";
 import { COLORS } from "@/constants";
 import { useT } from "@/i18n/useT";
+import GoogleSignInButton from "@/components/GoogleSignInButton";
 
 export default function LoginScreen() {
   const t = useT();
@@ -71,6 +72,10 @@ export default function LoginScreen() {
               {isPending ? t("Auth.signingIn") : t("Auth.signIn")}
             </Text>
           </TouchableOpacity>
+
+          <View style={{ marginTop: 16, alignItems: "center" }}>
+            <GoogleSignInButton />
+          </View>
 
           <TouchableOpacity
             style={styles.forgotBtn}

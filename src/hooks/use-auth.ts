@@ -42,6 +42,28 @@ export function useLogin() {
   });
 }
 
+export function useGoogleSignIn() {
+  const { setAuth } = useAuthStore();
+
+  return useMutation({
+    mutationFn: (idToken: string) =>
+      api
+        .post<AuthResponse>("/auth/google", { id_token: idToken })
+        .then((r) => r.data),
+
+    onSuccess: (data) => {
+      void setAuth(data.user, data.access_token).then(() => {
+        Toast.show({ type: "success", text1: "Вы вошли через Google" });
+        router.replace("/");
+      });
+    },
+
+    onError: (error: Error) => {
+      Toast.show({ type: "error", text1: error.message ?? "Ошибка входа через Google" });
+    },
+  });
+}
+
 export function useRegister() {
   const { setAuth } = useAuthStore();
 
