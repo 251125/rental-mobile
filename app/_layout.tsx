@@ -13,6 +13,7 @@ import { CallProvider } from "@/providers/CallProvider";
 import { NotificationsProvider } from "@/providers/NotificationsProvider";
 import CallOverlay from "@/components/CallOverlay";
 import ConfirmHost from "@/components/ConfirmModal";
+import HeaderBack from "@/components/HeaderBack";
 import { useLocaleStore } from "@/store/locale.store";
 import { useT } from "@/i18n/useT";
 
@@ -67,7 +68,12 @@ function AuthInitializer({ children }: { children: React.ReactNode }) {
 function AppStack() {
   const t = useT();
   return (
-    <Stack screenOptions={{ headerShown: false }}>
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        headerLeft: () => <HeaderBack />,
+      }}
+    >
       <Stack.Screen name="index" />
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="auth" />

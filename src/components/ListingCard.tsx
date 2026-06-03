@@ -58,7 +58,7 @@ export default function ListingCard({ listing, onFavoriteToggle, isFavorite }: P
           new Date(listing.promoted_until).getTime() > Date.now() && (
             <View style={styles.featuredBadge}>
               <Ionicons name="sparkles" size={11} color="#fff" />
-              <Text style={styles.featuredText}>Featured</Text>
+              <Text style={styles.featuredText}>{t("Home.featured")}</Text>
             </View>
           )}
         <View style={styles.imgOverlay}>

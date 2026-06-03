@@ -41,17 +41,35 @@ export function usePayRental() {
   });
 }
 
+export type PromotionTier = "basic" | "pro" | "premium";
+
+export interface PromotionPlan {
+  key: PromotionTier;
+  price: number;
+  days: number;
+}
+
+export function usePromotionTiers() {
+  return useQuery({
+    queryKey: ["promotion-tiers"],
+    queryFn: () =>
+      api.get<PromotionPlan[]>("/wallet/promotion-tiers").then((r) => r.data),
+    staleTime: 5 * 60_000,
+  });
+}
+
 export function usePromoteListing() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (listingId: string) =>
+    mutationFn: ({ listingId, tier }: { listingId: string; tier: PromotionTier }) =>
       api
-        .post<{ promoted_until: string; price: number }>(
+        .post<{ promoted_until: string; price: number; tier: PromotionTier }>(
           `/wallet/promote/${listingId}`,
+          { tier },
         )
         .then((r) => r.data),
-    onSuccess: () => {
-      Toast.show({ type: "success", text1: "Объявление продвинуто на 7 дней" });
+    onSuccess: (data) => {
+      Toast.show({ type: "success", text1: `Объявление продвинуто (${data.tier})` });
       void qc.invalidateQueries({ queryKey: ["wallet"] });
       void qc.invalidateQueries({ queryKey: ["listings"] });
     },

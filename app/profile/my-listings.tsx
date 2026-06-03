@@ -16,9 +16,9 @@ import {
   useDeleteListing,
   useSetListingVisibility,
 } from "@/hooks/use-listings";
-import { usePromoteListing } from "@/hooks/use-wallet";
 import ListingCard from "@/components/ListingCard";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import PromoteDialog from "@/components/PromoteDialog";
 import { COLORS } from "@/constants";
 import { useT } from "@/i18n/useT";
 
@@ -27,18 +27,8 @@ export default function MyListingsScreen() {
   const { data, isLoading } = useMyListings();
   const { mutate: deleteListing } = useDeleteListing();
   const { mutate: setVisibility } = useSetListingVisibility();
-  const { mutate: promoteListing } = usePromoteListing();
   const [togglingId, setTogglingId] = useState<string | null>(null);
-
-  const handlePromote = (id: string, title: string) => {
-    confirm({
-      title: t("Profile.promoteTitle"),
-      message: `"${title}"`,
-      cancelText: t("Common.cancel"),
-      confirmText: t("Profile.promoteBtn"),
-      onConfirm: () => promoteListing(id),
-    });
-  };
+  const [promoting, setPromoting] = useState<{ id: string; title: string } | null>(null);
 
   if (isLoading) return <LoadingSpinner />;
 
@@ -61,7 +51,7 @@ export default function MyListingsScreen() {
             <View style={styles.itemActions}>
               <TouchableOpacity
                 style={styles.promoteBtn}
-                onPress={() => handlePromote(item.id, item.title)}
+                onPress={() => setPromoting({ id: item.id, title: item.title })}
               >
                 <Ionicons name="rocket-outline" size={14} color={COLORS.warning} />
                 <Text style={styles.promoteText}>{t("Profile.promoteShort")}</Text>
@@ -143,6 +133,14 @@ export default function MyListingsScreen() {
           </View>
         }
       />
+      {promoting && (
+        <PromoteDialog
+          visible
+          listingId={promoting.id}
+          listingTitle={promoting.title}
+          onClose={() => setPromoting(null)}
+        />
+      )}
     </SafeAreaView>
   );
 }
