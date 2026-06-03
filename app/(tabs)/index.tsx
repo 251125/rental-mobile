@@ -20,7 +20,6 @@ import { useAuthStore } from "@/store/auth.store";
 import { useCompareStore } from "@/store/compare.store";
 import ListingCard from "@/components/ListingCard";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import RecentlyViewed from "@/components/RecentlyViewed";
 import {
   getSavedSearches,
   saveSearch,
@@ -76,12 +75,14 @@ function HeroBanner({ search, onSearch, onChangeSearch }: {
 }
 
 const hero = StyleSheet.create({
-  wrap: { marginBottom: 0 },
+  wrap: { paddingHorizontal: 16, paddingTop: 12, marginBottom: 8 },
   gradient: {
     backgroundColor: "#1d4ed8",
     paddingHorizontal: 20,
     paddingTop: 24,
     paddingBottom: 28,
+    borderRadius: 20,
+    overflow: "hidden",
   },
   tag: {
     color: "rgba(255,255,255,0.75)",
@@ -379,7 +380,6 @@ export default function HomeScreen() {
           ListHeaderComponent={
             <>
               <HeroBanner search={search} onSearch={handleSearch} onChangeSearch={setSearch} />
-              <RecentlyViewed />
               {ListHeader}
             </>
           }

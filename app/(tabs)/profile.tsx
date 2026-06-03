@@ -15,6 +15,7 @@ import { useIncomingRentalsCount } from "@/hooks/use-rentals";
 import { COLORS } from "@/constants";
 import { useT } from "@/i18n/useT";
 import UserAvatar from "@/components/UserAvatar";
+import RecentlyViewed from "@/components/RecentlyViewed";
 
 export default function ProfileScreen() {
   const t = useT();
@@ -115,6 +116,8 @@ export default function ProfileScreen() {
             </View>
           )}
         </View>
+
+        <RecentlyViewed />
 
         <View style={styles.menu}>
           {menuItems.map((item, i) => {
