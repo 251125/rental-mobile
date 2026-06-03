@@ -3,6 +3,7 @@ import {
   View,
   Text,
   FlatList,
+  ScrollView,
   TouchableOpacity,
   StyleSheet,
   SafeAreaView,
@@ -48,7 +49,11 @@ export default function MyListingsScreen() {
                 </View>
               )}
             </View>
-            <View style={styles.itemActions}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.itemActions}
+            >
               <TouchableOpacity
                 style={styles.promoteBtn}
                 onPress={() => setPromoting({ id: item.id, title: item.title })}
@@ -116,7 +121,7 @@ export default function MyListingsScreen() {
                 <Ionicons name="trash-outline" size={14} color={COLORS.danger} />
                 <Text style={styles.deleteText}>{t("Profile.deleteShort")}</Text>
               </TouchableOpacity>
-            </View>
+            </ScrollView>
           </View>
         )}
         contentContainerStyle={styles.list}
