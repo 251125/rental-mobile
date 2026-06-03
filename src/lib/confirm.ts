@@ -1,4 +1,5 @@
 import { Alert, Platform } from "react-native";
+import { useConfirmStore } from "@/components/ConfirmModal";
 
 interface ConfirmOptions {
   title: string;
@@ -11,30 +12,23 @@ interface ConfirmOptions {
 
 /**
  * Cross-platform confirm dialog.
- * `Alert.alert` with action buttons is unreliable on react-native-web
- * (often just shows the title and no buttons). On web we fall back to
- * the browser's native confirm() so the action button always works.
+ * On native we use Alert.alert (works perfectly with action buttons).
+ * On web we render our own ConfirmHost modal — react-native-web's Alert
+ * doesn't reliably show action buttons, and window.confirm() looks ugly
+ * and breaks immersion.
  */
-export function confirm({
-  title,
-  message,
-  confirmText = "OK",
-  cancelText = "Cancel",
-  destructive,
-  onConfirm,
-}: ConfirmOptions) {
+export function confirm(opts: ConfirmOptions) {
   if (Platform.OS === "web") {
-    const text = message ? `${title}\n\n${message}` : title;
-    if (window.confirm(text)) onConfirm();
+    useConfirmStore.getState().show(opts);
     return;
   }
 
-  Alert.alert(title, message, [
-    { text: cancelText, style: "cancel" },
+  Alert.alert(opts.title, opts.message, [
+    { text: opts.cancelText ?? "Cancel", style: "cancel" },
     {
-      text: confirmText,
-      style: destructive ? "destructive" : "default",
-      onPress: onConfirm,
+      text: opts.confirmText ?? "OK",
+      style: opts.destructive ? "destructive" : "default",
+      onPress: opts.onConfirm,
     },
   ]);
 }

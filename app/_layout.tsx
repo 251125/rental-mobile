@@ -12,6 +12,7 @@ import { COLORS } from "@/constants";
 import { CallProvider } from "@/providers/CallProvider";
 import { NotificationsProvider } from "@/providers/NotificationsProvider";
 import CallOverlay from "@/components/CallOverlay";
+import ConfirmHost from "@/components/ConfirmModal";
 import { useLocaleStore } from "@/store/locale.store";
 import { useT } from "@/i18n/useT";
 
@@ -163,6 +164,7 @@ export default function RootLayout() {
           </CallProvider>
           </NotificationsProvider>
         </AuthInitializer>
+        <ConfirmHost />
         <Toast visibilityTime={3000} topOffset={60} />
       </QueryClientProvider>
     </GestureHandlerRootView>
