@@ -64,7 +64,8 @@ export function useUploadImage() {
 
       return api
         .post<{ url: string }>("/uploads/image", formData, {
-          headers: { "Content-Type": "multipart/form-data" },
+          headers: { "Content-Type": undefined },
+          transformRequest: (data) => data,
         })
         .then((r) => r.data.url);
     },
