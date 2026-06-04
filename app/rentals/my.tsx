@@ -207,6 +207,7 @@ export default function MyRentalsScreen() {
   const [comment, setComment] = useState("");
   const [returnImages, setReturnImages] = useState<Record<string, string[]>>({});
   const [uploadingId, setUploadingId] = useState<string | null>(null);
+  const [viewerUri, setViewerUri] = useState<string | null>(null);
 
   const handleReturnPhoto = (rentalId: string) => {
     if (Platform.OS === "web") {
@@ -464,17 +465,24 @@ export default function MyRentalsScreen() {
                   </TouchableOpacity>
                 )}
               </View>
-              {(returnImages[item.id] ?? []).length > 0 && (
-                <View style={styles.returnThumbsRow}>
-                  {(returnImages[item.id] ?? []).map((url, idx) => (
-                    <Image
-                      key={idx}
-                      source={{ uri: resolveImageUrl(url) ?? url }}
-                      style={styles.returnThumb}
-                    />
-                  ))}
-                </View>
-              )}
+              {(() => {
+                const serverImgs = item.return_images ?? [];
+                const localImgs = (returnImages[item.id] ?? []).filter(u => !serverImgs.includes(u));
+                const allImgs = [...serverImgs, ...localImgs];
+                if (!allImgs.length) return null;
+                return (
+                  <View style={styles.returnThumbsRow}>
+                    {allImgs.map((url, idx) => (
+                      <TouchableOpacity key={idx} onPress={() => setViewerUri(resolveImageUrl(url) ?? url)}>
+                        <Image
+                          source={{ uri: resolveImageUrl(url) ?? url }}
+                          style={styles.returnThumb}
+                        />
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                );
+              })()}
 
               <TouchableOpacity
                 style={styles.timelineToggle}
@@ -501,6 +509,21 @@ export default function MyRentalsScreen() {
           </View>
         }
       />
+
+      <Modal visible={!!viewerUri} transparent animationType="fade" onRequestClose={() => setViewerUri(null)}>
+        <View style={styles.viewerBackdrop}>
+          <TouchableOpacity style={styles.viewerClose} onPress={() => setViewerUri(null)}>
+            <Ionicons name="close" size={28} color="#fff" />
+          </TouchableOpacity>
+          {viewerUri && (
+            <Image
+              source={{ uri: viewerUri }}
+              style={styles.viewerImage}
+              resizeMode="contain"
+            />
+          )}
+        </View>
+      </Modal>
 
       {disputeRental && (
         <DisputeModal
@@ -692,6 +715,23 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
   },
   returnThumb: { width: 64, height: 64, borderRadius: 8 },
+  viewerBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.92)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  viewerClose: {
+    position: "absolute",
+    top: 48,
+    right: 20,
+    zIndex: 1,
+    padding: 8,
+  },
+  viewerImage: {
+    width: "100%",
+    height: "80%",
+  },
   empty: { alignItems: "center", paddingTop: 60, gap: 12 },
   emptyText: { fontSize: 15, color: COLORS.muted },
   modalOverlay: {
