@@ -100,6 +100,7 @@ export default function TimePicker({ value, onChange, onClear }: Props) {
             value: value || "",
             onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
               if (e.target.value) onChange(e.target.value);
+              else onClear();
             },
             style: {
               position: "absolute",
