@@ -32,6 +32,13 @@ function Drum({
   const listRef = useRef<FlatList>(null);
   const selectedIdx = data.indexOf(selected);
 
+  const snapToIndex = (offsetY: number) => {
+    const idx = Math.round(offsetY / ITEM_HEIGHT);
+    const clamped = Math.max(0, Math.min(data.length - 1, idx));
+    listRef.current?.scrollToIndex({ index: clamped, animated: true });
+    onSelect(data[clamped]);
+  };
+
   return (
     <FlatList
       ref={listRef}
@@ -46,11 +53,8 @@ function Drum({
         index,
       })}
       initialScrollIndex={Math.max(0, selectedIdx)}
-      onMomentumScrollEnd={(e) => {
-        const idx = Math.round(e.nativeEvent.contentOffset.y / ITEM_HEIGHT);
-        const clamped = Math.max(0, Math.min(data.length - 1, idx));
-        onSelect(data[clamped]);
-      }}
+      onScrollEndDrag={(e) => snapToIndex(e.nativeEvent.contentOffset.y)}
+      onMomentumScrollEnd={(e) => snapToIndex(e.nativeEvent.contentOffset.y)}
       style={{ height: ITEM_HEIGHT * VISIBLE }}
       contentContainerStyle={{ paddingVertical: ITEM_HEIGHT * Math.floor(VISIBLE / 2) }}
       renderItem={({ item }) => {
