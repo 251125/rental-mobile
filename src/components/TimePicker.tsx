@@ -86,39 +86,36 @@ export default function TimePicker({ value, onChange, onClear }: Props) {
   const [minute, setMinute] = useState(() => (value ? value.split(":")[1] : "00"));
 
   // Web: overlay a hidden <input type="time"> over a styled trigger row.
-  // This gives the native OS time picker while keeping full control over visuals.
+  // Clear button lives OUTSIDE the relative container so the input overlay never covers it.
   if (Platform.OS === "web") {
     return (
-      <View style={[styles.trigger, { position: "relative" as const }]}>
-        <Ionicons name="time-outline" size={18} color={value ? COLORS.primary : COLORS.muted} />
-        <Text style={[styles.triggerText, value ? styles.triggerTextActive : null]}>
-          {value || t("Rental.pickReturnTime")}
-        </Text>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 14 }}>
+        <View style={[styles.webTrigger, { position: "relative" as const }]}>
+          <Ionicons name="time-outline" size={18} color={value ? COLORS.primary : COLORS.muted} />
+          <Text style={[styles.triggerText, value ? styles.triggerTextActive : null]}>
+            {value || t("Rental.pickReturnTime")}
+          </Text>
+          {React.createElement("input", {
+            type: "time",
+            value: value || "",
+            onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
+              if (e.target.value) onChange(e.target.value);
+            },
+            style: {
+              position: "absolute",
+              inset: 0,
+              opacity: 0,
+              cursor: "pointer",
+              width: "100%",
+              height: "100%",
+            },
+          })}
+        </View>
         {value && (
-          <TouchableOpacity
-            onPress={onClear}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            style={{ zIndex: 2 }}
-          >
-            <Ionicons name="close-circle" size={18} color={COLORS.muted} />
+          <TouchableOpacity onPress={onClear} style={styles.webClearBtn}>
+            <Text style={styles.webClearText}>{t("Rental.resetShort")}</Text>
           </TouchableOpacity>
         )}
-        {React.createElement("input", {
-          type: "time",
-          value: value || "",
-          onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
-            if (e.target.value) onChange(e.target.value);
-          },
-          style: {
-            position: "absolute",
-            inset: 0,
-            opacity: 0,
-            cursor: "pointer",
-            width: "100%",
-            height: "100%",
-            zIndex: 1,
-          },
-        })}
       </View>
     );
   }
@@ -208,6 +205,27 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     backgroundColor: COLORS.white,
     marginTop: 14,
+  },
+  webTrigger: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    backgroundColor: COLORS.white,
+  },
+  webClearBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 10,
+  },
+  webClearText: {
+    fontSize: 14,
+    color: COLORS.danger,
+    fontWeight: "600",
   },
   triggerText: { flex: 1, fontSize: 15, color: COLORS.muted },
   triggerTextActive: { color: COLORS.text, fontWeight: "600" },
