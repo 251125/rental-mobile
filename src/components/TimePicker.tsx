@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   FlatList,
   StyleSheet,
+  Platform,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "@/constants";
@@ -84,6 +85,37 @@ export default function TimePicker({ value, onChange, onClear }: Props) {
   const [hour, setHour] = useState(() => (value ? value.split(":")[0] : "10"));
   const [minute, setMinute] = useState(() => (value ? value.split(":")[1] : "00"));
 
+  // Web: native browser time input — reliable across all mobile browsers
+  if (Platform.OS === "web") {
+    return (
+      <View style={styles.trigger}>
+        <Ionicons name="time-outline" size={18} color={value ? COLORS.primary : COLORS.muted} />
+        {React.createElement("input", {
+          type: "time",
+          value: value || "",
+          onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
+            if (e.target.value) onChange(e.target.value);
+          },
+          style: {
+            flex: 1,
+            border: "none",
+            outline: "none",
+            fontSize: 15,
+            fontWeight: value ? "600" : "400",
+            color: value ? COLORS.text : COLORS.muted,
+            backgroundColor: "transparent",
+            cursor: "pointer",
+          },
+        })}
+        {value && (
+          <TouchableOpacity onPress={onClear} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <Ionicons name="close-circle" size={18} color={COLORS.muted} />
+          </TouchableOpacity>
+        )}
+      </View>
+    );
+  }
+
   const open = () => {
     if (value) {
       setHour(value.split(":")[0]);
@@ -110,10 +142,7 @@ export default function TimePicker({ value, onChange, onClear }: Props) {
           {value || t("Rental.pickReturnTime")}
         </Text>
         {value ? (
-          <TouchableOpacity
-            onPress={onClear}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
+          <TouchableOpacity onPress={onClear} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <Ionicons name="close-circle" size={18} color={COLORS.muted} />
           </TouchableOpacity>
         ) : (
