@@ -84,10 +84,21 @@ export default function TimePicker({ value, onChange, onClear }: Props) {
   const [visible, setVisible] = useState(false);
   const [hour, setHour] = useState(() => (value ? value.split(":")[0] : "10"));
   const [minute, setMinute] = useState(() => (value ? value.split(":")[1] : "00"));
+  const webInputRef = useRef<HTMLInputElement | null>(null);
 
-  // Web: overlay a hidden <input type="time"> over a styled trigger row.
-  // Clear button lives OUTSIDE the relative container so the input overlay never covers it.
+  // Keep uncontrolled input in sync when value changes externally
+  React.useEffect(() => {
+    if (Platform.OS === "web" && webInputRef.current) {
+      webInputRef.current.value = value || "";
+    }
+  }, [value]);
+
+  // Web: uncontrolled input so the browser's native reset button can clear freely.
   if (Platform.OS === "web") {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (e.target.value) onChange(e.target.value);
+      else onClear();
+    };
     return (
       <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 14 }}>
         <View style={[styles.webTrigger, { position: "relative" as const }]}>
@@ -96,12 +107,11 @@ export default function TimePicker({ value, onChange, onClear }: Props) {
             {value || t("Rental.pickReturnTime")}
           </Text>
           {React.createElement("input", {
+            ref: webInputRef,
             type: "time",
-            value: value || "",
-            onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
-              if (e.target.value) onChange(e.target.value);
-              else onClear();
-            },
+            defaultValue: value || "",
+            onChange: handleChange,
+            onInput: handleChange,
             style: {
               position: "absolute",
               inset: 0,
