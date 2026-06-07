@@ -85,42 +85,61 @@ export default function TimePicker({ value, onChange, onClear }: Props) {
   const [hour, setHour] = useState(() => (value ? value.split(":")[0] : "10"));
   const [minute, setMinute] = useState(() => (value ? value.split(":")[1] : "00"));
   const webInputRef = useRef<HTMLInputElement | null>(null);
+  const [webHour, setWebHour] = React.useState(() => value ? value.split(":")[0] : "");
+  const [webMinute, setWebMinute] = React.useState(() => value ? value.split(":")[1] : "");
 
-  // Keep uncontrolled input in sync when value changes externally
   React.useEffect(() => {
-    if (Platform.OS === "web" && webInputRef.current) {
-      webInputRef.current.value = value || "";
-    }
+    if (Platform.OS !== "web") return;
+    setWebHour(value ? value.split(":")[0] : "");
+    setWebMinute(value ? value.split(":")[1] : "");
   }, [value]);
 
-  // Web: uncontrolled input so the browser's native reset button can clear freely.
+  // Web: two <select> elements — fully controlled, reset always works.
   if (Platform.OS === "web") {
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      if (e.target.value) onChange(e.target.value);
-      else onClear();
+    const handleHour = (e: React.ChangeEvent<HTMLSelectElement>) => {
+      const h = e.target.value;
+      setWebHour(h);
+      if (h && webMinute) onChange(`${h}:${webMinute}`);
+      else if (!h) onClear();
+    };
+    const handleMinute = (e: React.ChangeEvent<HTMLSelectElement>) => {
+      const m = e.target.value;
+      setWebMinute(m);
+      if (webHour && m) onChange(`${webHour}:${m}`);
+    };
+    const selectStyle = {
+      border: "none",
+      outline: "none",
+      fontSize: 16,
+      fontWeight: "600",
+      color: COLORS.text,
+      backgroundColor: "transparent",
+      cursor: "pointer",
+      appearance: "none" as const,
+      WebkitAppearance: "none" as const,
+      padding: "0 2px",
     };
     return (
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 14 }}>
-        <View style={[styles.webTrigger, { position: "relative" as const }]}>
-          <Ionicons name="time-outline" size={18} color={value ? COLORS.primary : COLORS.muted} />
-          <Text style={[styles.triggerText, value ? styles.triggerTextActive : null]}>
-            {value || t("Rental.pickReturnTime")}
-          </Text>
-          {React.createElement("input", {
-            ref: webInputRef,
-            type: "time",
-            defaultValue: value || "",
-            onChange: handleChange,
-            onInput: handleChange,
-            style: {
-              position: "absolute",
-              inset: 0,
-              opacity: 0,
-              cursor: "pointer",
-              width: "100%",
-              height: "100%",
-            },
-          })}
+      <View style={styles.webRow}>
+        <Ionicons name="time-outline" size={18} color={value ? COLORS.primary : COLORS.muted} />
+        <View style={styles.webTrigger}>
+          {React.createElement("select", {
+            value: webHour,
+            onChange: handleHour,
+            style: selectStyle,
+          }, [
+            React.createElement("option", { key: "", value: "" }, t("Rental.hours")),
+            ...HOURS.map(h => React.createElement("option", { key: h, value: h }, h)),
+          ])}
+          <Text style={{ fontSize: 18, fontWeight: "700", color: COLORS.text, marginHorizontal: 2 }}>:</Text>
+          {React.createElement("select", {
+            value: webMinute,
+            onChange: handleMinute,
+            style: selectStyle,
+          }, [
+            React.createElement("option", { key: "", value: "" }, t("Rental.minutes")),
+            ...MINUTES.map(m => React.createElement("option", { key: m, value: m }, m)),
+          ])}
         </View>
         {value && (
           <TouchableOpacity onPress={onClear} style={styles.webClearBtn}>
@@ -217,11 +236,16 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
     marginTop: 14,
   },
+  webRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginTop: 14,
+  },
   webTrigger: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
     borderWidth: 1,
     borderColor: COLORS.border,
     borderRadius: 10,
