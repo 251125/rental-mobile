@@ -85,11 +85,24 @@ export default function TimePicker({ value, onChange, onClear }: Props) {
   const [hour, setHour] = useState(() => (value ? value.split(":")[0] : "10"));
   const [minute, setMinute] = useState(() => (value ? value.split(":")[1] : "00"));
 
-  // Web: native browser time input — reliable across all mobile browsers
+  // Web: overlay a hidden <input type="time"> over a styled trigger row.
+  // This gives the native OS time picker while keeping full control over visuals.
   if (Platform.OS === "web") {
     return (
-      <View style={styles.trigger}>
+      <View style={[styles.trigger, { position: "relative" as const }]}>
         <Ionicons name="time-outline" size={18} color={value ? COLORS.primary : COLORS.muted} />
+        <Text style={[styles.triggerText, value ? styles.triggerTextActive : null]}>
+          {value || t("Rental.pickReturnTime")}
+        </Text>
+        {value && (
+          <TouchableOpacity
+            onPress={onClear}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            style={{ zIndex: 2 }}
+          >
+            <Ionicons name="close-circle" size={18} color={COLORS.muted} />
+          </TouchableOpacity>
+        )}
         {React.createElement("input", {
           type: "time",
           value: value || "",
@@ -97,21 +110,15 @@ export default function TimePicker({ value, onChange, onClear }: Props) {
             if (e.target.value) onChange(e.target.value);
           },
           style: {
-            flex: 1,
-            border: "none",
-            outline: "none",
-            fontSize: 15,
-            fontWeight: value ? "600" : "400",
-            color: value ? COLORS.text : COLORS.muted,
-            backgroundColor: "transparent",
+            position: "absolute",
+            inset: 0,
+            opacity: 0,
             cursor: "pointer",
+            width: "100%",
+            height: "100%",
+            zIndex: 1,
           },
         })}
-        {value && (
-          <TouchableOpacity onPress={onClear} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <Ionicons name="close-circle" size={18} color={COLORS.muted} />
-          </TouchableOpacity>
-        )}
       </View>
     );
   }
