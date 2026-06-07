@@ -112,34 +112,40 @@ export default function TimePicker({ value, onChange, onClear }: Props) {
       outline: "none",
       fontSize: 16,
       fontWeight: "600",
-      color: COLORS.text,
+      color: webHour && webMinute ? COLORS.text : COLORS.muted,
       backgroundColor: "transparent",
       cursor: "pointer",
       appearance: "none" as const,
       WebkitAppearance: "none" as const,
-      padding: "0 2px",
+      width: "auto",
+      padding: 0,
     };
     return (
       <View style={styles.webRow}>
-        <Ionicons name="time-outline" size={18} color={value ? COLORS.primary : COLORS.muted} />
         <View style={styles.webTrigger}>
+          <Ionicons name="time-outline" size={18} color={value ? COLORS.primary : COLORS.muted} />
           {React.createElement("select", {
             value: webHour,
             onChange: handleHour,
             style: selectStyle,
           }, [
-            React.createElement("option", { key: "", value: "" }, t("Rental.hours")),
+            React.createElement("option", { key: "", value: "" }, "--"),
             ...HOURS.map(h => React.createElement("option", { key: h, value: h }, h)),
           ])}
-          <Text style={{ fontSize: 18, fontWeight: "700", color: COLORS.text, marginHorizontal: 2 }}>:</Text>
+          <Text style={{ fontSize: 16, fontWeight: "700", color: COLORS.text, marginHorizontal: 2 }}>:</Text>
           {React.createElement("select", {
             value: webMinute,
             onChange: handleMinute,
             style: selectStyle,
           }, [
-            React.createElement("option", { key: "", value: "" }, t("Rental.minutes")),
+            React.createElement("option", { key: "", value: "" }, "--"),
             ...MINUTES.map(m => React.createElement("option", { key: m, value: m }, m)),
           ])}
+          {!value && (
+            <Text style={{ fontSize: 14, color: COLORS.muted, marginLeft: 6 }}>
+              {t("Rental.pickReturnTime")}
+            </Text>
+          )}
         </View>
         {value && (
           <TouchableOpacity onPress={onClear} style={styles.webClearBtn}>
