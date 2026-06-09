@@ -8,6 +8,7 @@ import {
   SafeAreaView,
   Image,
   Modal,
+  ScrollView,
 } from "react-native";
 import QRCode from "react-qr-code";
 import { router, useNavigation } from "expo-router";
@@ -42,6 +43,16 @@ export default function IncomingRentalsScreen() {
   const { mutate: markSeen } = useMarkIncomingSeen();
   const [qrToken, setQrToken] = useState<string | null>(null);
   const [disputeRental, setDisputeRental] = useState<RentalRequest | null>(null);
+  const [expandedTimeline, setExpandedTimeline] = useState<Set<string>>(new Set());
+  const [viewerUri, setViewerUri] = useState<string | null>(null);
+
+  const toggleTimeline = (id: string) => {
+    setExpandedTimeline((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
 
   // Clear "new requests" badge when the user opens this screen
   useEffect(() => {
@@ -141,7 +152,7 @@ export default function IncomingRentalsScreen() {
                         onPress={() => setQrToken(item.qr_token!)}
                       >
                         <Ionicons name="qr-code-outline" size={16} color={COLORS.primary} />
-                        <Text style={styles.qrBtnText}>QR для оплаты</Text>
+                        <Text style={styles.qrBtnText}>{t("Rental.qrTitle")}</Text>
                       </TouchableOpacity>
                     )}
                     {item.renter && (
@@ -189,16 +200,59 @@ export default function IncomingRentalsScreen() {
                       style={styles.disputeOpenBtn}
                       onPress={() => router.push("/disputes" as never)}
                     >
-                      <Ionicons
-                        name="shield-outline"
-                        size={14}
-                        color={COLORS.warning}
-                      />
+                      <Ionicons name="shield-outline" size={14} color={COLORS.warning} />
                       <Text style={styles.disputeBtnText}>
                         {item.dispute.status === "OPEN" ? t("Rental.disputeOpenLabel") : t("Rental.disputeClosedLabel")}
                       </Text>
                     </TouchableOpacity>
                   )}
+                </View>
+              )}
+
+              {/* Return photos */}
+              {(item.return_images ?? []).length > 0 && (
+                <View style={styles.returnThumbsRow}>
+                  {(item.return_images ?? []).map((url, idx) => (
+                    <TouchableOpacity key={idx} onPress={() => setViewerUri(resolveImageUrl(url) ?? url)}>
+                      <Image source={{ uri: resolveImageUrl(url) ?? url }} style={styles.returnThumb} />
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+
+              {/* History toggle */}
+              <TouchableOpacity
+                style={styles.timelineToggle}
+                onPress={() => toggleTimeline(item.id)}
+              >
+                <Ionicons
+                  name={expandedTimeline.has(item.id) ? "chevron-up" : "chevron-down"}
+                  size={14}
+                  color={COLORS.muted}
+                />
+                <Text style={styles.timelineToggleText}>{t("Rental.historyBtn")}</Text>
+              </TouchableOpacity>
+              {expandedTimeline.has(item.id) && (
+                <View style={styles.timeline}>
+                  {[
+                    { label: t("Rental.stageCreated"), done: true, date: item.created_at },
+                    { label: t("Rental.stageApproved"), done: item.status === "APPROVED" || item.status === "COMPLETED", failed: item.status === "REJECTED" || item.status === "CANCELLED" },
+                    { label: t("Rental.stagePayment"), done: item.payment_status === "PAID" },
+                    { label: t("Rental.stageCompleted"), done: item.status === "COMPLETED" },
+                  ].map((step, i) => (
+                    <View key={i} style={styles.timelineRow}>
+                      <View style={[styles.dot, step.done && styles.dotDone, step.failed && styles.dotFailed]}>
+                        {step.done && <Ionicons name="checkmark" size={11} color={COLORS.white} />}
+                        {step.failed && <Ionicons name="close" size={11} color={COLORS.white} />}
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.timelineLabel, !step.done && !step.failed && { color: COLORS.muted }, step.failed && { textDecorationLine: "line-through", color: COLORS.danger }]}>
+                          {step.label}
+                        </Text>
+                        {step.date && <Text style={styles.timelineDate}>{new Date(step.date).toLocaleString("ru-RU")}</Text>}
+                      </View>
+                    </View>
+                  ))}
                 </View>
               )}
             </View>
@@ -220,6 +274,15 @@ export default function IncomingRentalsScreen() {
           onClose={() => setDisputeRental(null)}
         />
       )}
+
+      <Modal visible={!!viewerUri} transparent animationType="fade" onRequestClose={() => setViewerUri(null)}>
+        <View style={styles.viewerBackdrop}>
+          <TouchableOpacity style={styles.viewerClose} onPress={() => setViewerUri(null)}>
+            <Ionicons name="close" size={28} color="#fff" />
+          </TouchableOpacity>
+          {viewerUri && <Image source={{ uri: viewerUri }} style={styles.viewerImage} resizeMode="contain" />}
+        </View>
+      </Modal>
 
       <Modal visible={!!qrToken} transparent animationType="fade" onRequestClose={() => setQrToken(null)}>
         <View style={styles.qrOverlay}>
@@ -366,6 +429,20 @@ const styles = StyleSheet.create({
   disputeBtnText: { color: COLORS.warning, fontWeight: "600", fontSize: 14 },
   empty: { alignItems: "center", paddingTop: 60, gap: 12 },
   emptyText: { fontSize: 15, color: COLORS.muted },
+  returnThumbsRow: { flexDirection: "row", gap: 8, marginTop: 10, flexWrap: "wrap" },
+  returnThumb: { width: 64, height: 64, borderRadius: 8 },
+  timelineToggle: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: 10, paddingTop: 8, borderTopWidth: 1, borderTopColor: COLORS.border },
+  timelineToggleText: { fontSize: 13, color: COLORS.muted },
+  timeline: { marginTop: 10, gap: 10 },
+  timelineRow: { flexDirection: "row", alignItems: "flex-start", gap: 10 },
+  dot: { width: 18, height: 18, borderRadius: 9, borderWidth: 2, borderColor: COLORS.border, backgroundColor: COLORS.white, justifyContent: "center", alignItems: "center", marginTop: 2 },
+  dotDone: { borderColor: COLORS.success, backgroundColor: COLORS.success },
+  dotFailed: { borderColor: COLORS.danger, backgroundColor: COLORS.danger },
+  timelineLabel: { fontSize: 13, color: COLORS.text, fontWeight: "600" },
+  timelineDate: { fontSize: 11, color: COLORS.muted, marginTop: 2 },
+  viewerBackdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.92)", justifyContent: "center", alignItems: "center" },
+  viewerClose: { position: "absolute", top: 48, right: 20, zIndex: 1, padding: 8 },
+  viewerImage: { width: "100%", height: "80%" },
   qrOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.55)",
