@@ -34,6 +34,11 @@ export function useCategoryName() {
   const locale = useLocaleStore((s) => s.locale);
   return (name: string): string => {
     const map = (messages[locale] as Record<string, unknown>)?.Categories as Record<string, string> | undefined;
-    return map?.[name] ?? name;
+    if (!map) return name;
+    // Exact match first, then case-insensitive fallback
+    if (map[name]) return map[name];
+    const lower = name.toLowerCase();
+    const found = Object.keys(map).find((k) => k.toLowerCase() === lower);
+    return found ? map[found] : name;
   };
 }
