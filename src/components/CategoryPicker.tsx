@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "@/constants";
-import { useT } from "@/i18n/useT";
+import { useT, useCategoryName } from "@/i18n/useT";
 
 interface Category {
   id: string;
@@ -30,6 +30,7 @@ export default function CategoryPicker({
   placeholder,
 }: Props) {
   const t = useT();
+  const categoryName = useCategoryName();
   const effectivePlaceholder = placeholder ?? t("Listing.selectCategory");
   const [open, setOpen] = useState(false);
 
@@ -49,7 +50,7 @@ export default function CategoryPicker({
           color={value ? COLORS.primary : COLORS.muted}
         />
         <Text style={[styles.triggerText, !value && styles.placeholder]}>
-          {selected?.name || effectivePlaceholder}
+          {selected ? categoryName(selected.name) : effectivePlaceholder}
         </Text>
         <Ionicons name="chevron-down" size={16} color={COLORS.muted} />
       </TouchableOpacity>
@@ -84,7 +85,7 @@ export default function CategoryPicker({
                     color={isSelected ? COLORS.primary : COLORS.muted}
                   />
                   <Text style={[styles.itemText, isSelected && styles.itemTextActive]}>
-                    {item.name}
+                    {categoryName(item.name)}
                   </Text>
                   {isSelected && (
                     <Ionicons name="checkmark" size={16} color={COLORS.primary} />

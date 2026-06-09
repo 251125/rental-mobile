@@ -1,5 +1,6 @@
 import { useLocaleStore } from "@/store/locale.store";
 import { i18n } from "./index";
+import { messages } from "./messages";
 
 const PLACEHOLDER_RE = /\{(\w+)\}/g;
 
@@ -25,5 +26,14 @@ export function useT() {
   return (key: string, params?: Record<string, string | number>) => {
     const resolved = i18n.t(key, { locale });
     return interpolate(resolved, params);
+  };
+}
+
+/** Translates a category name from the DB (English) to the current locale. */
+export function useCategoryName() {
+  const locale = useLocaleStore((s) => s.locale);
+  return (name: string): string => {
+    const map = (messages[locale] as Record<string, unknown>)?.Categories as Record<string, string> | undefined;
+    return map?.[name] ?? name;
   };
 }
