@@ -30,7 +30,7 @@ import Toast from "react-native-toast-message";
 import { COLORS } from "@/constants";
 import { ListingFilters } from "@/types";
 import CityPicker from "@/components/CityPicker";
-import { useT } from "@/i18n/useT";
+import { useT, useCategoryName } from "@/i18n/useT";
 
 // ─── Hero ─────────────────────────────────────────────────────────────────────
 
@@ -141,6 +141,7 @@ const hero = StyleSheet.create({
 
 export default function HomeScreen() {
   const t = useT();
+  const categoryName = useCategoryName();
   const { user } = useAuthStore();
   const { items: compareItems } = useCompareStore();
   const [filters, setFilters] = useState<ListingFilters>({ page: 1, limit: 20, sortBy: "created_at", sortOrder: "desc" });
@@ -305,7 +306,7 @@ export default function HomeScreen() {
             onPress={() => handleCategoryPress(cat.id)}
           >
             <Text style={[styles.catText, selectedCategory === cat.id && styles.catTextActive]}>
-              {cat.name}
+              {categoryName(cat.name)}
             </Text>
           </TouchableOpacity>
         ))}
