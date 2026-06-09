@@ -114,17 +114,21 @@ const hero = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 10,
+    overflow: "hidden",
+    minWidth: 0,
   },
   searchInput: {
     flex: 1,
-    fontSize: 16,
+    fontSize: 15,
     color: "#1e293b",
+    minWidth: 0,
   },
   searchBtn: {
     backgroundColor: "#fff",
     borderRadius: 12,
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingVertical: 11,
+    flexShrink: 0,
   },
   searchBtnText: {
     color: "#1d4ed8",

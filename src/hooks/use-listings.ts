@@ -56,8 +56,12 @@ export function useUploadImage() {
 
       if (Platform.OS === "web" || uri.startsWith("blob:") || uri.startsWith("http")) {
         const res = await fetch(uri);
-        const blob = await res.blob();
-        formData.append("file", blob, filename);
+        const rawBlob = await res.blob();
+        // Ensure MIME type is set — empty type causes multer to reject the file
+        const mime = rawBlob.type || "image/jpeg";
+        const blob = rawBlob.type ? rawBlob : new Blob([rawBlob], { type: mime });
+        const safeFilename = /\.(jpe?g|png|webp)$/i.test(filename) ? filename : "photo.jpg";
+        formData.append("file", blob, safeFilename);
 
         // On web use fetch directly — Axios corrupts multipart Content-Type
         const token = await getToken();
