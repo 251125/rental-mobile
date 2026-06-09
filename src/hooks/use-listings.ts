@@ -1,5 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import api from "@/services/api";
+import { Platform } from "react-native";
+import api, { getToken } from "@/services/api";
+import { API_URL } from "@/constants";
 import { Listing, PaginatedResponse, ListingFilters } from "@/types";
 
 export function useListings(filters: ListingFilters = {}) {
@@ -52,20 +54,35 @@ export function useUploadImage() {
       const filename = uri.split("/").pop()?.split("?")[0] ?? "photo.jpg";
       const formData = new FormData();
 
-      if (uri.startsWith("blob:") || uri.startsWith("http")) {
-        // Web: fetch the actual Blob from the blob/http URI
+      if (Platform.OS === "web" || uri.startsWith("blob:") || uri.startsWith("http")) {
         const res = await fetch(uri);
         const blob = await res.blob();
         formData.append("file", blob, filename);
-      } else {
-        // React Native: use the RN-specific object shorthand
-        formData.append("file", { uri, name: filename, type: "image/jpeg" } as unknown as Blob);
+
+        // On web use fetch directly — Axios corrupts multipart Content-Type
+        const token = await getToken();
+        const response = await fetch(`${API_URL}/uploads/image`, {
+          method: "POST",
+          body: formData,
+          headers: {
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            "X-Mobile-Client": "1",
+            "X-Requested-With": "XMLHttpRequest",
+          },
+        });
+        if (!response.ok) throw new Error("Upload failed");
+        const data = await response.json() as { url: string };
+        return data.url;
       }
 
+      // React Native native: Axios with RN FormData shorthand
+      formData.append("file", { uri, name: filename, type: "image/jpeg" } as unknown as Blob);
       return api
         .post<{ url: string }>("/uploads/image", formData, {
-          headers: { "Content-Type": undefined },
-          transformRequest: (data) => data,
+          transformRequest: [(_data, headers) => {
+            if (headers) delete (headers as Record<string, unknown>)["Content-Type"];
+            return formData;
+          }],
         })
         .then((r) => r.data.url);
     },
