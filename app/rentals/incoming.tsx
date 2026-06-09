@@ -152,7 +152,7 @@ export default function IncomingRentalsScreen() {
                         onPress={() => setQrToken(item.qr_token!)}
                       >
                         <Ionicons name="qr-code-outline" size={16} color={COLORS.primary} />
-                        <Text style={styles.qrBtnText}>{t("Rental.qrTitle")}</Text>
+                        <Text style={styles.qrBtnText} numberOfLines={1}>{t("Rental.qrBtn")}</Text>
                       </TouchableOpacity>
                     )}
                     {item.renter && (
