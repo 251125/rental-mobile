@@ -5,6 +5,7 @@ import { User } from "@/types";
 import { router } from "expo-router";
 import Toast from "react-native-toast-message";
 import { disconnectSocket } from "@/services/socket";
+import { tl } from "@/i18n/tl";
 
 interface LoginDto {
   email: string;
@@ -31,13 +32,13 @@ export function useLogin() {
 
     onSuccess: (data) => {
       void setAuth(data.user, data.access_token).then(() => {
-        Toast.show({ type: "success", text1: "Вы успешно вошли" });
+        Toast.show({ type: "success", text1: tl("Auth.loginSuccess") });
         router.replace("/");
       });
     },
 
     onError: (error: Error) => {
-      Toast.show({ type: "error", text1: error.message ?? "Ошибка входа" });
+      Toast.show({ type: "error", text1: error.message ?? tl("Auth.loginError") });
     },
   });
 }
@@ -53,13 +54,13 @@ export function useGoogleSignIn() {
 
     onSuccess: (data) => {
       void setAuth(data.user, data.access_token).then(() => {
-        Toast.show({ type: "success", text1: "Вы вошли через Google" });
+        Toast.show({ type: "success", text1: tl("Auth.googleSuccess") });
         router.replace("/");
       });
     },
 
     onError: (error: Error) => {
-      Toast.show({ type: "error", text1: error.message ?? "Ошибка входа через Google" });
+      Toast.show({ type: "error", text1: error.message ?? tl("Auth.googleError") });
     },
   });
 }
@@ -73,7 +74,7 @@ export function useRegister() {
 
     onSuccess: (data) => {
       void setAuth(data.user, data.access_token).then(() => {
-        Toast.show({ type: "success", text1: "Аккаунт успешно создан" });
+        Toast.show({ type: "success", text1: tl("Auth.registerSuccess") });
         router.replace("/");
       });
     },
@@ -81,7 +82,7 @@ export function useRegister() {
     onError: (error: Error) => {
       Toast.show({
         type: "error",
-        text1: error.message ?? "Ошибка регистрации",
+        text1: error.message ?? tl("Auth.registerError"),
       });
     },
   });
@@ -94,13 +95,10 @@ export function useForgotPassword() {
         .post<{ message: string }>("/auth/forgot-password", { email })
         .then((r) => r.data),
     onSuccess: () => {
-      Toast.show({
-        type: "success",
-        text1: "Если аккаунт существует, письмо отправлено",
-      });
+      Toast.show({ type: "success", text1: tl("Auth.forgotPasswordSent") });
     },
     onError: (error: Error) => {
-      Toast.show({ type: "error", text1: error.message ?? "Ошибка" });
+      Toast.show({ type: "error", text1: error.message ?? tl("Common.error") });
     },
   });
 }
@@ -112,13 +110,13 @@ export function useResetPassword() {
         .post<{ message: string }>("/auth/reset-password", { token, password })
         .then((r) => r.data),
     onSuccess: () => {
-      Toast.show({ type: "success", text1: "Пароль изменён. Войдите заново." });
+      Toast.show({ type: "success", text1: tl("Auth.passwordChangedRelogin") });
       router.replace("/auth/login");
     },
     onError: (error: Error) => {
       Toast.show({
         type: "error",
-        text1: error.message ?? "Ссылка недействительна или истекла",
+        text1: error.message ?? tl("Auth.linkExpired"),
       });
     },
   });
@@ -130,19 +128,18 @@ export function useChangePassword() {
     mutationFn: ({ currentPassword, newPassword }: { currentPassword: string; newPassword: string }) =>
       api
         .post("/auth/change-password", {
-          // Backend DTO is snake_case
           current_password: currentPassword,
           new_password: newPassword,
         })
         .then((r) => r.data),
     onSuccess: async () => {
-      Toast.show({ type: "success", text1: "Пароль изменён. Войдите заново." });
+      Toast.show({ type: "success", text1: tl("Auth.passwordChangedRelogin") });
       disconnectSocket();
       await logout();
       router.replace("/auth/login");
     },
     onError: (error: Error) => {
-      Toast.show({ type: "error", text1: error.message ?? "Ошибка изменения пароля" });
+      Toast.show({ type: "error", text1: error.message ?? tl("Auth.changePasswordError") });
     },
   });
 }

@@ -7,6 +7,7 @@ import { COLORS, resolveImageUrl } from "@/constants";
 import { useCompareStore } from "@/store/compare.store";
 import Toast from "react-native-toast-message";
 import { useT, useCategoryName } from "@/i18n/useT";
+import { tl } from "@/i18n/tl";
 
 interface Props {
   listing: Listing;
@@ -28,11 +29,11 @@ export default function ListingCard({ listing, onFavoriteToggle, isFavorite }: P
     }
     const result = add(listing);
     if (!result.ok) {
-      Toast.show({ type: "error", text1: "Можно сравнивать не более 3 объявлений" });
+      Toast.show({ type: "error", text1: tl("Listing.compareMax") });
       return;
     }
     if (result.reason === "category_switched") {
-      Toast.show({ type: "info", text1: `Сравнение сброшено: «${listing.category.name}»` });
+      Toast.show({ type: "info", text1: tl("Listing.compareReset", { name: listing.category.name }) });
     } else {
       Toast.show({ type: "success", text1: t("Listing.addedToCompare") });
     }

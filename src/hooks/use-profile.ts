@@ -3,6 +3,7 @@ import api from "@/services/api";
 import { User } from "@/types";
 import Toast from "react-native-toast-message";
 import { useAuthStore } from "@/store/auth.store";
+import { tl } from "@/i18n/tl";
 
 export function useMe() {
   return useQuery({
@@ -38,7 +39,7 @@ export function useUpdateProfile() {
     onSuccess: (data) => {
       setUser(data);
       void queryClient.invalidateQueries({ queryKey: ["me"] });
-      Toast.show({ type: "success", text1: "Профиль обновлён" });
+      Toast.show({ type: "success", text1: tl("Rental.profileUpdated") });
     },
     onError: (error: Error) => {
       Toast.show({

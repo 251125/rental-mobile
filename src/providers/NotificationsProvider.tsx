@@ -7,6 +7,7 @@ import { SOCKET_URL } from "@/constants";
 import { getToken } from "@/services/api";
 import { getSocket } from "@/services/socket";
 import { useNotificationsStore } from "@/store/notifications.store";
+import { tl } from "@/i18n/tl";
 
 let notifSocket: Socket | null = null;
 
@@ -42,30 +43,29 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     });
 
     notifSocket.on("rental_status_changed", (data: { message: string }) => {
-      Toast.show({ type: "info", text1: "Изменение статуса", text2: data.message });
+      Toast.show({ type: "info", text1: tl("Rental.statusChanged"), text2: data.message });
       increment();
       void queryClient.invalidateQueries({ queryKey: ["rentals"] });
     });
 
     notifSocket.on("payment_received", (data: { message: string }) => {
-      Toast.show({ type: "success", text1: "Оплата получена", text2: data.message });
+      Toast.show({ type: "success", text1: tl("Rental.paymentReceived"), text2: data.message });
       increment();
       void queryClient.invalidateQueries({ queryKey: ["wallet"] });
       void queryClient.invalidateQueries({ queryKey: ["rentals"] });
     });
 
     notifSocket.on("payment_made", (data: { message: string }) => {
-      Toast.show({ type: "info", text1: "Оплата прошла", text2: data.message });
+      Toast.show({ type: "info", text1: tl("Rental.paymentMade"), text2: data.message });
       increment();
       void queryClient.invalidateQueries({ queryKey: ["wallet"] });
       void queryClient.invalidateQueries({ queryKey: ["rentals"] });
     });
 
     notifSocket.on("incoming_rental", (data: { message: string }) => {
-      Toast.show({ type: "info", text1: "Новая заявка", text2: data.message });
+      Toast.show({ type: "info", text1: tl("Rental.newRequest"), text2: data.message });
       increment();
-      void queryClient.invalidateQueries({ queryKey: ["rentals", "incoming"] });
-      void queryClient.invalidateQueries({ queryKey: ["rentals", "incoming", "count"] });
+      void queryClient.invalidateQueries({ queryKey: ["rentals"] });
     });
 
     // Eagerly open chats socket for global chat_updated events

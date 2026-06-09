@@ -3,6 +3,7 @@ import api from "@/services/api";
 import { RentalRequest, RentalRequestStatus } from "@/types";
 import Toast from "react-native-toast-message";
 import { useAuthStore } from "@/store/auth.store";
+import { tl } from "@/i18n/tl";
 
 export function useMyRentals() {
   return useQuery({
@@ -54,11 +55,11 @@ export function useCreateRentalRequest() {
       end_date: string;
     }) => api.post<RentalRequest>("/rental-requests", dto).then((r) => r.data),
     onSuccess: () => {
-      Toast.show({ type: "success", text1: "Заявка отправлена!" });
+      Toast.show({ type: "success", text1: tl("Rental.requestOk") });
       void queryClient.invalidateQueries({ queryKey: ["rentals"] });
     },
     onError: (error: Error) => {
-      Toast.show({ type: "error", text1: error.message ?? "Ошибка" });
+      Toast.show({ type: "error", text1: error.message ?? tl("Common.error") });
     },
   });
 }
@@ -77,11 +78,11 @@ export function useUpdateRentalStatus() {
         .patch(`/rental-requests/${id}/status`, { status })
         .then((r) => r.data),
     onSuccess: () => {
-      Toast.show({ type: "success", text1: "Статус обновлён" });
+      Toast.show({ type: "success", text1: tl("Rental.statusChanged") });
       void queryClient.invalidateQueries({ queryKey: ["rentals"] });
     },
     onError: (error: Error) => {
-      Toast.show({ type: "error", text1: error.message ?? "Ошибка" });
+      Toast.show({ type: "error", text1: error.message ?? tl("Common.error") });
     },
   });
 }
@@ -92,11 +93,11 @@ export function useCancelRental() {
     mutationFn: (id: string) =>
       api.patch(`/rental-requests/${id}/cancel`).then((r) => r.data),
     onSuccess: () => {
-      Toast.show({ type: "success", text1: "Заявка отменена" });
+      Toast.show({ type: "success", text1: tl("Rental.cancel") });
       void queryClient.invalidateQueries({ queryKey: ["rentals"] });
     },
     onError: (error: Error) => {
-      Toast.show({ type: "error", text1: error.message ?? "Ошибка" });
+      Toast.show({ type: "error", text1: error.message ?? tl("Common.error") });
     },
   });
 }
