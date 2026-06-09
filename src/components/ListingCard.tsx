@@ -6,7 +6,7 @@ import { Listing } from "@/types";
 import { COLORS, resolveImageUrl } from "@/constants";
 import { useCompareStore } from "@/store/compare.store";
 import Toast from "react-native-toast-message";
-import { useT } from "@/i18n/useT";
+import { useT, useCategoryName } from "@/i18n/useT";
 
 interface Props {
   listing: Listing;
@@ -16,6 +16,7 @@ interface Props {
 
 export default function ListingCard({ listing, onFavoriteToggle, isFavorite }: Props) {
   const t = useT();
+  const categoryName = useCategoryName();
   const imageUrl = resolveImageUrl(listing.images[0]?.image_url);
   const { add, remove, has, items } = useCompareStore();
   const inCompare = has(listing.id);
@@ -91,7 +92,14 @@ export default function ListingCard({ listing, onFavoriteToggle, isFavorite }: P
           📍 {listing.city}
         </Text>
         <View style={styles.footer}>
-          <Text style={styles.price}>{Number(listing.price).toLocaleString()} ₸/{t("Listing.perDayShort")}</Text>
+          <View>
+            <Text style={styles.price}>{Number(listing.price).toLocaleString()} ₸/{t("Listing.perDayShort")}</Text>
+            {Number(listing.deposit) > 0 && (
+              <Text style={styles.deposit}>
+                {t("Listing.deposit")}: {Number(listing.deposit).toLocaleString()} ₸
+              </Text>
+            )}
+          </View>
           <View style={styles.rightMeta}>
             <View style={styles.ratingRow}>
               <Ionicons name="star" size={11} color="#f59e0b" />
@@ -99,7 +107,7 @@ export default function ListingCard({ listing, onFavoriteToggle, isFavorite }: P
                 {listing.rating_avg ? parseFloat(String(listing.rating_avg)).toFixed(1) : "—"}
               </Text>
             </View>
-            <Text style={styles.category}>{listing.category.name}</Text>
+            <Text style={styles.category}>{categoryName(listing.category.name)}</Text>
           </View>
         </View>
       </View>
@@ -177,6 +185,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   price: { fontSize: 15, fontWeight: "700", color: COLORS.primary },
+  deposit: { fontSize: 11, color: COLORS.muted, marginTop: 2 },
   rightMeta: { flexDirection: "row", alignItems: "center", gap: 6 },
   ratingRow: { flexDirection: "row", alignItems: "center", gap: 2 },
   ratingText: { fontSize: 11, color: COLORS.muted, fontWeight: "600" },

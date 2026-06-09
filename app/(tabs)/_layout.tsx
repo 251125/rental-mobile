@@ -6,6 +6,7 @@ import { useUnreadCount } from "@/hooks/use-chats";
 import { useIncomingRentalsCount } from "@/hooks/use-rentals";
 import { Text } from "react-native";
 import { useT } from "@/i18n/useT";
+import { useNotificationsStore } from "@/store/notifications.store";
 
 function TabBadge({ count }: { count: number }) {
   if (!count) return null;
@@ -36,6 +37,7 @@ export default function TabsLayout() {
   const { isAuthenticated } = useAuthStore();
   const { data: unreadCount = 0 } = useUnreadCount(isAuthenticated);
   const { data: incomingCount = 0 } = useIncomingRentalsCount();
+  const notifCount = useNotificationsStore((s) => s.unreadCount);
 
   return (
     <Tabs
@@ -118,7 +120,7 @@ export default function TabsLayout() {
           tabBarIcon: ({ color, size }) => (
             <>
               <Ionicons name="person-outline" size={size} color={color} />
-              <TabBadge count={incomingCount} />
+              <TabBadge count={incomingCount + notifCount} />
             </>
           ),
         }}

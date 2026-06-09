@@ -28,6 +28,7 @@ import { RentalRequest } from "@/types";
 import api from "@/services/api";
 import Toast from "react-native-toast-message";
 import { useT } from "@/i18n/useT";
+import { useNotificationsStore } from "@/store/notifications.store";
 
 function calcProgress(startDate: string, endDate: string): number {
   const now = Date.now();
@@ -173,6 +174,8 @@ const timelineStyles = StyleSheet.create({
 export default function MyRentalsScreen() {
   const t = useT();
   const navigation = useNavigation();
+  const clearNotifs = useNotificationsStore((s) => s.clear);
+
   useEffect(() => {
     navigation.setOptions({
       headerLeft: () => (
@@ -181,7 +184,8 @@ export default function MyRentalsScreen() {
         </TouchableOpacity>
       ),
     });
-  }, [navigation]);
+    clearNotifs();
+  }, [navigation, clearNotifs]);
 
   const { data: rentals, isLoading } = useMyRentals();
   const { mutate: cancelRental } = useCancelRental();

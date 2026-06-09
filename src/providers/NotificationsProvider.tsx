@@ -6,6 +6,7 @@ import { useAuthStore } from "@/store/auth.store";
 import { SOCKET_URL } from "@/constants";
 import { getToken } from "@/services/api";
 import { getSocket } from "@/services/socket";
+import { useNotificationsStore } from "@/store/notifications.store";
 
 let notifSocket: Socket | null = null;
 
@@ -21,6 +22,7 @@ interface ChatMessagePayload {
 export function NotificationsProvider({ children }: { children: React.ReactNode }) {
   const { user, isAuthenticated } = useAuthStore();
   const queryClient = useQueryClient();
+  const increment = useNotificationsStore((s) => s.increment);
 
   useEffect(() => {
     if (!isAuthenticated || !user) {
@@ -41,17 +43,20 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
 
     notifSocket.on("rental_status_changed", (data: { message: string }) => {
       Toast.show({ type: "info", text1: "Изменение статуса", text2: data.message });
+      increment();
       void queryClient.invalidateQueries({ queryKey: ["rentals"] });
     });
 
     notifSocket.on("payment_received", (data: { message: string }) => {
       Toast.show({ type: "success", text1: "Оплата получена", text2: data.message });
+      increment();
       void queryClient.invalidateQueries({ queryKey: ["wallet"] });
       void queryClient.invalidateQueries({ queryKey: ["rentals"] });
     });
 
     notifSocket.on("incoming_rental", (data: { message: string }) => {
       Toast.show({ type: "info", text1: "Новая заявка", text2: data.message });
+      increment();
       void queryClient.invalidateQueries({ queryKey: ["rentals", "incoming"] });
       void queryClient.invalidateQueries({ queryKey: ["rentals", "incoming", "count"] });
     });
