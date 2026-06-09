@@ -54,6 +54,13 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
       void queryClient.invalidateQueries({ queryKey: ["rentals"] });
     });
 
+    notifSocket.on("payment_made", (data: { message: string }) => {
+      Toast.show({ type: "info", text1: "Оплата прошла", text2: data.message });
+      increment();
+      void queryClient.invalidateQueries({ queryKey: ["wallet"] });
+      void queryClient.invalidateQueries({ queryKey: ["rentals"] });
+    });
+
     notifSocket.on("incoming_rental", (data: { message: string }) => {
       Toast.show({ type: "info", text1: "Новая заявка", text2: data.message });
       increment();

@@ -122,16 +122,28 @@ export default function WalletScreen() {
               <Text style={styles.title}>{t("Wallet.title")}</Text>
             </View>
 
-            {/* Balance card */}
-            <View style={styles.balanceCard}>
-              <View style={styles.balanceTopRow}>
-                <Ionicons name="wallet-outline" size={18} color="rgba(255,255,255,0.7)" />
-                <Text style={styles.balanceTag}>Rental Pay</Text>
+            {/* Balance cards row */}
+            <View style={styles.balanceRow}>
+              <View style={[styles.balanceCard, { flex: 1 }]}>
+                <View style={styles.balanceTopRow}>
+                  <Ionicons name="wallet-outline" size={16} color="rgba(255,255,255,0.7)" />
+                  <Text style={styles.balanceTag}>Rental Pay</Text>
+                </View>
+                <Text style={styles.balance}>
+                  {Number(data?.balance ?? 0).toLocaleString()} ₸
+                </Text>
+                <Text style={styles.balanceSub}>{t("Wallet.balanceHint")}</Text>
               </View>
-              <Text style={styles.balance}>
-                {Number(data?.balance ?? 0).toLocaleString()} ₸
-              </Text>
-              <Text style={styles.balanceSub}>{t("Wallet.balanceHint")}</Text>
+              <View style={[styles.balanceCard, { flex: 1, backgroundColor: "#0ea5e9" }]}>
+                <View style={styles.balanceTopRow}>
+                  <Ionicons name="shield-checkmark-outline" size={16} color="rgba(255,255,255,0.7)" />
+                  <Text style={styles.balanceTag}>{t("Wallet.depositAccount")}</Text>
+                </View>
+                <Text style={styles.balance}>
+                  {Number(data?.deposit_balance ?? 0).toLocaleString()} ₸
+                </Text>
+                <Text style={styles.balanceSub}>{t("Listing.depositRefundable")}</Text>
+              </View>
             </View>
 
             {/* Premium card */}
@@ -238,12 +250,18 @@ const styles = StyleSheet.create({
   },
   title: { fontSize: 20, fontWeight: "800", color: COLORS.text },
 
+  balanceRow: {
+    flexDirection: "row",
+    gap: 10,
+    marginHorizontal: 16,
+    marginTop: 16,
+    marginBottom: 0,
+  },
   balanceCard: {
-    margin: 16,
     backgroundColor: "#635BFF",
     borderRadius: 20,
-    padding: 24,
-    gap: 6,
+    padding: 16,
+    gap: 4,
   },
   balanceTopRow: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 4 },
   balanceTag: { fontSize: 12, color: "rgba(255,255,255,0.7)" },
