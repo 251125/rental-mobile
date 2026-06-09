@@ -8,12 +8,15 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  ImageBackground,
 } from "react-native";
 import { router } from "expo-router";
 import { useLogin } from "@/hooks/use-auth";
 import { COLORS } from "@/constants";
 import { useT } from "@/i18n/useT";
 import GoogleSignInButton from "@/components/GoogleSignInButton";
+
+const heroBg = require("../../assets/hero-bg.png");
 
 export default function LoginScreen() {
   const t = useT();
@@ -27,10 +30,12 @@ export default function LoginScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.flex}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-    >
+    <ImageBackground source={heroBg} style={styles.flex} resizeMode="cover">
+      <View style={styles.bgOverlay} />
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      >
       <ScrollView
         contentContainerStyle={styles.container}
         keyboardShouldPersistTaps="handled"
@@ -95,12 +100,17 @@ export default function LoginScreen() {
           </TouchableOpacity>
         </View>
       </ScrollView>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: COLORS.white },
+  flex: { flex: 1 },
+  bgOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(255,255,255,0.72)",
+  },
   container: {
     flexGrow: 1,
     justifyContent: "center",
@@ -111,7 +121,7 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   logo: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: "800",
     color: COLORS.primary,
     marginBottom: 8,
@@ -122,6 +132,9 @@ const styles = StyleSheet.create({
   },
   form: {
     gap: 4,
+    backgroundColor: "rgba(255,255,255,0.9)",
+    borderRadius: 16,
+    padding: 20,
   },
   label: {
     fontSize: 14,

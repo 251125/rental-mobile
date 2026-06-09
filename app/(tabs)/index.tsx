@@ -12,7 +12,6 @@ import {
   Modal,
   ImageBackground,
 } from "react-native";
-const heroBg = require("../../assets/hero-bg.png");
 import { router, useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useListings, useCategories } from "@/hooks/use-listings";
@@ -43,8 +42,7 @@ function HeroBanner({ search, onSearch, onChangeSearch }: {
   const t = useT();
   return (
     <View style={hero.wrap}>
-      <ImageBackground source={heroBg} style={hero.gradient} imageStyle={hero.bgImage}>
-        <View style={hero.overlay} />
+      <View style={hero.gradient}>
         <Text style={hero.tag}>{t("Home.heroBadge")}</Text>
         <Text style={hero.title}>{t("Home.heroTitle")}</Text>
         <Text style={hero.sub}>{t("Home.heroSub")}</Text>
@@ -71,7 +69,7 @@ function HeroBanner({ search, onSearch, onChangeSearch }: {
             <Text style={hero.searchBtnText} numberOfLines={1}>{t("Home.searchBtn")}</Text>
           </TouchableOpacity>
         </View>
-      </ImageBackground>
+      </View>
     </View>
   );
 }
@@ -79,19 +77,12 @@ function HeroBanner({ search, onSearch, onChangeSearch }: {
 const hero = StyleSheet.create({
   wrap: { paddingHorizontal: 16, paddingTop: 12, marginBottom: 8 },
   gradient: {
+    backgroundColor: "#1d4ed8",
     paddingHorizontal: 20,
     paddingTop: 24,
     paddingBottom: 28,
     borderRadius: 20,
     overflow: "hidden",
-  },
-  bgImage: {
-    borderRadius: 20,
-  },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(15, 40, 100, 0.52)",
-    borderRadius: 20,
   },
   tag: {
     color: "rgba(255,255,255,0.75)",
