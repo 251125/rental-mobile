@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { create } from "zustand";
 import { COLORS } from "@/constants";
+import { useT } from "@/i18n/useT";
 
 interface ConfirmRequest {
   title: string;
@@ -36,6 +37,7 @@ export const useConfirmStore = create<ConfirmState>((set) => ({
  * confirm() is called from anywhere in the app.
  */
 export default function ConfirmHost() {
+  const t = useT();
   const pending = useConfirmStore((s) => s.pending);
   const hide = useConfirmStore((s) => s.hide);
 
@@ -60,7 +62,7 @@ export default function ConfirmHost() {
           <View style={styles.row}>
             <TouchableOpacity style={styles.cancelBtn} onPress={onCancel}>
               <Text style={styles.cancelText}>
-                {pending.cancelText ?? "Отмена"}
+                {pending.cancelText ?? t("Common.cancel")}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity

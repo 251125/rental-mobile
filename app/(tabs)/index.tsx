@@ -66,7 +66,7 @@ function HeroBanner({ search, onSearch, onChangeSearch }: {
             )}
           </View>
           <TouchableOpacity style={hero.searchBtn} onPress={onSearch}>
-            <Text style={hero.searchBtnText}>Найти</Text>
+            <Text style={hero.searchBtnText} numberOfLines={1}>{t("Home.searchBtn")}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -172,10 +172,10 @@ export default function HomeScreen() {
     }
     const ok = await saveSearch(filters);
     if (ok) {
-      Toast.show({ type: "success", text1: "Поиск сохранён" });
+      Toast.show({ type: "success", text1: t("Home.searchSaved") });
       setSavedSearches(await getSavedSearches());
     } else {
-      Toast.show({ type: "info", text1: "Уже в сохранённых" });
+      Toast.show({ type: "info", text1: t("Home.searchAlreadySaved") });
     }
   };
 
@@ -277,7 +277,7 @@ export default function HomeScreen() {
             </View>
           )}
           <Text style={[styles.filterBtnText, activeFilterCount > 0 && { color: COLORS.white }]}>
-            Фильтры
+            {t("Home.filters")}
           </Text>
         </TouchableOpacity>
       </View>
@@ -292,7 +292,7 @@ export default function HomeScreen() {
           style={[styles.catChip, !selectedCategory && styles.catChipActive]}
           onPress={() => handleCategoryPress(null)}
         >
-          <Text style={[styles.catText, !selectedCategory && styles.catTextActive]}>Все</Text>
+          <Text style={[styles.catText, !selectedCategory && styles.catTextActive]}>{t("Common.all")}</Text>
         </TouchableOpacity>
         {categories?.map((cat) => (
           <TouchableOpacity
@@ -309,7 +309,7 @@ export default function HomeScreen() {
 
       {savedSearches.length > 0 && (
         <View style={styles.savedWrap}>
-          <Text style={styles.savedTitle}>Сохранённые поиски</Text>
+          <Text style={styles.savedTitle}>{t("Home.savedSearches")}</Text>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -333,12 +333,12 @@ export default function HomeScreen() {
 
       <View style={styles.listingHeader}>
         <Text style={styles.sectionTitle}>
-          {data ? `${data.meta.total} объявлений` : "Объявления"}
+          {data ? `${data.meta.total} ${t("Nav.listings")}` : t("Nav.listings")}
         </Text>
         {hasMeaningfulFilter && (
           <TouchableOpacity onPress={handleSaveSearch} style={styles.saveBtn}>
             <Ionicons name="bookmark-outline" size={14} color={COLORS.primary} />
-            <Text style={styles.saveBtnText}>Сохранить</Text>
+            <Text style={styles.saveBtnText}>{t("Common.save")}</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -388,7 +388,7 @@ export default function HomeScreen() {
           ListEmptyComponent={
             <View style={styles.empty}>
               <Ionicons name="search-outline" size={48} color={COLORS.border} />
-              <Text style={styles.emptyText}>Объявления не найдены</Text>
+              <Text style={styles.emptyText}>{t("Home.noListings")}</Text>
               <TouchableOpacity
                 onPress={() => {
                   setSearch("");
@@ -397,7 +397,7 @@ export default function HomeScreen() {
                 }}
                 style={styles.emptyBtn}
               >
-                <Text style={styles.emptyBtnText}>Сбросить фильтры</Text>
+                <Text style={styles.emptyBtnText}>{t("Home.resetFilters")}</Text>
               </TouchableOpacity>
             </View>
           }
@@ -407,7 +407,7 @@ export default function HomeScreen() {
                 style={styles.loadMore}
                 onPress={() => setFilters((p) => ({ ...p, page: (p.page ?? 1) + 1 }))}
               >
-                <Text style={styles.loadMoreText}>Загрузить ещё</Text>
+                <Text style={styles.loadMoreText}>{t("Home.loadMore")}</Text>
               </TouchableOpacity>
             ) : null
           }
@@ -439,16 +439,16 @@ export default function HomeScreen() {
         <View style={styles.filterSheet}>
           <View style={styles.filterHandle} />
           <View style={styles.filterHeader}>
-            <Text style={styles.filterTitle}>Фильтры</Text>
+            <Text style={styles.filterTitle}>{t("Home.filters")}</Text>
             <TouchableOpacity onPress={() => setShowFilters(false)}>
               <Ionicons name="close" size={24} color={COLORS.text} />
             </TouchableOpacity>
           </View>
 
-          <Text style={styles.filterLabel}>Город</Text>
+          <Text style={styles.filterLabel}>{t("Home.filterCity")}</Text>
           <CityPicker value={cityInput} onChange={setCityInput} placeholder={t("Home.anyCity")} />
 
-          <Text style={styles.filterLabel}>Цена (₸/день)</Text>
+          <Text style={styles.filterLabel}>{t("Home.pricePerDay")}</Text>
           <View style={styles.priceRow}>
             <TextInput
               style={[styles.filterInput, styles.priceInput]}
@@ -469,7 +469,7 @@ export default function HomeScreen() {
             />
           </View>
 
-          <Text style={styles.filterLabel}>Сортировка</Text>
+          <Text style={styles.filterLabel}>{t("Home.sorting")}</Text>
           <ScrollView style={{ maxHeight: 160 }} nestedScrollEnabled>
             {SORT_OPTIONS.map((opt) => {
               const isActive = sortBy === opt.sortBy && sortOrder === opt.sortOrder;
@@ -490,10 +490,10 @@ export default function HomeScreen() {
 
           <View style={styles.filterActions}>
             <TouchableOpacity style={styles.resetBtn} onPress={resetFilters}>
-              <Text style={styles.resetBtnText}>Сбросить</Text>
+              <Text style={styles.resetBtnText}>{t("Common.reset")}</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.applyBtn} onPress={applyFilters}>
-              <Text style={styles.applyBtnText}>Применить</Text>
+              <Text style={styles.applyBtnText}>{t("Common.apply")}</Text>
             </TouchableOpacity>
           </View>
         </View>

@@ -11,8 +11,10 @@ import { router, useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS, resolveImageUrl } from "@/constants";
 import { getRecentlyViewed, RecentItem } from "@/lib/recently-viewed";
+import { useT } from "@/i18n/useT";
 
 export default function RecentlyViewed() {
+  const t = useT();
   const [items, setItems] = useState<RecentItem[]>([]);
 
   // Refresh on every focus so newly visited listings show up immediately
@@ -34,7 +36,7 @@ export default function RecentlyViewed() {
     <View style={styles.wrap}>
       <View style={styles.header}>
         <Ionicons name="time-outline" size={16} color={COLORS.muted} />
-        <Text style={styles.title}>Недавно просмотренные</Text>
+        <Text style={styles.title}>{t("Home.recentlyViewed")}</Text>
       </View>
       <FlatList
         horizontal
@@ -61,7 +63,7 @@ export default function RecentlyViewed() {
               {item.title}
             </Text>
             <Text style={styles.price}>
-              {Number(item.price).toLocaleString()} ₸/день
+              {Number(item.price).toLocaleString()} ₸/{t("Listing.perDayShort")}
             </Text>
           </TouchableOpacity>
         )}

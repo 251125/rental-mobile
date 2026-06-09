@@ -124,8 +124,8 @@ export default function CompareScreen() {
                     <Text style={[styles.dataText, highlight && styles.dataTextHighlight]}>
                       {val}
                     </Text>
-                    {isLowest && <Text style={styles.badgeText}>выгодно</Text>}
-                    {isTopRated && <Text style={styles.badgeText}>топ</Text>}
+                    {isLowest && <Text style={styles.badgeText}>{t("Compare.cheapBadge")}</Text>}
+                    {isTopRated && <Text style={styles.badgeText}>{t("Compare.topBadge")}</Text>}
                   </View>
                 );
               })}
@@ -141,7 +141,7 @@ export default function CompareScreen() {
                   style={styles.viewBtn}
                   onPress={() => router.push(`/listings/${item.id}`)}
                 >
-                  <Text style={styles.viewBtnText}>Открыть</Text>
+                  <Text style={styles.viewBtnText}>{t("Compare.openBtn")}</Text>
                 </TouchableOpacity>
               </View>
             ))}
