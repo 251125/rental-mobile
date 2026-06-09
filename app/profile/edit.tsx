@@ -13,13 +13,17 @@ import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { useAuthStore } from "@/store/auth.store";
 import { useUpdateProfile } from "@/hooks/use-profile";
+import { useUploadImage } from "@/hooks/use-listings";
 import { COLORS, resolveImageUrl } from "@/constants";
 import { useT } from "@/i18n/useT";
+import Toast from "react-native-toast-message";
 
 export default function EditProfileScreen() {
   const t = useT();
   const { user } = useAuthStore();
   const { mutate: updateProfile, isPending } = useUpdateProfile();
+  const { mutateAsync: uploadImage } = useUploadImage();
+  const [isSaving, setIsSaving] = useState(false);
 
   const [name, setName] = useState(user?.name ?? "");
   const [avatarUri, setAvatarUri] = useState<string | null>(null);
@@ -38,22 +42,22 @@ export default function EditProfileScreen() {
     }
   };
 
-  const handleSave = () => {
-    const formData = new FormData();
-    formData.append("name", name);
-
-    if (avatarUri) {
-      const filename = avatarUri.split("/").pop() ?? "avatar.jpg";
-      formData.append("avatar", {
-        uri: avatarUri,
-        name: filename,
-        type: "image/jpeg",
-      } as unknown as Blob);
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      let avatar_url: string | undefined;
+      if (avatarUri) {
+        avatar_url = await uploadImage(avatarUri);
+      }
+      updateProfile(
+        { name, ...(avatar_url !== undefined ? { avatar_url } : {}) },
+        { onSuccess: () => router.back() },
+      );
+    } catch {
+      Toast.show({ type: "error", text1: "Ошибка загрузки фото" });
+    } finally {
+      setIsSaving(false);
     }
-
-    updateProfile(formData, {
-      onSuccess: () => router.back(),
-    });
   };
 
   const displayAvatar = avatarUri ?? existingAvatar;
@@ -98,12 +102,12 @@ export default function EditProfileScreen() {
         <Text style={styles.hint}></Text>
 
         <TouchableOpacity
-          style={[styles.saveBtn, isPending && { opacity: 0.6 }]}
+          style={[styles.saveBtn, (isPending || isSaving) && { opacity: 0.6 }]}
           onPress={handleSave}
-          disabled={isPending}
+          disabled={isPending || isSaving}
         >
           <Text style={styles.saveBtnText}>
-            {isPending ? t("Profile.saving") : t("Profile.save")}
+            {(isPending || isSaving) ? t("Profile.saving") : t("Profile.save")}
           </Text>
         </TouchableOpacity>
       </View>

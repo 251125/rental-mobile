@@ -33,12 +33,8 @@ export function useUpdateProfile() {
   const { setUser } = useAuthStore();
 
   return useMutation({
-    mutationFn: (data: FormData) =>
-      api
-        .patch<User>("/users/me", data, {
-          headers: { "Content-Type": "multipart/form-data" },
-        })
-        .then((r) => r.data),
+    mutationFn: (data: { name?: string; avatar_url?: string | null }) =>
+      api.patch<User>("/users/me", data).then((r) => r.data),
     onSuccess: (data) => {
       setUser(data);
       void queryClient.invalidateQueries({ queryKey: ["me"] });
