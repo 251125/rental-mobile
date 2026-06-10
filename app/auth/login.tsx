@@ -30,10 +30,10 @@ export default function LoginScreen() {
   };
 
   return (
-    <ImageBackground source={heroBg} style={styles.flex} resizeMode="cover">
+    <ImageBackground source={heroBg} style={styles.root} resizeMode="cover">
       <View style={styles.bgOverlay} />
       <KeyboardAvoidingView
-        style={styles.flex}
+        style={styles.root}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
       <ScrollView
@@ -105,36 +105,47 @@ export default function LoginScreen() {
   );
 }
 
+
 const styles = StyleSheet.create({
-  flex: { flex: 1 },
+  root: { flex: 1, width: "100%" },
   bgOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(255,255,255,0.72)",
+    backgroundColor: "rgba(10, 30, 80, 0.45)",
   },
   container: {
     flexGrow: 1,
     justifyContent: "center",
     padding: 24,
+    width: "100%",
   },
   header: {
     alignItems: "center",
-    marginBottom: 40,
+    marginBottom: 32,
   },
   logo: {
-    fontSize: 32,
+    fontSize: 34,
     fontWeight: "800",
-    color: COLORS.primary,
-    marginBottom: 8,
+    color: "#fff",
+    marginBottom: 6,
+    textShadowColor: "rgba(0,0,0,0.3)",
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
   },
   subtitle: {
     fontSize: 16,
-    color: COLORS.muted,
+    color: "rgba(255,255,255,0.85)",
   },
   form: {
     gap: 4,
-    backgroundColor: "rgba(255,255,255,0.9)",
-    borderRadius: 16,
-    padding: 20,
+    backgroundColor: "rgba(255,255,255,0.95)",
+    borderRadius: 20,
+    padding: 24,
+    width: "100%",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    elevation: 10,
   },
   label: {
     fontSize: 14,
